@@ -8,8 +8,21 @@
     <!-- 1. Pyodide (Python Engine) -->
     <script src="https://cdn.jsdelivr.net/pyodide/v0.29.0/full/pyodide.js"></script>
 
-    <!-- 2. PDF Libraries (New!) -->
+    <!-- 2. PDF Libraries -->
+    <!-- Load jsPDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
+    <!-- 
+       CRITICAL FIX: svg2pdf expects 'window.jsPDF' to exist to extend it.
+       jsPDF 2.x puts it under 'window.jspdf.jsPDF', so we alias it here manually.
+    -->
+    <script>
+        if (window.jspdf && window.jspdf.jsPDF) {
+            window.jsPDF = window.jspdf.jsPDF;
+        }
+    </script>
+
+    <!-- Load svg2pdf (Must be loaded AFTER the shim above) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/svg2pdf.js/2.2.1/svg2pdf.umd.min.js"></script>
 
     <style>
@@ -23,7 +36,6 @@
         #gen-btn:hover { background: #1d4ed8; }
         #gen-btn:disabled { background: #93c5fd; cursor: not-allowed; }
         
-        /* New styling for button group */
         .btn-group { display: flex; gap: 10px; margin-top: 10px; display: none; }
         .btn-group button { margin-top: 0; flex: 1; }
         #dl-svg { background: #10b981; color: white; }
@@ -49,7 +61,6 @@
 
             <button id="gen-btn" disabled onclick="runGeneration()">Generate Diagram</button>
             
-            <!-- Download Buttons -->
             <div id="dl-buttons" class="btn-group">
                 <button id="dl-svg" onclick="downloadSVG()">SVG</button>
                 <button id="dl-pdf" onclick="downloadPDF()">PDF</button>
@@ -161,7 +172,7 @@
             document.body.removeChild(a);
         }
 
-        // --- NEW PDF FUNCTION ---
+        // --- PDF FUNCTION ---
         async function downloadPDF() {
             const svgElement = document.querySelector("#preview svg");
             
@@ -171,21 +182,21 @@
             }
 
             try {
-                const { jsPDF } = window.jspdf;
-                
-                // Create a PDF (A4 size, Landscape)
-                const doc = new jsPDF({
+                // Ensure jsPDF constructor is available
+                // window.jsPDF should now be populated by our shim in the <head>
+                const doc = new window.jsPDF({
                     orientation: 'landscape',
                     unit: 'mm',
                     format: 'a4'
                 });
 
-                // Convert the SVG Element to PDF
+                // Add SVG to PDF
+                // svg2pdf extends the jsPDF object with .svg()
                 await doc.svg(svgElement, {
                     x: 10,
                     y: 10,
-                    width: 277,  // A4 width (297) - margins (20)
-                    height: 190  // A4 height (210) - margins (20)
+                    width: 277,
+                    height: 190
                 });
 
                 doc.save("diagram.pdf");
