@@ -3,39 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Build123d Diagram Generator</title>
+    <title>Instrument Neck Geometry Generator</title>
     
-    <!-- Pyodide (Python in WebAssembly) -->
+    <!-- Pyodide -->
     <script src="https://cdn.jsdelivr.net/pyodide/v0.29.0/full/pyodide.js"></script>
+
+    <!-- SVG.js for zoom/pan -->
+    <script src="https://cdn.jsdelivr.net/npm/@svgdotjs/svg.js@3.2.4/dist/svg.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@svgdotjs/svg.panzoom.js@2.1.2/dist/svg.panzoom.min.js"></script>
 
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #8B4513 0%, #D2691E 100%);
             min-height: 100vh;
-            padding: 2rem 1rem;
+            padding: 1.5rem;
         }
         
         .app-container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
         }
         
-        h1 {
-            color: white;
+        header {
             text-align: center;
-            margin-bottom: 1rem;
-            font-size: 2rem;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            color: white;
+            margin-bottom: 1.5rem;
+        }
+        
+        h1 {
+            font-size: 2.2rem;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
         }
         
         .subtitle {
-            color: rgba(255,255,255,0.9);
-            text-align: center;
-            margin-bottom: 2rem;
-            font-size: 0.95rem;
+            font-size: 1rem;
+            opacity: 0.95;
         }
         
         .status-bar {
@@ -43,36 +49,17 @@
             padding: 12px 20px;
             border-radius: 8px;
             margin-bottom: 1.5rem;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
             display: flex;
             align-items: center;
             gap: 10px;
             transition: all 0.3s ease;
         }
         
-        .status-bar.loading {
-            background: #fef3c7;
-            color: #92400e;
-            border-left: 4px solid #f59e0b;
-        }
-        
-        .status-bar.ready {
-            background: #d1fae5;
-            color: #065f46;
-            border-left: 4px solid #10b981;
-        }
-        
-        .status-bar.error {
-            background: #fee2e2;
-            color: #991b1b;
-            border-left: 4px solid #ef4444;
-        }
-        
-        .status-bar.generating {
-            background: #dbeafe;
-            color: #1e40af;
-            border-left: 4px solid #3b82f6;
-        }
+        .status-bar.loading { background: #fef3c7; color: #92400e; border-left: 4px solid #f59e0b; }
+        .status-bar.ready { background: #d1fae5; color: #065f46; border-left: 4px solid #10b981; }
+        .status-bar.error { background: #fee2e2; color: #991b1b; border-left: 4px solid #ef4444; }
+        .status-bar.generating { background: #dbeafe; color: #1e40af; border-left: 4px solid #3b82f6; }
         
         .spinner {
             width: 16px;
@@ -85,182 +72,407 @@
         }
         
         .status-bar.loading .spinner,
-        .status-bar.generating .spinner {
-            display: block;
-        }
+        .status-bar.generating .spinner { display: block; }
         
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
+        @keyframes spin { to { transform: rotate(360deg); } }
         
-        .container {
+        .main-container {
             background: white;
             border-radius: 12px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
             display: grid;
-            grid-template-columns: 320px 1fr;
+            grid-template-columns: 380px 1fr;
             gap: 0;
             overflow: hidden;
+            max-height: calc(100vh - 200px);
         }
         
-        @media (max-width: 768px) {
-            .container {
+        @media (max-width: 1024px) {
+            .main-container {
                 grid-template-columns: 1fr;
+                max-height: none;
             }
         }
         
-        .controls {
+        .controls-panel {
             background: #f9fafb;
-            padding: 2rem;
+            padding: 0;
             border-right: 1px solid #e5e7eb;
+            overflow-y: auto;
+            max-height: calc(100vh - 200px);
+            display: flex;
+            flex-direction: column;
         }
-        
-        .form-group {
-            margin-bottom: 1.5rem;
+
+        .sticky-generate-section {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: #f9fafb;
+            padding: 1.5rem;
+            border-bottom: 2px solid #e5e7eb;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
-        
-        label {
+
+        .scrollable-params {
+            padding: 1.5rem;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .preset-selector {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            border: 2px solid #e5e7eb;
+        }
+
+        .preset-selector label {
             display: block;
             font-weight: 600;
             color: #374151;
             margin-bottom: 0.5rem;
             font-size: 0.875rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
         }
-        
-        .input-group {
-            position: relative;
-        }
-        
-        input {
+
+        .preset-selector select {
             width: 100%;
-            padding: 10px 12px;
+            padding: 8px;
             border: 2px solid #d1d5db;
             border-radius: 6px;
-            font-size: 1rem;
+            font-size: 0.95rem;
+        }
+
+        .param-management {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            border: 2px solid #e5e7eb;
+        }
+
+        .param-management-label {
+            display: block;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .param-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .param-btn {
+            flex: 1;
+            padding: 8px 12px;
+            border: 2px solid #d1d5db;
+            border-radius: 6px;
+            background: white;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
             transition: all 0.2s;
+            color: #374151;
         }
-        
-        input:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+
+        .param-btn:hover {
+            border-color: #8B4513;
+            background: #f9fafb;
         }
-        
-        input:invalid {
-            border-color: #ef4444;
+
+        .param-btn-save {
+            border-color: #10b981;
+            color: #10b981;
         }
-        
-        .input-hint {
-            font-size: 0.75rem;
-            color: #6b7280;
-            margin-top: 0.25rem;
+
+        .param-btn-save:hover {
+            background: #d1fae5;
+            border-color: #059669;
         }
-        
-        .validation-error {
-            color: #dc2626;
-            font-size: 0.75rem;
-            margin-top: 0.25rem;
+
+        .param-btn-load {
+            border-color: #3b82f6;
+            color: #3b82f6;
+        }
+
+        .param-btn-load:hover {
+            background: #dbeafe;
+            border-color: #2563eb;
+        }
+
+        #load-params-input {
             display: none;
         }
         
-        .validation-error.show {
-            display: block;
+        .category-section {
+            margin-bottom: 1.5rem;
+            background: white;
+            border-radius: 8px;
+            padding: 1rem;
+            border: 1px solid #e5e7eb;
         }
         
-        button {
-            width: 100%;
-            padding: 12px;
-            border: none;
-            border-radius: 6px;
+        .category-title {
+            font-weight: 700;
+            color: #8B4513;
+            margin-bottom: 0.75rem;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid #D2691E;
+            padding-bottom: 0.5rem;
+        }
+        
+        .param-group {
+            margin-bottom: 1rem;
+        }
+        
+        .param-group:last-child {
+            margin-bottom: 0;
+        }
+        
+        .param-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 0.4rem;
+        }
+        
+        .param-label label {
             font-weight: 600;
+            color: #374151;
+            font-size: 0.85rem;
+        }
+        
+        .param-unit {
+            font-size: 0.75rem;
+            color: #6b7280;
+            font-weight: normal;
+        }
+        
+        .param-description {
+            font-size: 0.7rem;
+            color: #6b7280;
+            margin-top: 0.25rem;
+            line-height: 1.3;
+        }
+        
+        input[type="number"],
+        input[type="range"],
+        select {
+            width: 100%;
+            padding: 6px 8px;
+            border: 2px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            transition: border-color 0.2s;
+        }
+        
+        input[type="number"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #8B4513;
+        }
+        
+        input[type="range"] {
+            padding: 0;
+        }
+        
+        input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            margin-right: 8px;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+        }
+        
+        .range-value {
+            display: inline-block;
+            min-width: 50px;
+            text-align: right;
+            font-size: 0.85rem;
+            color: #374151;
+            font-weight: 600;
+        }
+        
+        .generate-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #8B4513 0%, #D2691E 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 700;
             font-size: 1rem;
             cursor: pointer;
             transition: all 0.2s;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 6px rgba(139, 69, 19, 0.3);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
         }
-        
-        #gen-btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            box-shadow: 0 4px 6px rgba(102, 126, 234, 0.3);
-        }
-        
-        #gen-btn:hover:not(:disabled) {
+
+        .generate-btn:hover:not(:disabled) {
             transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 6px 12px rgba(139, 69, 19, 0.4);
         }
-        
-        #gen-btn:disabled {
+
+        .generate-btn:disabled {
             background: #9ca3af;
             cursor: not-allowed;
             box-shadow: none;
         }
-        
-        .btn-group {
-            display: none;
-            gap: 10px;
-            margin-top: 1rem;
+
+        .generate-btn-shortcut {
+            font-size: 0.7rem;
+            opacity: 0.9;
+            text-transform: none;
+            letter-spacing: 0.5px;
+            font-weight: 400;
         }
         
-        .btn-group.show {
+        .download-buttons {
             display: flex;
+            gap: 8px;
+            align-items: center;
         }
-        
-        .btn-group button {
-            flex: 1;
-            padding: 10px;
-            font-size: 0.875rem;
+
+        .download-buttons button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
         }
-        
-        #dl-svg {
+
+        .download-buttons button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-svg {
             background: #10b981;
             color: white;
         }
-        
-        #dl-svg:hover {
+
+        .btn-svg:hover:not(:disabled) {
             background: #059669;
         }
-        
-        #dl-pdf {
+
+        .btn-pdf {
             background: #ef4444;
             color: white;
         }
-        
-        #dl-pdf:hover {
+
+        .btn-pdf:hover:not(:disabled) {
             background: #dc2626;
         }
         
-        .preview-container {
+        .preview-panel {
             padding: 2rem;
             display: flex;
             flex-direction: column;
-            min-height: 500px;
-        }
-        
-        #preview {
-            border: 2px dashed #e5e7eb;
-            border-radius: 8px;
             background: #fafafa;
+        }
+
+        .view-controls-header {
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            justify-content: center;
+            margin-bottom: 1rem;
+            gap: 1rem;
+        }
+
+        .view-tabs {
+            display: flex;
+            gap: 10px;
             flex: 1;
+        }
+
+        .view-tab {
+            flex: 1;
+            padding: 10px 16px;
+            background: white;
+            border: 2px solid #d1d5db;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #6b7280;
+        }
+
+        .view-tab:hover {
+            border-color: #8B4513;
+            background: #f9fafb;
+        }
+
+        .view-tab.active {
+            background: linear-gradient(135deg, #8B4513 0%, #D2691E 100%);
+            color: white;
+            border-color: #8B4513;
+        }
+
+        .zoom-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .zoom-btn {
+            padding: 6px 12px;
+            background: white;
+            border: 2px solid #d1d5db;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            min-width: 36px;
+        }
+
+        .zoom-btn:hover {
+            border-color: #8B4513;
+            background: #f9fafb;
+        }
+
+        #preview-container {
+            flex: 1;
+            border: 2px dashed #d1d5db;
+            border-radius: 8px;
+            background: white;
+            min-height: 500px;
             overflow: hidden;
             position: relative;
         }
-        
-        #preview.has-content {
+
+        #preview-container.has-content {
             border-style: solid;
-            border-color: #d1d5db;
+            border-color: #8B4513;
         }
-        
-        #preview svg {
-            max-width: 100%;
-            max-height: 100%;
-            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
+
+        #preview-container .preview-placeholder {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        /* SVG.js canvas should fill container */
+        #preview-container > svg {
+            width: 100% !important;
+            height: 100% !important;
+            display: block;
         }
         
         .preview-placeholder {
@@ -270,129 +482,154 @@
         }
         
         .preview-placeholder svg {
-            width: 64px;
-            height: 64px;
+            width: 80px;
+            height: 80px;
             margin-bottom: 1rem;
             opacity: 0.3;
         }
         
-        .error-details {
-            background: #fef2f2;
-            border: 1px solid #fecaca;
-            border-radius: 6px;
+        .error-panel {
+            background: #fee2e2;
+            border: 2px solid #fecaca;
+            border-radius: 8px;
             padding: 1rem;
             margin-top: 1rem;
             display: none;
         }
         
-        .error-details.show {
+        .error-panel.show {
             display: block;
         }
         
-        .error-details h3 {
+        .error-panel h3 {
             color: #991b1b;
-            font-size: 0.875rem;
+            font-size: 0.9rem;
             margin-bottom: 0.5rem;
         }
         
-        .error-details p {
+        .error-panel ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .error-panel li {
             color: #7f1d1d;
-            font-size: 0.8rem;
-            line-height: 1.5;
+            font-size: 0.85rem;
+            padding: 0.25rem 0;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+        
+        .error-panel li:before {
+            content: "•";
+            position: absolute;
+            left: 0.5rem;
+        }
+
+        @media (max-width: 1200px) {
+            .view-controls-header {
+                flex-wrap: wrap;
+            }
+
+            .view-tabs {
+                flex: 1 1 100%;
+                margin-bottom: 0.5rem;
+            }
+
+            .zoom-controls,
+            .download-buttons {
+                flex: 0 0 auto;
+            }
         }
     </style>
 </head>
 <body>
     <div class="app-container">
-        <h1>🔧 Build123d Diagram Generator</h1>
-        <p class="subtitle">Create parametric 2D CAD diagrams in your browser</p>
+        <header>
+            <h1>🎻 Instrument Neck Geometry Generator</h1>
+            <p class="subtitle">Parametric CAD for Lutherie - Design precise neck templates based on historical and modern measurements</p>
+        </header>
 
         <div id="status" class="status-bar loading">
             <div class="spinner"></div>
-            <span id="status-text">Initializing Python engine...</span>
+            <span id="status-text">Initializing Python environment...</span>
         </div>
 
-        <div class="container">
-            <div class="controls">
-                <div class="form-group">
-                    <label for="length">Length (mm)</label>
-                    <div class="input-group">
-                        <input 
-                            type="number" 
-                            id="length" 
-                            value="100" 
-                            min="0.1" 
-                            max="10000" 
-                            step="0.1"
-                            required
-                        >
-                    </div>
-                    <div class="input-hint">Recommended: 10-1000mm</div>
-                    <div class="validation-error" id="length-error"></div>
-                </div>
-
-                <div class="form-group">
-                    <label for="width">Width (mm)</label>
-                    <div class="input-group">
-                        <input 
-                            type="number" 
-                            id="width" 
-                            value="50" 
-                            min="0.1" 
-                            max="10000" 
-                            step="0.1"
-                            required
-                        >
-                    </div>
-                    <div class="input-hint">Recommended: 10-1000mm</div>
-                    <div class="validation-error" id="width-error"></div>
-                </div>
-
-                <div class="form-group">
-                    <label for="radius">Hole Radius (mm)</label>
-                    <div class="input-group">
-                        <input 
-                            type="number" 
-                            id="radius" 
-                            value="10" 
-                            min="0.1" 
-                            max="5000" 
-                            step="0.1"
-                            required
-                        >
-                    </div>
-                    <div class="input-hint">Must fit within plate dimensions</div>
-                    <div class="validation-error" id="radius-error"></div>
-                </div>
-
-                <button id="gen-btn" disabled onclick="runGeneration()">
-                    Generate Diagram
-                </button>
-                
-                <div id="dl-buttons" class="btn-group">
-                    <button id="dl-svg" onclick="downloadSVG()">
-                        📥 SVG
+        <div class="main-container">
+            <div class="controls-panel">
+                <div class="sticky-generate-section">
+                    <button class="generate-btn" id="gen-btn" disabled onclick="generateNeck()">
+                        <span>Generate Template</span>
+                        <span class="generate-btn-shortcut" id="gen-btn-shortcut">⌘/Ctrl + Enter</span>
                     </button>
-                    <button id="dl-pdf">
-                        📄 PDF
-                    </button>
+
+                    <div class="preset-selector">
+                        <label for="preset">Quick Presets</label>
+                        <select id="preset" onchange="loadPreset()">
+                            <option value="">-- Custom --</option>
+                        </select>
+                    </div>
+
+                    <div class="param-management">
+                        <span class="param-management-label">Parameters</span>
+                        <div class="param-buttons">
+                            <button class="param-btn param-btn-save" onclick="saveParameters()">💾 Save</button>
+                            <button class="param-btn param-btn-load" onclick="document.getElementById('load-params-input').click()">📂 Load</button>
+                            <input type="file" id="load-params-input" accept=".json" onchange="loadParameters(event)" />
+                        </div>
+                    </div>
                 </div>
 
-                <div id="error-details" class="error-details">
-                    <h3>⚠️ Error Details</h3>
-                    <p id="error-message"></p>
+                <div class="scrollable-params">
+                    <div id="parameters-container">
+                        <!-- Parameters will be generated here -->
+                    </div>
+
+                    <div id="error-panel" class="error-panel">
+                        <h3>⚠️ Validation Errors</h3>
+                        <ul id="error-list"></ul>
+                    </div>
                 </div>
             </div>
 
-            <div class="preview-container">
-                <div id="preview">
+            <div class="preview-panel">
+                <div class="view-controls-header">
+                    <div id="view-tabs" class="view-tabs">
+                        <button class="view-tab active" data-view="top" onclick="switchView('top')">
+                            Top View
+                        </button>
+                        <button class="view-tab" data-view="side" onclick="switchView('side')">
+                            Side View
+                        </button>
+                        <button class="view-tab" data-view="cross_section" onclick="switchView('cross_section')">
+                            Cross-Section
+                        </button>
+                    </div>
+
+                    <div id="zoom-controls" class="zoom-controls">
+                        <button class="zoom-btn" onclick="zoomIn()" title="Zoom In">+</button>
+                        <button class="zoom-btn" onclick="zoomOut()" title="Zoom Out">−</button>
+                        <button class="zoom-btn" onclick="zoomReset()" title="Reset View">⟲</button>
+                    </div>
+
+                    <div id="download-buttons" class="download-buttons">
+                        <button class="btn-svg" id="dl-svg" onclick="downloadSVG()" disabled>📥 SVG</button>
+                        <button class="btn-pdf" id="dl-pdf" onclick="downloadPDF()" disabled>📄 PDF</button>
+                    </div>
+                </div>
+
+                <div id="preview-container">
                     <div class="preview-placeholder">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <rect x="3" y="3" width="18" height="18" rx="2"/>
+                            <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z"/>
                             <circle cx="12" cy="12" r="3"/>
                         </svg>
-                        <div>Preview will appear here</div>
-                        <div style="font-size: 0.8rem; margin-top: 0.5rem;">Enter dimensions and click Generate</div>
+                        <div style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem;">
+                            Neck Template Preview
+                        </div>
+                        <div style="font-size: 0.9rem;">
+                            Adjust parameters and click Generate
+                        </div>
                     </div>
                 </div>
             </div>
@@ -401,119 +638,72 @@
 
     <!-- Main Application Script -->
     <script>
-        // Global state
-        const state = {
+        // Global state (exposed to window for PDF module)
+        window.state = {
             pyodide: null,
             isGenerating: false,
-            lastSVG: null
+            views: null,              // Stores all 3 SVG views
+            currentView: 'top',       // Currently displayed view
+            svgCanvas: null,          // SVG.js canvas for zoom/pan
+            parameterDefinitions: null,
+            presets: null
         };
 
-        // DOM elements
+        const state = window.state;  // Local reference
+
         const elements = {
             status: document.getElementById('status'),
             statusText: document.getElementById('status-text'),
             genBtn: document.getElementById('gen-btn'),
-            preview: document.getElementById('preview'),
-            dlButtons: document.getElementById('dl-buttons'),
-            errorDetails: document.getElementById('error-details'),
-            errorMessage: document.getElementById('error-message'),
-            lengthInput: document.getElementById('length'),
-            widthInput: document.getElementById('width'),
-            radiusInput: document.getElementById('radius')
+            preview: document.getElementById('preview-container'),
+            errorPanel: document.getElementById('error-panel'),
+            errorList: document.getElementById('error-list'),
+            parametersContainer: document.getElementById('parameters-container'),
+            presetSelect: document.getElementById('preset'),
+            viewTabs: document.getElementById('view-tabs'),
+            zoomControls: document.getElementById('zoom-controls'),
+            dlSvg: document.getElementById('dl-svg'),
+            dlPdf: document.getElementById('dl-pdf')
         };
 
-        /**
-         * Updates the status bar UI
-         */
         function setStatus(type, message) {
             elements.status.className = `status-bar ${type}`;
             elements.statusText.textContent = message;
         }
 
-        /**
-         * Shows error details in the UI
-         */
-        function showError(message) {
-            elements.errorMessage.textContent = message;
-            elements.errorDetails.classList.add('show');
-            console.error('Application Error:', message);
+        function showErrors(errors) {
+            elements.errorList.innerHTML = errors.map(e => `<li>${e}</li>`).join('');
+            elements.errorPanel.classList.add('show');
         }
 
-        /**
-         * Hides error details
-         */
-        function hideError() {
-            elements.errorDetails.classList.remove('show');
+        function hideErrors() {
+            elements.errorPanel.classList.remove('show');
         }
 
-        /**
-         * Validates input dimensions
-         */
-        function validateInputs() {
-            const length = parseFloat(elements.lengthInput.value);
-            const width = parseFloat(elements.widthInput.value);
-            const radius = parseFloat(elements.radiusInput.value);
-
-            const errors = [];
-
-            if (isNaN(length) || length <= 0) {
-                errors.push('Length must be a positive number');
-            }
-            if (isNaN(width) || width <= 0) {
-                errors.push('Width must be a positive number');
-            }
-            if (isNaN(radius) || radius <= 0) {
-                errors.push('Hole radius must be a positive number');
-            }
-
-            if (errors.length === 0) {
-                const minDim = Math.min(length, width);
-                const maxRadius = minDim * 0.45;
-                
-                if (radius > maxRadius) {
-                    errors.push(`Hole radius too large. Maximum: ${maxRadius.toFixed(1)}mm for ${length}x${width}mm plate`);
-                }
-            }
-
-            return {
-                valid: errors.length === 0,
-                errors: errors
-            };
-        }
-
-        /**
-         * Initializes Pyodide and loads dependencies
-         */
         async function initializePython() {
             try {
                 setStatus('loading', 'Loading Python engine...');
                 state.pyodide = await loadPyodide();
 
-                setStatus('loading', 'Configuring package manager...');
+                setStatus('loading', 'Installing package manager...');
                 await state.pyodide.loadPackage('micropip');
                 
-                setStatus('loading', 'Installing CAD libraries (this may take a minute)...');
+                setStatus('loading', 'Installing CAD libraries (this may take 1-2 minutes)...');
                 await state.pyodide.runPythonAsync(`
                     import micropip
-                    import sys
-
-                    # Configure package sources
+                    
                     micropip.set_index_urls([
                         "https://yeicor.github.io/OCP.wasm",
                         "https://pypi.org/simple"
                     ])
-
-                    # Install lib3mf
-                    await micropip.install("lib3mf")
                     
-                    # Mock py-lib3mf wrapper
+                    await micropip.install("lib3mf")
                     micropip.add_mock_package(
                         "py-lib3mf", 
                         "2.4.1", 
                         modules={"py_lib3mf": "from lib3mf import *"}
                     )
-
-                    # Install build123d and dependencies
+                    
                     await micropip.install([
                         "build123d",
                         "sqlite3",
@@ -521,88 +711,273 @@
                         "numpy"
                     ])
                     
-                    print("✅ All packages installed successfully")
+                    print("✅ Packages installed")
                 `);
 
-                setStatus('loading', 'Loading application logic...');
+                setStatus('loading', 'Loading instrument neck modules...');
                 
-                // Try production path first, fall back to development path
-                let logicCode;
-                try {
-                    const response = await fetch('./logic.py');
-                    if (!response.ok) throw new Error('Not found in production path');
-                    logicCode = await response.text();
-                } catch (e) {
-                    console.log('Trying development path...');
-                    const response = await fetch('../src/logic.py');
+                // Load Python modules
+                const modules = ['instrument_parameters.py', 'instrument_geometry.py', 'instrument_generator.py'];
+                
+                for (const moduleName of modules) {
+                    let response = await fetch(`./${moduleName}`);
                     if (!response.ok) {
-                        throw new Error('Could not find logic.py in ./logic.py or ../src/logic.py');
+                        response = await fetch(`../src/${moduleName}`);
                     }
-                    logicCode = await response.text();
+                    if (!response.ok) {
+                        throw new Error(`Could not find ${moduleName}`);
+                    }
+                    
+                    const code = await response.text();
+                    state.pyodide.FS.writeFile(moduleName, code);
                 }
 
-                // Load the logic module
-                state.pyodide.FS.writeFile('logic.py', logicCode);
+                // Import modules
                 await state.pyodide.runPythonAsync(`
-                    import logic
-                    from logic import generate_plate_svg
-                    print("✅ Logic module loaded")
+                    import instrument_parameters
+                    import instrument_geometry
+                    import instrument_generator
+                    print("✅ Modules loaded")
                 `);
 
-                // Ready!
-                setStatus('ready', '✅ Ready! Enter dimensions and click Generate');
+                // Get parameter definitions
+                setStatus('loading', 'Building interface...');
+                const paramDefsJson = await state.pyodide.runPythonAsync(`
+                    from instrument_generator import get_parameter_definitions
+                    get_parameter_definitions()
+                `);
+                
+                state.parameterDefinitions = JSON.parse(paramDefsJson);
+                
+                // Get presets
+                const presetsJson = await state.pyodide.runPythonAsync(`
+                    from instrument_generator import get_presets
+                    get_presets()
+                `);
+                
+                state.presets = JSON.parse(presetsJson);
+                
+                // Generate UI
+                generateUI();
+                populatePresets();
+
+                setStatus('ready', '✅ Ready! Adjust parameters and generate your template');
                 elements.genBtn.disabled = false;
 
             } catch (error) {
                 setStatus('error', '❌ Initialization failed');
-                showError(`Failed to initialize: ${error.message}`);
-                throw error;
+                showErrors([`Failed to initialize: ${error.message}`]);
+                console.error('Initialization error:', error);
             }
         }
 
-        /**
-         * Generates the diagram
-         */
-        async function runGeneration() {
-            if (state.isGenerating) return;
+        function generateUI() {
+            const container = elements.parametersContainer;
+            container.innerHTML = '';
 
-            // Validate inputs first
-            const validation = validateInputs();
-            if (!validation.valid) {
-                showError(validation.errors.join('. '));
-                return;
+            const categories = state.parameterDefinitions.categories;
+            const parameters = state.parameterDefinitions.parameters;
+
+            for (const category of categories) {
+                const section = document.createElement('div');
+                section.className = 'category-section';
+                
+                const title = document.createElement('div');
+                title.className = 'category-title';
+                title.textContent = category;
+                section.appendChild(title);
+
+                for (const [name, param] of Object.entries(parameters)) {
+                    if (param.category === category) {
+                        section.appendChild(createParameterControl(name, param));
+                    }
+                }
+
+                container.appendChild(section);
+            }
+        }
+
+        function createParameterControl(name, param) {
+            const group = document.createElement('div');
+            group.className = 'param-group';
+
+            if (param.type === 'number') {
+                const labelDiv = document.createElement('div');
+                labelDiv.className = 'param-label';
+                
+                const label = document.createElement('label');
+                label.textContent = param.label;
+                label.htmlFor = name;
+                
+                const unit = document.createElement('span');
+                unit.className = 'param-unit';
+                unit.textContent = param.unit;
+                
+                labelDiv.appendChild(label);
+                labelDiv.appendChild(unit);
+                group.appendChild(labelDiv);
+
+                const input = document.createElement('input');
+                input.type = 'number';
+                input.id = name;
+                input.name = name;
+                input.value = param.default;
+                input.min = param.min;
+                input.max = param.max;
+                input.step = param.step;
+                input.addEventListener('change', hideErrors);
+                group.appendChild(input);
+
+            } else if (param.type === 'enum') {
+                const labelDiv = document.createElement('div');
+                labelDiv.className = 'param-label';
+                
+                const label = document.createElement('label');
+                label.textContent = param.label;
+                label.htmlFor = name;
+                labelDiv.appendChild(label);
+                group.appendChild(labelDiv);
+
+                const select = document.createElement('select');
+                select.id = name;
+                select.name = name;
+                
+                for (const option of param.options) {
+                    const opt = document.createElement('option');
+                    opt.value = option.value;
+                    opt.textContent = option.label;
+                    if (option.value === param.default) {
+                        opt.selected = true;
+                    }
+                    select.appendChild(opt);
+                }
+                
+                select.addEventListener('change', hideErrors);
+                group.appendChild(select);
+
+            } else if (param.type === 'boolean') {
+                const checkboxDiv = document.createElement('div');
+                checkboxDiv.className = 'checkbox-group';
+                
+                const input = document.createElement('input');
+                input.type = 'checkbox';
+                input.id = name;
+                input.name = name;
+                input.checked = param.default;
+                input.addEventListener('change', hideErrors);
+                
+                const label = document.createElement('label');
+                label.textContent = param.label;
+                label.htmlFor = name;
+                
+                checkboxDiv.appendChild(input);
+                checkboxDiv.appendChild(label);
+                group.appendChild(checkboxDiv);
             }
 
-            hideError();
+            if (param.description) {
+                const desc = document.createElement('div');
+                desc.className = 'param-description';
+                desc.textContent = param.description;
+                group.appendChild(desc);
+            }
+
+            return group;
+        }
+
+        function populatePresets() {
+            const select = elements.presetSelect;
+            
+            for (const [name, values] of Object.entries(state.presets)) {
+                const option = document.createElement('option');
+                option.value = name;
+                option.textContent = name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                select.appendChild(option);
+            }
+        }
+
+        function loadPreset() {
+            const presetName = elements.presetSelect.value;
+            if (!presetName) return;
+
+            const preset = state.presets[presetName];
+            if (!preset) return;
+
+            // Apply preset values
+            for (const [name, value] of Object.entries(preset)) {
+                const element = document.getElementById(name);
+                if (element) {
+                    if (element.type === 'checkbox') {
+                        element.checked = value;
+                    } else {
+                        element.value = value;
+                    }
+                }
+            }
+
+            hideErrors();
+        }
+
+        function collectParameters() {
+            const params = {};
+            
+            for (const [name, param] of Object.entries(state.parameterDefinitions.parameters)) {
+                const element = document.getElementById(name);
+                if (!element) continue;
+
+                if (param.type === 'number') {
+                    params[name] = parseFloat(element.value);
+                } else if (param.type === 'boolean') {
+                    params[name] = element.checked;
+                } else if (param.type === 'enum') {
+                    params[name] = element.value;
+                }
+            }
+
+            return params;
+        }
+
+        async function generateNeck() {
+            if (state.isGenerating) return;
+
+            hideErrors();
             state.isGenerating = true;
             elements.genBtn.disabled = true;
 
-            const length = elements.lengthInput.value;
-            const width = elements.widthInput.value;
-            const radius = elements.radiusInput.value;
+            setStatus('generating', '⚙️ Generating neck templates (all views)...');
 
-            setStatus('generating', '⚙️ Generating diagram...');
-            
             try {
-                const code = `logic.generate_plate_svg(${length}, ${width}, ${radius})`;
-                const svgContent = await state.pyodide.runPythonAsync(code);
+                const params = collectParameters();
+                const paramsJson = JSON.stringify(params);
 
-                if (!svgContent || !svgContent.trim()) {
-                    throw new Error('Generated SVG is empty');
+                const resultJson = await state.pyodide.runPythonAsync(`
+                    from instrument_generator import generate_violin_neck
+                    generate_violin_neck('${paramsJson.replace(/'/g, "\\'")}')
+                `);
+
+                const result = JSON.parse(resultJson);
+
+                if (result.success) {
+                    // Store all views
+                    state.views = result.views;
+
+                    // Display current view
+                    displayCurrentView();
+
+                    // Enable download buttons
+                    elements.dlSvg.disabled = false;
+                    elements.dlPdf.disabled = false;
+                    elements.preview.classList.add('has-content');
+
+                    setStatus('ready', '✅ Templates generated successfully! Use tabs to switch views.');
+                } else {
+                    showErrors(result.errors);
+                    setStatus('error', '❌ Generation failed - see errors below');
                 }
 
-                // Update preview
-                elements.preview.innerHTML = svgContent;
-                elements.preview.classList.add('has-content');
-                elements.dlButtons.classList.add('show');
-                
-                state.lastSVG = svgContent;
-                
-                setStatus('ready', '✅ Diagram generated successfully!');
-
             } catch (error) {
+                showErrors([`Unexpected error: ${error.message}`]);
                 setStatus('error', '❌ Generation failed');
-                showError(`Generation error: ${error.message}`);
                 console.error('Generation error:', error);
             } finally {
                 state.isGenerating = false;
@@ -610,106 +985,281 @@
             }
         }
 
-        /**
-         * Downloads the generated SVG
-         */
-        function downloadSVG() {
-            if (!state.lastSVG) {
-                alert('Please generate a diagram first.');
+        function displayCurrentView() {
+            if (!state.views || !state.views[state.currentView]) {
+                console.error('No view available for:', state.currentView);
                 return;
             }
 
-            try {
-                const blob = new Blob([state.lastSVG], { type: 'image/svg+xml' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `plate_${elements.lengthInput.value}x${elements.widthInput.value}_r${elements.radiusInput.value}.svg`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-            } catch (error) {
-                alert(`Download failed: ${error.message}`);
+            // Clear previous canvas
+            if (state.svgCanvas) {
+                state.svgCanvas.clear();
+                state.svgCanvas.remove();
+                state.svgCanvas = null;
+            }
+
+            // Clear container
+            elements.preview.innerHTML = '';
+
+            // Get container dimensions
+            const containerRect = elements.preview.getBoundingClientRect();
+
+            // Create SVG.js canvas with explicit size
+            state.svgCanvas = SVG()
+                .addTo('#preview-container')
+                .size(containerRect.width, containerRect.height);
+
+            // Load the SVG content
+            state.svgCanvas.svg(state.views[state.currentView]);
+
+            // Get the actual content and fit it to the viewport
+            const content = state.svgCanvas.children()[0];
+            if (content) {
+                const bbox = content.bbox();
+
+                // Set viewBox to fit content with some padding
+                const padding = 20;
+                state.svgCanvas.viewbox(
+                    bbox.x - padding,
+                    bbox.y - padding,
+                    bbox.width + padding * 2,
+                    bbox.height + padding * 2
+                );
+            }
+
+            // Enable pan/zoom
+            state.svgCanvas.panZoom({
+                zoomMin: 0.1,
+                zoomMax: 20,
+                zoomFactor: 0.3
+            });
+
+            // Update tab highlighting
+            document.querySelectorAll('.view-tab').forEach(tab => {
+                if (tab.dataset.view === state.currentView) {
+                    tab.classList.add('active');
+                } else {
+                    tab.classList.remove('active');
+                }
+            });
+        }
+
+        function switchView(viewName) {
+            if (!state.views) {
+                console.error('No views generated yet');
+                return;
+            }
+
+            state.currentView = viewName;
+            displayCurrentView();
+        }
+
+        function zoomIn() {
+            if (state.svgCanvas) {
+                state.svgCanvas.zoom(state.svgCanvas.zoom() * 1.3);
             }
         }
 
-        // Input validation on change
-        [elements.lengthInput, elements.widthInput, elements.radiusInput].forEach(input => {
-            input.addEventListener('input', () => {
-                hideError();
-            });
+        function zoomOut() {
+            if (state.svgCanvas) {
+                state.svgCanvas.zoom(state.svgCanvas.zoom() / 1.3);
+            }
+        }
+
+        function zoomReset() {
+            if (state.svgCanvas) {
+                // Re-fit the content to viewport
+                const content = state.svgCanvas.children()[0];
+                if (content) {
+                    const bbox = content.bbox();
+                    const padding = 20;
+                    state.svgCanvas.viewbox(
+                        bbox.x - padding,
+                        bbox.y - padding,
+                        bbox.width + padding * 2,
+                        bbox.height + padding * 2
+                    );
+                }
+            }
+        }
+
+        function downloadSVG() {
+            if (!state.views || !state.views[state.currentView]) {
+                alert('Please generate a template first.');
+                return;
+            }
+
+            const viewNames = {
+                'top': 'top-view',
+                'side': 'side-view',
+                'cross_section': 'cross-section'
+            };
+
+            const svgContent = state.views[state.currentView];
+            const blob = new Blob([svgContent], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `instrument_neck_${viewNames[state.currentView]}.svg`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function downloadPDF() {
+            if (!state.views || !state.views[state.currentView]) {
+                alert('Please generate a template first.');
+                return;
+            }
+
+            // PDF download will use the current view
+            alert('PDF export will be updated to download current view');
+        }
+
+        function saveParameters() {
+            const params = collectParameters();
+
+            const saveData = {
+                metadata: {
+                    version: '1.0',
+                    timestamp: new Date().toISOString(),
+                    description: 'Instrument Neck Parameters',
+                    generator: 'Instrument Neck Geometry Generator'
+                },
+                parameters: params
+            };
+
+            const jsonString = JSON.stringify(saveData, null, 2);
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+            a.download = `instrument_params_${timestamp}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function loadParameters(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const saveData = JSON.parse(e.target.result);
+
+                    // Validate structure
+                    if (!saveData.parameters) {
+                        alert('Invalid parameters file: missing parameters object');
+                        return;
+                    }
+
+                    // Apply loaded values
+                    const params = saveData.parameters;
+                    for (const [name, value] of Object.entries(params)) {
+                        const element = document.getElementById(name);
+                        if (element) {
+                            if (element.type === 'checkbox') {
+                                element.checked = value;
+                            } else {
+                                element.value = value;
+                            }
+                        }
+                    }
+
+                    // Reset preset selector
+                    elements.presetSelect.value = '';
+
+                    hideErrors();
+                    setStatus('ready', '✅ Parameters loaded successfully');
+
+                } catch (error) {
+                    alert(`Failed to load parameters: ${error.message}`);
+                }
+            };
+            reader.readAsText(file);
+
+            // Reset file input so the same file can be loaded again
+            event.target.value = '';
+        }
+
+        // Keyboard shortcut handler
+        document.addEventListener('keydown', (e) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+                e.preventDefault();
+                if (!elements.genBtn.disabled && !state.isGenerating) {
+                    generateNeck();
+                }
+            }
         });
 
-        // Allow Enter key to trigger generation
-        document.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter' && !elements.genBtn.disabled && !state.isGenerating) {
-                runGeneration();
+        // Detect OS and update shortcut display
+        (function updateShortcutDisplay() {
+            const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+            const shortcutElement = document.getElementById('gen-btn-shortcut');
+            if (shortcutElement) {
+                shortcutElement.textContent = isMac ? '⌘ + Enter' : 'Ctrl + Enter';
+            }
+        })();
+
+        // Handle window resize to update SVG canvas dimensions
+        window.addEventListener('resize', () => {
+            if (state.svgCanvas && state.views) {
+                const containerRect = elements.preview.getBoundingClientRect();
+                state.svgCanvas.size(containerRect.width, containerRect.height);
             }
         });
 
         // Initialize on load
-        initializePython().catch(error => {
-            console.error('Fatal initialization error:', error);
-        });
+        initializePython();
     </script>
 
-    <!-- PDF Export Module -->
+    <!-- PDF Export (optional) -->
     <script type="module">
         import { jsPDF } from "https://cdn.jsdelivr.net/npm/jspdf@2.5.1/+esm";
         import { svg2pdf } from "https://cdn.jsdelivr.net/npm/svg2pdf.js@2.2.4/+esm";
 
-        document.getElementById('dl-pdf').addEventListener('click', async () => {
-            const svgElement = document.querySelector('#preview svg');
-            
+        window.downloadPDF = async function() {
+            const svgElement = document.querySelector('#preview-container svg');
+
             if (!svgElement) {
-                alert('Please generate a diagram first.');
+                alert('Please generate a template first.');
                 return;
             }
 
             try {
                 const doc = new jsPDF({
-                    orientation: 'landscape',
+                    orientation: 'portrait',
                     unit: 'mm',
                     format: 'a4'
                 });
 
-                // Extract dimensions from SVG
-                let width_mm = 200;
-                let height_mm = 100;
-                
-                if (svgElement.viewBox && svgElement.viewBox.baseVal) {
-                    width_mm = svgElement.viewBox.baseVal.width;
-                    height_mm = svgElement.viewBox.baseVal.height;
-                } else if (svgElement.getAttribute('width')) {
-                    width_mm = parseFloat(svgElement.getAttribute('width')) || 200;
-                    height_mm = parseFloat(svgElement.getAttribute('height')) || 100;
-                }
-
-                // Center on page
-                const pageWidth = doc.internal.pageSize.getWidth();
-                const pageHeight = doc.internal.pageSize.getHeight();
-                const x = (pageWidth - width_mm) / 2;
-                const y = (pageHeight - height_mm) / 2;
-
                 await svg2pdf(svgElement, doc, {
-                    x: Math.max(10, x),
-                    y: Math.max(10, y),
-                    width: width_mm,
-                    height: height_mm
+                    x: 10,
+                    y: 10,
+                    width: 190,
+                    height: 277
                 });
 
-                const length = document.getElementById('length').value;
-                const width = document.getElementById('width').value;
-                const radius = document.getElementById('radius').value;
-                
-                doc.save(`plate_${length}x${width}_r${radius}.pdf`);
-                
+                const viewNames = {
+                    'top': 'top-view',
+                    'side': 'side-view',
+                    'cross_section': 'cross-section'
+                };
+
+                // Access state from main scope
+                const currentView = window.state ? window.state.currentView : 'top';
+                doc.save(`instrument_neck_${viewNames[currentView]}.pdf`);
+
             } catch (error) {
-                console.error('PDF generation error:', error);
+                console.error('PDF error:', error);
                 alert(`PDF generation failed: ${error.message}`);
             }
-        });
+        };
     </script>
 </body>
 </html>

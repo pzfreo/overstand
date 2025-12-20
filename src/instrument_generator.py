@@ -33,8 +33,8 @@ def generate_violin_neck(params_json: str) -> str:
         params = json.loads(params_json)
 
         # Import here to ensure modules are loaded
-        from violin_parameters import validate_parameters
-        from violin_geometry import generate_multi_view_svg
+        from instrument_parameters import validate_parameters
+        from instrument_geometry import generate_multi_view_svg
 
         # Validate parameters
         is_valid, errors = validate_parameters(params)
@@ -85,7 +85,7 @@ def get_parameter_definitions() -> str:
         JSON string of parameter definitions
     """
     try:
-        from violin_parameters import get_parameters_as_json
+        from instrument_parameters import get_parameters_as_json
         return get_parameters_as_json()
     except Exception as e:
         return json.dumps({
@@ -101,7 +101,7 @@ def get_presets() -> str:
         JSON string of presets
     """
     try:
-        from violin_parameters import PRESETS
+        from instrument_parameters import PRESETS
         return json.dumps(PRESETS)
     except Exception as e:
         return json.dumps({
@@ -111,7 +111,7 @@ def get_presets() -> str:
 
 if __name__ == '__main__':
     # Test the generator
-    from violin_parameters import get_default_values
+    from instrument_parameters import get_default_values
     import json
     
     print("Testing violin neck generator...")

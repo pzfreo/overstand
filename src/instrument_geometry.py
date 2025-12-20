@@ -23,7 +23,7 @@ class ViolinNeckGeometry:
         Initialize with validated parameters.
         
         Args:
-            params: Dictionary of parameter values from violin_parameters.py
+            params: Dictionary of parameter values from instrument_parameters.py
         """
         self.params = params
         
@@ -653,7 +653,7 @@ def generate_multi_view_svg(params: Dict[str, Any]) -> dict:
 
 if __name__ == '__main__':
     # Test with default parameters
-    from violin_parameters import get_default_values
+    from instrument_parameters import get_default_values
 
     params = get_default_values()
 

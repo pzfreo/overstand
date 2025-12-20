@@ -34,16 +34,21 @@ jobs:
         run: |
           # 1. Create a clean 'public' directory for deployment
           mkdir public
-          
+
           # 2. Copy the web interface
           cp -r web/* public/
-          
-          # 3. Copy the logic file INTO the public folder (so it sits next to index.html)
+
+          # 3. Copy all Python logic files INTO the public folder
           cp src/logic.py public/logic.py
-          
-          # 4. Patch index.html to look for './logic.py' instead of '../src/logic.py'
+          cp src/instrument_parameters.py public/instrument_parameters.py
+          cp src/instrument_geometry.py public/instrument_geometry.py
+          cp src/instrument_generator.py public/instrument_generator.py
+
+          # 4. Patch sample.html to look for './logic.py' instead of '../src/logic.py'
           # We use sed to replace the string on the fly
-          sed -i 's|../src/logic.py|./logic.py|g' public/index.html
+          sed -i 's|../src/logic.py|./logic.py|g' public/sample.html
+
+          # Note: index.html already tries './' first, so no patching needed
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
