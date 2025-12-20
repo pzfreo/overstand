@@ -384,6 +384,8 @@
             display: flex;
             flex-direction: column;
             background: #fafafa;
+            max-height: calc(100vh - 200px);
+            overflow: hidden;
         }
 
         .view-controls-header {
@@ -451,9 +453,10 @@
             border: 2px dashed #d1d5db;
             border-radius: 8px;
             background: white;
-            min-height: 500px;
+            min-height: 400px;
             overflow: hidden;
             position: relative;
+            display: flex;
         }
 
         #preview-container.has-content {
@@ -1001,13 +1004,9 @@
             // Clear container
             elements.preview.innerHTML = '';
 
-            // Get container dimensions
-            const containerRect = elements.preview.getBoundingClientRect();
-
-            // Create SVG.js canvas with explicit size
+            // Create SVG.js canvas (CSS handles sizing with width/height 100%)
             state.svgCanvas = SVG()
-                .addTo('#preview-container')
-                .size(containerRect.width, containerRect.height);
+                .addTo('#preview-container');
 
             // Load the SVG content
             state.svgCanvas.svg(state.views[state.currentView]);
@@ -1206,13 +1205,7 @@
             }
         })();
 
-        // Handle window resize to update SVG canvas dimensions
-        window.addEventListener('resize', () => {
-            if (state.svgCanvas && state.views) {
-                const containerRect = elements.preview.getBoundingClientRect();
-                state.svgCanvas.size(containerRect.width, containerRect.height);
-            }
-        });
+        // Window resize is handled automatically by CSS (width/height 100%)
 
         // Initialize on load
         initializePython();
