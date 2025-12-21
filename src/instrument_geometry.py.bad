@@ -9,7 +9,11 @@ import math
 from typing import Dict, Any, Tuple
 import os
 
+<<<<<<< HEAD
 font_url = "https://github.com/google/fonts/blob/main/ofl/roboto/Roboto%5Bwdth%2Cwght%5D.ttf"
+=======
+font_url = "https://github.com/pzfreo/diagram-creator/raw/refs/heads/main/src/Roboto.ttf"
+>>>>>>> 0631fa4 (change)
 roboto = "Roboto.ttf"
 
 if not os.path.exists(roboto):
