@@ -7,18 +7,68 @@ This is where your Build123d geometry expertise goes.
 from build123d import *
 import math
 from typing import Dict, Any, Tuple
+
+import js
 import os
 
-font_url = "https://github.com/pzfreo/diagram-creator/raw/refs/heads/main/src/Roboto.ttf"
-roboto = "Roboto.ttf"
+# 1. Define the correct raw URL
+font_url = "https://raw.githubusercontent.com/pzfreo/diagram-creator/main/src/Roboto.ttf"
+font_file = "Roboto.ttf"
+font_name = "Roboto"
+MAGIC_COLOR = Color(0x123456)
 
-if not os.path.exists(roboto):
-    print(f"Downloading {roboto}...")
-    import urllib.request
-    # Download the file to the virtual filesystem
-    urllib.request.urlretrieve(font_url, roboto)
+def download_font_sync(url, filename):
+    """Downloads a binary file synchronously (blocking), avoiding async/await issues."""
+    try:
+        # Create a browser XMLHttpRequest
+        req = js.XMLHttpRequest.new()
+        req.open("GET", url, False)  # False = Synchronous
+        
+        # TRICK: Tell browser to treat data as user-defined text (preserves byte values)
+        req.overrideMimeType("text/plain; charset=x-user-defined")
+        req.send(None)
+        
+        if req.status == 200:
+            # Convert the "text" back to raw bytes
+            # We take the lower 8 bits of each character code
+            binary_data = bytes(ord(c) & 0xFF for c in req.responseText)
+            
+            with open(filename, "wb") as f:
+                f.write(binary_data)
+            print(f"✓ Downloaded {filename} successfully")
+        else:
+            print(f"✗ Failed to download. Status: {req.status}")
+            
+    except Exception as e:
+        print(f"✗ Error during download: {e}")
 
+# 2. Run the download immediately (No await needed!)
+if not os.path.exists(font_file):
+    print(f"Downloading {font_file}...")
+    download_font_sync(font_url, font_file)
 
+roboto = os.path.abspath(font_file)
+
+from OCP.TCollection import TCollection_AsciiString
+from OCP.Font import Font_FontMgr, Font_FA_Regular, Font_StrictLevel
+
+# 1. Get the absolute path
+
+# 2. Manually register with the OCP Kernel
+mgr = Font_FontMgr.GetInstance_s()
+
+# 3. Load the font from the file
+#    FIX: Pass 'font_path' as a simple Python string. Do not use TCollection_AsciiString.
+font_handle = mgr.CheckFont(font_file)
+
+# 4. Register the font with the manager
+#    This makes it available to the 3D text engine.
+#    Arguments: (Font Handle, Override_if_exists=True)
+if font_handle:
+    mgr.RegisterFont(font_handle, True)
+    print(f"✓ Successfully registered font: {font_handle.FontName().ToCString()}")
+else:
+    print("✗ Failed to load font file.")
 
 class NeckGeometry:
     """
@@ -83,6 +133,12 @@ def exporter_to_svg(exp: ExportSVG) -> str:
         if os.path.exists(temp_path):
             os.remove(temp_path)
 
+    # sort out text
+    filled_style = 'fill="black" stroke="none"'
+    svg_content = svg_content.replace('stroke="#123456"', filled_style)
+    svg_content = svg_content.replace('stroke="rgb(18,52,86)"', filled_style)    
+
+
     return svg_content
 
 
@@ -99,7 +155,7 @@ def generate_neck_svg(params: Dict[str, Any]) -> str:
     neck_length = params.get('neck_length')
     
     exporter = ExportSVG(scale=1.0)
-    exporter.add_shape(Text("Neck view",10, font=roboto))
+    exporter.add_shape(Text("Neck view",10, font=font_name))
     
     return exporter_to_svg(exporter)
     
@@ -115,8 +171,11 @@ def generate_side_view_svg(params: Dict[str, Any]) -> str:
     neck_thickness_at_seventh = params.get('neck_thickness_at_seventh')
     
     # Export to SVG
-    exporter = ExportSVG(scale=1.0)
-    exporter.add_shape(Rectangle(width=body_length,height=-rib_height))
+    exporter = ExportSVG(scale=1.0,unit=Unit.MM, line_weight=0.5)
+    exporter.add_layer("text",fill_color=(0,0,0),line_type=LineType.HIDDEN)
+    exporter.add_layer("drawing",fill_color=None, line_color=(255,0,0),line_type=LineType.CONTINUOUS)
+    exporter.add_shape(Rectangle(width=body_length,height=-rib_height),layer="drawing")
+    exporter.add_shape(Text("Side View", 10, font=font_name),layer="text")
     return exporter_to_svg(exporter)
     
 
@@ -124,24 +183,10 @@ def generate_top_view_svg(params: Dict[str, Any]) -> str:
   
 
     exporter = ExportSVG(scale=1.0)
-    exporter.add_shape(Text("Top View", 10, font=roboto))
-
-    import tempfile
-    import os
-
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.svg', delete=False) as tmp:
-        temp_path = tmp.name
-
-    try:
-        exporter.write(temp_path)
-        with open(temp_path, 'r') as f:
-            svg_content = f.read()
-    finally:
-        if os.path.exists(temp_path):
-            os.remove(temp_path)
-
-    return svg_content
-
+    text_shape = Text("Top View", 10, font=font_name)
+    exporter.add_shape(text_shape)
+    return exporter_to_svg(exporter)
+    
 
 def generate_cross_section_svg(params: Dict[str, Any]) -> str:
     """
@@ -153,23 +198,10 @@ def generate_cross_section_svg(params: Dict[str, Any]) -> str:
         SVG string of cross-section view
     """
     exporter = ExportSVG(scale=1.0)
-    exporter.add_shape(Text("Cross section",10))
-
-    import tempfile
-    import os
-
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.svg', delete=False) as tmp:
-        temp_path = tmp.name
-
-    try:
-        exporter.write(temp_path)
-        with open(temp_path, 'r') as f:
-            svg_content = f.read()
-    finally:
-        if os.path.exists(temp_path):
-            os.remove(temp_path)
-
-    return svg_content
+    exporter.add_shape(Text("Cross section",10,font=font_name))
+    return exporter_to_svg(exporter)
+    
+    
 
 
 def generate_multi_view_svg(params: Dict[str, Any]) -> dict:
@@ -202,7 +234,7 @@ if __name__ == '__main__':
 
     print("Generating test template...")
     try:
-        svg = generate_neck_svg(params)
+        svg = generate_side_view_svg(params)
         print(f"✓ Generated SVG ({len(svg)} bytes)")
 
         # Save test output
