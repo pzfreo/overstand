@@ -339,6 +339,140 @@ def create_horizontal_dimension(feature_line, label, offset_y=-10,
     return shapes
 
 
+def create_angle_dimension(line1, line2, label=None, arc_radius=15,
+                          font_size=8*PTS_MM, line_extension=5):
+    """
+    Create angle dimension shapes from two lines that meet at a junction point.
+
+    Args:
+        line1: First Edge (line)
+        line2: Second Edge (line)
+        label: Text label for the angle (e.g., "90.0°"). If None, angle is calculated.
+        arc_radius: Radius of the arc showing the angle
+        font_size: Font size for dimension text
+        line_extension: How far to extend the lines beyond their endpoints
+
+    Returns:
+        List of (shape, layer) tuples to add to exporter
+    """
+    shapes = []
+
+    # Get endpoints of both lines
+    line1_p1 = (line1.position_at(0).X, line1.position_at(0).Y)
+    line1_p2 = (line1.position_at(1).X, line1.position_at(1).Y)
+    line2_p1 = (line2.position_at(0).X, line2.position_at(0).Y)
+    line2_p2 = (line2.position_at(1).X, line2.position_at(1).Y)
+
+    # Find the junction point (the common point between the two lines)
+    # Check which endpoints are closest to determine the junction
+    def dist(p1, p2):
+        return math.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)
+
+    # Find the junction point (the point that appears in both lines)
+    tolerance = 0.01
+    if dist(line1_p1, line2_p1) < tolerance:
+        junction = line1_p1
+        dir1_point = line1_p2
+        dir2_point = line2_p2
+    elif dist(line1_p1, line2_p2) < tolerance:
+        junction = line1_p1
+        dir1_point = line1_p2
+        dir2_point = line2_p1
+    elif dist(line1_p2, line2_p1) < tolerance:
+        junction = line1_p2
+        dir1_point = line1_p1
+        dir2_point = line2_p2
+    elif dist(line1_p2, line2_p2) < tolerance:
+        junction = line1_p2
+        dir1_point = line1_p1
+        dir2_point = line2_p1
+    else:
+        # Lines don't share a common endpoint, try to find intersection
+        # For now, use line1_p2 as default
+        junction = line1_p2
+        dir1_point = line1_p1
+        dir2_point = line2_p1
+
+    jx, jy = junction
+
+    # Calculate angles of both lines from the junction
+    angle1 = math.atan2(dir1_point[1] - jy, dir1_point[0] - jx)
+    angle2 = math.atan2(dir2_point[1] - jy, dir2_point[0] - jx)
+
+    # Calculate the angle between them (in radians)
+    angle_diff = angle2 - angle1
+
+    # Normalize to 0-360 degrees
+    angle_deg = (angle_diff * 180 / math.pi) % 360
+    if angle_deg > 180:
+        angle_deg = 360 - angle_deg
+
+    # If no label provided, create one from the calculated angle
+    if label is None:
+        label = f"{angle_deg:.1f}°"
+
+    # Extend the lines slightly beyond their endpoints for clarity
+    if line_extension > 0:
+        # Extend line 1
+        dx1 = dir1_point[0] - jx
+        dy1 = dir1_point[1] - jy
+        len1 = math.sqrt(dx1**2 + dy1**2)
+        if len1 > 0:
+            ext1_point = (dir1_point[0] + (dx1/len1)*line_extension,
+                         dir1_point[1] + (dy1/len1)*line_extension)
+            ext_line1 = Edge.make_line(junction, ext1_point)
+            shapes.append((ext_line1, "extensions"))
+
+        # Extend line 2
+        dx2 = dir2_point[0] - jx
+        dy2 = dir2_point[1] - jy
+        len2 = math.sqrt(dx2**2 + dy2**2)
+        if len2 > 0:
+            ext2_point = (dir2_point[0] + (dx2/len2)*line_extension,
+                         dir2_point[1] + (dy2/len2)*line_extension)
+            ext_line2 = Edge.make_line(junction, ext2_point)
+            shapes.append((ext_line2, "extensions"))
+
+    # Draw an arc to show the angle
+    # Determine start and end angles for the arc
+    start_angle = min(angle1, angle2)
+    end_angle = max(angle1, angle2)
+
+    # If the angle is > 180, we need to swap to get the smaller arc
+    if (end_angle - start_angle) > math.pi:
+        start_angle, end_angle = end_angle, start_angle + 2*math.pi
+
+    # Create arc using Edge.make_three_point_arc or by approximating with line segments
+    # Build123d can create arcs, but we'll approximate with line segments for simplicity
+    num_segments = 12
+    arc_points = []
+    for i in range(num_segments + 1):
+        t = i / num_segments
+        angle = start_angle + t * (end_angle - start_angle)
+        px = jx + arc_radius * math.cos(angle)
+        py = jy + arc_radius * math.sin(angle)
+        arc_points.append((px, py))
+
+    # Create arc as a series of line segments
+    for i in range(len(arc_points) - 1):
+        arc_segment = Edge.make_line(arc_points[i], arc_points[i+1])
+        shapes.append((arc_segment, "dimensions"))
+
+    # Position text near the middle of the arc
+    mid_angle = (start_angle + end_angle) / 2
+    text_radius = arc_radius + font_size * 1.5
+    text_x = jx + text_radius * math.cos(mid_angle)
+    text_y = jy + text_radius * math.sin(mid_angle)
+
+    text = Text(label, font_size, font=font_name)
+    # Center the text approximately (rough centering based on typical character width)
+    text_width_approx = len(label) * font_size * 0.6
+    text = text.move(Location((text_x - text_width_approx/2, text_y - font_size/2)))
+    shapes.append((text, "extensions"))
+
+    return shapes
+
+
 def generate_side_view_svg(params: Dict[str, Any]) -> str:
     vsl = params.get('vsl')
     neck_stop = params.get('neck_stop')
@@ -351,6 +485,13 @@ def generate_side_view_svg(params: Dict[str, Any]) -> str:
     bridge_height = params.get('bridge_height')
     belly_edge_thickness = params.get('belly_edge_thickness', 3.5)  # Default to 3.5mm if not provided
     body_width = params.get('body_width')
+    overstand = params.get('overstand', 0)
+    fb_thickness_at_nut = params.get('fb_thickness_at_nut', 5.0)
+    string_height_nut = params.get('string_height_nut', 0.5)
+
+    # Calculate neck angle
+    derived = calculate_derived_values(params)
+    neck_angle_deg = derived.get('Neck Angle', 0)
 
     # Export to SVG
     exporter = ExportSVG(scale=1.0,unit=Unit.MM, line_weight=0.5)
@@ -407,8 +548,72 @@ def generate_side_view_svg(params: Dict[str, Any]) -> str:
     arrowhead = arrowhead.move(Location((body_stop,arching_height-(arrow_size/2))))
     exporter.add_shape(arrowhead, layer="arrows")
 
+    # Add neck angle reference lines
+    # Line 1: Vertical from (0, 0) to (0, overstand)
+    neck_vertical_line = Edge.make_line((0, 0), (0, overstand))
+    exporter.add_shape(neck_vertical_line, layer="drawing")
+
+    # Line 2: From (0, overstand) at neck_angle, going down and left for length neck_stop
+    # Convert neck angle from degrees to radians
+    neck_angle_rad = neck_angle_deg * math.pi / 180
+
+    # Calculate endpoint: going down and to the left at neck_angle from vertical
+    neck_end_x = 0 - neck_stop
+    neck_end_y = overstand - neck_stop * math.cos(neck_angle_rad)
+    neck_angled_line = Edge.make_line((0, overstand), (neck_end_x, neck_end_y))
+    exporter.add_shape(neck_angled_line, layer="drawing")
+
+    # Add nut as a quarter circle at the end of the neck
+    # The quarter circle is centered at the nut position and extends perpendicular to the neck surface
+    nut_radius = fb_thickness_at_nut + string_height_nut
+
+    # Calculate the angle of the neck line (from horizontal)
+    neck_line_angle = math.atan2(neck_end_y - overstand, neck_end_x - 0)
+
+    # The quarter circle extends perpendicular to the neck surface, away from body and above neck
+    # Rotated 180 degrees to extend away from body (left) and above the neck
+    start_angle = neck_line_angle - math.pi/2  # Perpendicular outward (rotated 180°)
+    end_angle = start_angle + math.pi/2  # Quarter circle (90 degrees)
+
+    # Create the quarter circle using line segments
+    num_segments = 12
+    nut_arc_points = []
+    for i in range(num_segments + 1):
+        t = i / num_segments
+        angle = start_angle + t * (end_angle - start_angle)
+        px = neck_end_x + nut_radius * math.cos(angle)
+        py = neck_end_y + nut_radius * math.sin(angle)
+        nut_arc_points.append((px, py))
+
+    # Create arc as a series of line segments on schematic layer
+    # Draw every other segment to create a dashed effect
+    for i in range(len(nut_arc_points) - 1):
+        if i % 2 == 0:  # Only draw even-indexed segments for dashed effect
+            nut_segment = Edge.make_line(nut_arc_points[i], nut_arc_points[i+1])
+            exporter.add_shape(nut_segment, layer="schematic")
+
+    # Add radial lines from center to arc endpoints to complete the pie slice
+    radius_line_1 = Edge.make_line((neck_end_x, neck_end_y), nut_arc_points[0])
+    exporter.add_shape(radius_line_1, layer="schematic")
+    radius_line_2 = Edge.make_line((neck_end_x, neck_end_y), nut_arc_points[-1])
+    exporter.add_shape(radius_line_2, layer="schematic")
+
+    # Add angle annotation between the two lines
+    for shape, layer in create_angle_dimension(neck_vertical_line, neck_angled_line,
+                                              label=f"{neck_angle_deg:.1f}°",
+                                              arc_radius=12, line_extension=0):
+        exporter.add_shape(shape, layer=layer)
+
     # Add dimension annotations using helper functions
     dim_font_size = 8*PTS_MM
+
+    # Dimension: horizontal distance from nut to x=0 (neck projection)
+    # The nut is at (neck_end_x, neck_end_y), we want horizontal distance to (0, neck_end_y)
+    nut_x_distance = abs(neck_end_x)  # This equals neck_stop
+    nut_feature_line = Edge.make_line((neck_end_x, neck_end_y), (0, neck_end_y))
+    for shape, layer in create_horizontal_dimension(nut_feature_line, f"{nut_x_distance:.1f}",
+                                                     offset_y=-10, extension_length=3, font_size=dim_font_size):
+        exporter.add_shape(shape, layer=layer)
 
     # Dimension: arching_height (vertical, from top of belly to arch peak - includes belly thickness)
     arch_feature_line = Edge.make_line((body_stop, 0), (body_stop, arching_height))
