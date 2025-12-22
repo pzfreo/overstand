@@ -711,8 +711,7 @@
                         "build123d",
                         "sqlite3",
                         "svgpathtools",
-                        "numpy",
-                        "matplotlib"
+                        "numpy"
                     ])
                     
                     print("✅ Packages installed")
@@ -1218,14 +1217,20 @@
         import { svg2pdf } from "https://cdn.jsdelivr.net/npm/svg2pdf.js@2.2.4/+esm";
 
         window.downloadPDF = async function() {
-            const svgElement = document.querySelector('#preview-container svg');
-
-            if (!svgElement) {
+            if (!window.state || !window.state.views || !window.state.views[window.state.currentView]) {
                 alert('Please generate a template first.');
                 return;
             }
 
             try {
+                // Use the raw SVG content from state, not the DOM element
+                const svgContent = window.state.views[window.state.currentView];
+
+                // Create a temporary SVG element from the raw content
+                const parser = new DOMParser();
+                const svgDoc = parser.parseFromString(svgContent, 'image/svg+xml');
+                const svgElement = svgDoc.documentElement;
+
                 const doc = new jsPDF({
                     orientation: 'portrait',
                     unit: 'mm',
@@ -1245,8 +1250,7 @@
                     'cross_section': 'cross-section'
                 };
 
-                // Access state from main scope
-                const currentView = window.state ? window.state.currentView : 'top';
+                const currentView = window.state.currentView;
                 doc.save(`instrument_neck_${viewNames[currentView]}.pdf`);
 
             } catch (error) {
