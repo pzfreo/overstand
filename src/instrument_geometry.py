@@ -15,7 +15,6 @@ import os
 font_url = "https://raw.githubusercontent.com/pzfreo/diagram-creator/main/src/Roboto.ttf"
 font_file = "Roboto.ttf"
 font_name = "Roboto"
-MAGIC_COLOR = Color(0x123456)
 
 def download_font_sync(url, filename):
     """Downloads a binary file synchronously (blocking), avoiding async/await issues."""
