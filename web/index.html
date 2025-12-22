@@ -598,11 +598,11 @@
             <div class="preview-panel">
                 <div class="view-controls-header">
                     <div id="view-tabs" class="view-tabs">
-                        <button class="view-tab active" data-view="top" onclick="switchView('top')">
-                            Top View
-                        </button>
-                        <button class="view-tab" data-view="side" onclick="switchView('side')">
+                        <button class="view-tab active" data-view="side" onclick="switchView('side')">
                             Side View
+                        </button>
+                        <button class="view-tab" data-view="top" onclick="switchView('top')">
+                            Top View
                         </button>
                         <button class="view-tab" data-view="cross_section" onclick="switchView('cross_section')">
                             Cross-Section
@@ -646,8 +646,9 @@
             pyodide: null,
             isGenerating: false,
             views: null,              // Stores all 3 SVG views
-            currentView: 'top',       // Currently displayed view
+            currentView: 'side',      // Currently displayed view (default to side)
             svgCanvas: null,          // SVG.js canvas for zoom/pan
+            initialViewBox: null,     // Initial viewBox for zoom reset
             parameterDefinitions: null,
             presets: null
         };
@@ -1011,22 +1012,37 @@
             // Load the SVG content
             state.svgCanvas.svg(state.views[state.currentView]);
 
-            // Get the actual content and fit it to the viewport
-            const content = state.svgCanvas.children()[0];
-            if (content) {
-                const bbox = content.bbox();
+            // Get the bounding box of all content before enabling pan/zoom
+            // We need to do this first to get accurate bbox
+            const bbox = state.svgCanvas.bbox();
 
-                // Set viewBox to fit content with some padding
-                const padding = 20;
-                state.svgCanvas.viewbox(
-                    bbox.x - padding,
-                    bbox.y - padding,
-                    bbox.width + padding * 2,
-                    bbox.height + padding * 2
-                );
-            }
+            // Get container dimensions
+            const containerRect = elements.preview.getBoundingClientRect();
 
-            // Enable pan/zoom
+            // Calculate padding (5% of smallest dimension)
+            const paddingPercent = 0.05;
+            const minDim = Math.min(containerRect.width, containerRect.height);
+            const padding = minDim * paddingPercent;
+
+            // Set viewBox to fit content with padding
+            const viewBoxConfig = {
+                x: bbox.x - padding,
+                y: bbox.y - padding,
+                width: bbox.width + padding * 2,
+                height: bbox.height + padding * 2
+            };
+
+            state.svgCanvas.viewbox(
+                viewBoxConfig.x,
+                viewBoxConfig.y,
+                viewBoxConfig.width,
+                viewBoxConfig.height
+            );
+
+            // Store the initial viewBox for reset
+            state.initialViewBox = viewBoxConfig;
+
+            // Enable pan/zoom after setting the viewBox
             state.svgCanvas.panZoom({
                 zoomMin: 0.1,
                 zoomMax: 20,
@@ -1066,19 +1082,14 @@
         }
 
         function zoomReset() {
-            if (state.svgCanvas) {
-                // Re-fit the content to viewport
-                const content = state.svgCanvas.children()[0];
-                if (content) {
-                    const bbox = content.bbox();
-                    const padding = 20;
-                    state.svgCanvas.viewbox(
-                        bbox.x - padding,
-                        bbox.y - padding,
-                        bbox.width + padding * 2,
-                        bbox.height + padding * 2
-                    );
-                }
+            if (state.svgCanvas && state.initialViewBox) {
+                // Reset to the initial fitted viewBox (this automatically fits to viewport)
+                state.svgCanvas.viewbox(
+                    state.initialViewBox.x,
+                    state.initialViewBox.y,
+                    state.initialViewBox.width,
+                    state.initialViewBox.height
+                );
             }
         }
 
@@ -1089,8 +1100,8 @@
             }
 
             const viewNames = {
-                'top': 'top-view',
                 'side': 'side-view',
+                'top': 'top-view',
                 'cross_section': 'cross-section'
             };
 

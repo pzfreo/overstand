@@ -307,7 +307,7 @@ def generate_side_view_svg(params: Dict[str, Any]) -> str:
     neck_thickness_at_first = params.get('neck_thickness_at_first')
     neck_thickness_at_seventh = params.get('neck_thickness_at_seventh')
     bridge_height = params.get('bridge_height')
-    belly_edge_thickness = params.get('belly_edge_thickness')
+    belly_edge_thickness = params.get('belly_edge_thickness', 3.5)  # Default to 3.5mm if not provided
 
     # Export to SVG
     exporter = ExportSVG(scale=1.0,unit=Unit.MM, line_weight=0.5)
