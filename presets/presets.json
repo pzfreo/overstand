@@ -1,6 +1,7 @@
 {
   "presets": [
     "basic_violin.json",
-    "modern_viola.json"
+    "modern_viola.json",
+    "test_minimal.json"
   ]
 }

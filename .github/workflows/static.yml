@@ -43,6 +43,7 @@ jobs:
           cp src/instrument_parameters.py public/instrument_parameters.py
           cp src/instrument_geometry.py public/instrument_geometry.py
           cp src/instrument_generator.py public/instrument_generator.py
+          cp src/dimension_utils.py public/dimension_utils.py
 
           # 4. Copy presets directory for instrument configurations
           cp -r presets public/

@@ -1,0 +1,28 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "timestamp": "2025-01-15T00:00:00.000Z",
+    "description": "Minimal test preset with basic valid parameters",
+    "generator": "Instrument Neck Geometry Generator"
+  },
+  "parameters": {
+    "instrument_name": "Test Minimal",
+    "vsl": 300.0,
+    "body_stop": 180.0,
+    "neck_stop": 120.0,
+    "body_length": 340.0,
+    "rib_height": 28.0,
+    "fingerboard_length": 250.0,
+    "arching_height": 14.0,
+    "belly_edge_thickness": 3.0,
+    "bridge_height": 30.0,
+    "overstand": 10.0,
+    "fb_thickness_at_nut": 4.5,
+    "fb_thickness_at_join": 6.5,
+    "string_height_nut": 0.5,
+    "string_height_eof": 3.5,
+    "fingerboard_width_at_nut": 22.0,
+    "fingerboard_width_at_end": 28.0,
+    "show_measurements": true
+  }
+}
