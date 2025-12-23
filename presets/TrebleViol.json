@@ -1,0 +1,28 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "timestamp": "2025-12-23T10:52:01.800Z",
+    "description": "Instrument Neck Parameters",
+    "generator": "Instrument Neck Geometry Generator"
+  },
+  "parameters": {
+    "instrument_name": "Treble Viol 385",
+    "vsl": 385,
+    "body_stop": 205,
+    "neck_stop": 180,
+    "body_length": 385,
+    "rib_height": 90,
+    "fingerboard_length": 256,
+    "arching_height": 16,
+    "belly_edge_thickness": 3,
+    "bridge_height": 50,
+    "overstand": 12,
+    "fb_thickness_at_nut": 10,
+    "fb_thickness_at_join": 15,
+    "string_height_nut": 0.6,
+    "string_height_eof": 4,
+    "fingerboard_width_at_nut": null,
+    "fingerboard_width_at_end": null,
+    "show_measurements": true
+  }
+}
