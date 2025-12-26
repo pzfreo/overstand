@@ -149,6 +149,8 @@ h1 {
     color: #6b7280;
     cursor: pointer;
     z-index: 11;
+    opacity: 0;
+    transition: opacity 0.3s ease;
 }
 
 .mobile-close-btn:hover {
@@ -168,10 +170,12 @@ h1 {
     z-index: 999;
     opacity: 0;
     transition: opacity 0.3s ease;
+    pointer-events: none;
 }
 
 .sidebar-overlay.active {
     opacity: 1;
+    pointer-events: auto;
 }
 
 @media (max-width: 1024px) {
@@ -194,6 +198,10 @@ h1 {
         display: block;
     }
 
+    .controls-panel.mobile-open .mobile-close-btn {
+        opacity: 1;
+    }
+
     .controls-panel {
         position: fixed;
         top: 0;
@@ -202,13 +210,15 @@ h1 {
         width: 85%;
         max-width: 380px;
         transform: translateX(-100%);
-        transition: transform 0.3s ease;
+        transition: transform 0.3s ease, visibility 0.3s ease;
         z-index: 1000;
         box-shadow: 2px 0 12px rgba(0, 0, 0, 0.2);
+        visibility: hidden;
     }
 
     .controls-panel.mobile-open {
         transform: translateX(0);
+        visibility: visible;
     }
 
     .sidebar-overlay {

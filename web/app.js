@@ -825,11 +825,17 @@ document.addEventListener('keydown', (e) => {
 // Window resize is handled automatically by CSS (width/height 100%)
 
 // ==================== Mobile Menu Controls ====================
-(function initMobileMenu() {
+document.addEventListener('DOMContentLoaded', function() {
     const mobileMenuBtn = document.getElementById('mobile-menu-btn');
     const mobileCloseBtn = document.getElementById('mobile-close-btn');
     const controlsPanel = document.getElementById('controls-panel');
     const sidebarOverlay = document.getElementById('sidebar-overlay');
+
+    // Verify elements exist before attaching listeners
+    if (!mobileMenuBtn || !mobileCloseBtn || !controlsPanel || !sidebarOverlay) {
+        console.warn('Mobile menu elements not found');
+        return;
+    }
 
     function openSidebar() {
         controlsPanel.classList.add('mobile-open');
@@ -858,7 +864,7 @@ document.addEventListener('keydown', (e) => {
             closeSidebar();
         }
     });
-})();
+});
 
 // Initialize on load
 initializePython();
