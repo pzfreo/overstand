@@ -338,35 +338,39 @@ class ExportSVG:
 
         # Add shapes grouped by layer
         for shape, layer_name in self.shapes:
+            # Check if layer is invisible (skip all shapes on invisible layers)
+            if layer_name in self.layers:
+                layer = self.layers[layer_name]
+                fill_color = layer.get('fill_color')
+                line_color = layer.get('line_color')
+
+                # Skip entire shape if layer is invisible (both colors are None)
+                if fill_color is None and line_color is None:
+                    continue
+
             if isinstance(shape, (Edge, Rectangle, Spline, Polygon)):
                 style = self._get_stroke_style(layer_name)
-                if 'stroke="none"' not in style:  # Skip invisible layers
-                    # Check if shape should be filled (Polygon with filled=True)
-                    if isinstance(shape, Polygon) and shape.filled:
-                        # Get fill color from layer
-                        if layer_name in self.layers:
-                            fill_color = self.layers[layer_name].get('fill_color')
-                            if fill_color:
-                                fill = f'rgb({fill_color[0]},{fill_color[1]},{fill_color[2]})'
-                            else:
-                                fill = 'black'
+                # Check if shape should be filled (Polygon with filled=True)
+                if isinstance(shape, Polygon) and shape.filled:
+                    # Get fill color from layer
+                    if layer_name in self.layers:
+                        layer_fill_color = self.layers[layer_name].get('fill_color')
+                        if layer_fill_color:
+                            fill = f'rgb({layer_fill_color[0]},{layer_fill_color[1]},{layer_fill_color[2]})'
                         else:
                             fill = 'black'
-                        style = style.replace('fill="none"', f'fill="{fill}"')
-                    svg_parts.append(f'<path d="{shape.to_svg_path()}" {style}/>')
+                    else:
+                        fill = 'black'
+                    style = style.replace('fill="none"', f'fill="{fill}"')
+                svg_parts.append(f'<path d="{shape.to_svg_path()}" {style}/>')
 
             elif isinstance(shape, Text):
-                # Check if layer is invisible
+                # Render text with layer's color
                 if layer_name in self.layers:
                     layer = self.layers[layer_name]
                     fill_color = layer.get('fill_color')
                     line_color = layer.get('line_color')
-
-                    # Skip if layer is invisible (both colors are None)
-                    if fill_color is None and line_color is None:
-                        continue
-
-                    # Render text with layer's fill color (or line_color if fill is None)
+                    # Use fill_color if available, otherwise line_color
                     text_color = fill_color if fill_color else line_color
                     svg_parts.append(shape.to_svg(text_color, y_flipped=True))
                 else:
