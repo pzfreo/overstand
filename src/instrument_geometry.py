@@ -161,9 +161,9 @@ def calculate_derived_values(params: Dict[str, Any]) -> Dict[str, Any]:
     string_length = math.sqrt((bridge_top_x - nut_top_x)**2 + (bridge_top_y - nut_top_y)**2)
     derived['String Length'] = f"{round(string_length, 1)} mm"
 
-    # Add nut height if rib reference is enabled
+    # Add nut position relative to ribs if rib reference is enabled
     if show_rib_reference:
-        derived['Nut Height'] = f"{round(nut_top_y, 1)} mm"
+        derived['Nut Relative to Ribs'] = f"{round(nut_top_y, 1)} mm"
 
     return derived
     
