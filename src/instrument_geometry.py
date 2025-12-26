@@ -570,6 +570,7 @@ def generate_side_view_svg(params: Dict[str, Any]) -> str:
     instrument_name = params.get('instrument_name', 'Instrument')
     generator_url = params.get('_generator_url', 'https://github.com/pzfreo/diagram-creator')
     show_measurements = params.get('show_measurements', True)
+    show_rib_reference = params.get('show_rib_reference', True)
 
     # Calculate neck angle precisely (without rounding) for accurate geometry
     string_height_at_join = (string_height_eof - string_height_nut) * (neck_stop / fingerboard_length) + string_height_nut
@@ -590,6 +591,10 @@ def generate_side_view_svg(params: Dict[str, Any]) -> str:
     exporter.add_layer("text",fill_color=(0,0,255),line_type=LineType.HIDDEN)
     exporter.add_layer("drawing",fill_color=None, line_color=(0,0,0),line_type=LineType.CONTINUOUS)
     exporter.add_layer("schematic",fill_color=None, line_color=(0,0,0),line_type=LineType.DASHED)
+
+    # Reference layer - dotted line, invisible if show_rib_reference is False
+    ref_color = (0,0,0) if show_rib_reference else None
+    exporter.add_layer("reference",fill_color=None, line_color=ref_color,line_type=LineType.HIDDEN)
 
     # Dimension layers - invisible if show_measurements is False
     dim_color = (255,0,0) if show_measurements else None
@@ -736,10 +741,10 @@ def generate_side_view_svg(params: Dict[str, Any]) -> str:
     nut_top_y = neck_end_y + nut_radius * math.sin(neck_line_angle - math.pi/2)
 
     # Add horizontal reference line from top of ribs (0,0) extending 20mm beyond nut
-    # This is a dashed schematic line (dashing handled by SVG layer style)
+    # This is a dotted reference line (controlled by show_rib_reference parameter)
     reference_line_end_x = nut_top_x - 20
     reference_line = Edge.make_line((0, 0), (reference_line_end_x, 0))
-    exporter.add_shape(reference_line, layer="schematic")
+    exporter.add_shape(reference_line, layer="reference")
 
     # Top of bridge: at (body_stop, arching_height + bridge_height)
     bridge_top_x = body_stop
@@ -749,14 +754,15 @@ def generate_side_view_svg(params: Dict[str, Any]) -> str:
     string_line = Edge.make_line((nut_top_x, nut_top_y), (bridge_top_x, bridge_top_y))
     exporter.add_shape(string_line, layer="drawing")
 
-    
+
     # Dimension: vertical distance from ribs (y=0) to top of nut
-    # Position this dimension at the end of the reference line
-    rib_to_nut_feature_line = Edge.make_line((reference_line_end_x, 0), (reference_line_end_x, nut_top_y))
-    for shape, layer in create_vertical_dimension(rib_to_nut_feature_line,
-                                                   f"{nut_top_y:.1f}",
-                                                   offset_x=-8, font_size=dim_font_size):
-        exporter.add_shape(shape, layer=layer)
+    # Only show if both measurements and rib reference are enabled
+    if show_measurements and show_rib_reference:
+        rib_to_nut_feature_line = Edge.make_line((reference_line_end_x, 0), (reference_line_end_x, nut_top_y))
+        for shape, layer in create_vertical_dimension(rib_to_nut_feature_line,
+                                                       f"{nut_top_y:.1f}",
+                                                       offset_x=-8, font_size=dim_font_size):
+            exporter.add_shape(shape, layer=layer)
 
     # Calculate string length
     string_length = math.sqrt((bridge_top_x - nut_top_x)**2 + (bridge_top_y - nut_top_y)**2)

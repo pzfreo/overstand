@@ -405,7 +405,15 @@ INSTRUMENT_PARAMETERS = {
         description='Display dimension annotations',
         category='Display Options'
     ),
-    
+
+    'show_rib_reference': BooleanParameter(
+        name='show_rib_reference',
+        label='Show Rib Reference Line',
+        default=True,
+        description='Display dotted reference line from rib top to nut position',
+        category='Display Options'
+    ),
+
 }
 
 

@@ -105,7 +105,7 @@ async function initializePython() {
         setStatus('loading', 'Installing package manager...');
         await state.pyodide.loadPackage('micropip');
 
-        setStatus('loading', 'Installing CAD libraries (this may take 1-2 minutes)...');
+        setStatus('loading', 'Installing Python libraries...');
         await state.pyodide.runPythonAsync(`
             import micropip
 
