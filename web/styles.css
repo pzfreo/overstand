@@ -169,13 +169,14 @@ h1 {
     background: rgba(0, 0, 0, 0.5);
     z-index: 999;
     opacity: 0;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.3s ease, left 0.3s ease;
     pointer-events: none;
 }
 
 .sidebar-overlay.active {
     opacity: 1;
     pointer-events: auto;
+    left: 85%;  /* Only cover area to the right of sidebar */
 }
 
 @media (max-width: 1024px) {
