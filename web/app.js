@@ -445,6 +445,17 @@ async function generateNeck() {
 
     setStatus('generating', '⚙️ Generating neck templates (all views)...');
 
+    // Close mobile sidebar when generating (so user can see the preview)
+    if (window.innerWidth <= 1024) {
+        const controlsPanel = document.getElementById('controls-panel');
+        const sidebarOverlay = document.getElementById('sidebar-overlay');
+        if (controlsPanel) {
+            controlsPanel.classList.remove('mobile-open');
+            sidebarOverlay.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+    }
+
     try {
         const params = collectParameters();
         // Add current URL for footer
@@ -812,6 +823,42 @@ document.addEventListener('keydown', (e) => {
 })();
 
 // Window resize is handled automatically by CSS (width/height 100%)
+
+// ==================== Mobile Menu Controls ====================
+(function initMobileMenu() {
+    const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+    const mobileCloseBtn = document.getElementById('mobile-close-btn');
+    const controlsPanel = document.getElementById('controls-panel');
+    const sidebarOverlay = document.getElementById('sidebar-overlay');
+
+    function openSidebar() {
+        controlsPanel.classList.add('mobile-open');
+        sidebarOverlay.classList.add('active');
+        document.body.style.overflow = 'hidden'; // Prevent background scrolling
+    }
+
+    function closeSidebar() {
+        controlsPanel.classList.remove('mobile-open');
+        sidebarOverlay.classList.remove('active');
+        document.body.style.overflow = ''; // Restore scrolling
+    }
+
+    // Open sidebar when hamburger is clicked
+    mobileMenuBtn.addEventListener('click', openSidebar);
+
+    // Close sidebar when close button is clicked
+    mobileCloseBtn.addEventListener('click', closeSidebar);
+
+    // Close sidebar when overlay is clicked
+    sidebarOverlay.addEventListener('click', closeSidebar);
+
+    // Close sidebar on escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && controlsPanel.classList.contains('mobile-open')) {
+            closeSidebar();
+        }
+    });
+})();
 
 // Initialize on load
 initializePython();

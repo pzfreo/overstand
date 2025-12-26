@@ -18,6 +18,16 @@
 </head>
 
 <body>
+    <!-- Mobile hamburger menu button -->
+    <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Open menu">
+        <span></span>
+        <span></span>
+        <span></span>
+    </button>
+
+    <!-- Mobile sidebar overlay -->
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
     <div class="app-container">
         <header>
             <h1>🎻 Instrument Neck Geometry Generator</h1>
@@ -31,7 +41,8 @@
         </div>
 
         <div class="main-container">
-            <div class="controls-panel">
+            <div class="controls-panel" id="controls-panel">
+                <button class="mobile-close-btn" id="mobile-close-btn">✕ Close</button>
                 <div class="sticky-generate-section">
                     <button class="generate-btn" id="gen-btn" disabled onclick="generateNeck()">
                         <span>Generate Template</span>
