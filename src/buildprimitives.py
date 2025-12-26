@@ -53,6 +53,102 @@ class Edge:
         return f"M {self.p1[0]},{self.p1[1]} L {self.p2[0]},{self.p2[1]}"
 
 
+class Rectangle:
+    """Represents a rectangle (centered by default)"""
+
+    def __init__(self, width: float, height: float):
+        self.width = width
+        self.height = height
+        self.x = 0  # Center position
+        self.y = 0
+
+    def move(self, location: 'Location') -> 'Rectangle':
+        """Move rectangle to a location (center point)"""
+        new_rect = Rectangle(self.width, self.height)
+        new_rect.x = location.x
+        new_rect.y = location.y
+        return new_rect
+
+    def to_svg_path(self) -> str:
+        """Convert rectangle to SVG path data"""
+        # Rectangle is centered at (x, y)
+        x1 = self.x - self.width / 2
+        y1 = self.y - self.height / 2
+        x2 = self.x + self.width / 2
+        y2 = self.y + self.height / 2
+        return f"M {x1},{y1} L {x2},{y1} L {x2},{y2} L {x1},{y2} Z"
+
+
+class Spline:
+    """Represents a smooth curve through points"""
+
+    def __init__(self, *points: Tuple[float, float]):
+        self.points = points
+
+    def to_svg_path(self) -> str:
+        """Convert spline to SVG path using quadratic bezier curves"""
+        if len(self.points) < 2:
+            return ""
+
+        # Start at first point
+        path = f"M {self.points[0][0]},{self.points[0][1]}"
+
+        # For a simple smooth curve, use quadratic bezier through control points
+        if len(self.points) == 2:
+            # Just a line
+            path += f" L {self.points[1][0]},{self.points[1][1]}"
+        elif len(self.points) == 3:
+            # Perfect for quadratic bezier: start, control, end
+            path += f" Q {self.points[1][0]},{self.points[1][1]} {self.points[2][0]},{self.points[2][1]}"
+        else:
+            # Multiple points - use quadratic bezier segments
+            for i in range(1, len(self.points) - 1):
+                path += f" Q {self.points[i][0]},{self.points[i][1]} {self.points[i+1][0]},{self.points[i+1][1]}"
+
+        return path
+
+
+class Polygon:
+    """Represents a closed polygon"""
+
+    def __init__(self, *vertices: Tuple[float, float]):
+        self.vertices = vertices
+        self.x = 0
+        self.y = 0
+        self.filled = False
+
+    def move(self, location: 'Location') -> 'Polygon':
+        """Move polygon to a location"""
+        new_poly = Polygon(*self.vertices)
+        new_poly.x = location.x
+        new_poly.y = location.y
+        new_poly.filled = self.filled
+        return new_poly
+
+    def to_svg_path(self) -> str:
+        """Convert polygon to SVG path data"""
+        if len(self.vertices) < 3:
+            return ""
+
+        # Apply offset
+        path = f"M {self.vertices[0][0] + self.x},{self.vertices[0][1] + self.y}"
+        for v in self.vertices[1:]:
+            path += f" L {v[0] + self.x},{v[1] + self.y}"
+        path += " Z"  # Close path
+        return path
+
+
+def make_face(shape):
+    """Convert a shape to a filled face"""
+    if isinstance(shape, Polygon):
+        new_shape = Polygon(*shape.vertices)
+        new_shape.x = shape.x
+        new_shape.y = shape.y
+        new_shape.filled = True
+        return new_shape
+    return shape
+
+
 class Text:
     """Represents text with position and rotation"""
 
@@ -174,6 +270,24 @@ class ExportSVG:
                 max_x = max(max_x, shape.p1[0], shape.p2[0])
                 min_y = min(min_y, shape.p1[1], shape.p2[1])
                 max_y = max(max_y, shape.p1[1], shape.p2[1])
+            elif isinstance(shape, Rectangle):
+                x1 = shape.x - shape.width / 2
+                x2 = shape.x + shape.width / 2
+                y1 = shape.y - shape.height / 2
+                y2 = shape.y + shape.height / 2
+                min_x = min(min_x, x1, x2)
+                max_x = max(max_x, x1, x2)
+                min_y = min(min_y, y1, y2)
+                max_y = max(max_y, y1, y2)
+            elif isinstance(shape, (Spline, Polygon)):
+                points = shape.points if isinstance(shape, Spline) else shape.vertices
+                for p in points:
+                    px = p[0] + (shape.x if isinstance(shape, Polygon) else 0)
+                    py = p[1] + (shape.y if isinstance(shape, Polygon) else 0)
+                    min_x = min(min_x, px)
+                    max_x = max(max_x, px)
+                    min_y = min(min_y, py)
+                    max_y = max(max_y, py)
             elif isinstance(shape, Text):
                 # Rough text bounds estimation
                 text_width = len(shape.text) * shape.font_size * 0.6
@@ -206,9 +320,21 @@ class ExportSVG:
 
         # Add shapes grouped by layer
         for shape, layer_name in self.shapes:
-            if isinstance(shape, Edge):
+            if isinstance(shape, (Edge, Rectangle, Spline, Polygon)):
                 style = self._get_stroke_style(layer_name)
                 if 'stroke="none"' not in style:  # Skip invisible layers
+                    # Check if shape should be filled (Polygon with filled=True)
+                    if isinstance(shape, Polygon) and shape.filled:
+                        # Get fill color from layer
+                        if layer_name in self.layers:
+                            fill_color = self.layers[layer_name].get('fill_color')
+                            if fill_color:
+                                fill = f'rgb({fill_color[0]},{fill_color[1]},{fill_color[2]})'
+                            else:
+                                fill = 'black'
+                        else:
+                            fill = 'black'
+                        style = style.replace('fill="none"', f'fill="{fill}"')
                     svg_parts.append(f'<path d="{shape.to_svg_path()}" {style}/>')
 
             elif isinstance(shape, Text):
@@ -232,11 +358,15 @@ class ExportSVG:
 # Export all commonly used items for "from buildprimitives import *"
 __all__ = [
     'Edge',
+    'Rectangle',
+    'Spline',
+    'Polygon',
     'Text',
     'Location',
     'Axis',
     'ExportSVG',
     'LineType',
     'Unit',
-    'Point'
+    'Point',
+    'make_face'
 ]
