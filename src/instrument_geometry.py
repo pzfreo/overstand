@@ -50,28 +50,9 @@ if not os.path.exists(font_file):
     print(f"Downloading {font_file}...")
     download_font_sync(font_url, font_file)
 
-roboto = os.path.abspath(font_file)
-
-from OCP.TCollection import TCollection_AsciiString
-from OCP.Font import Font_FontMgr, Font_FA_Regular, Font_StrictLevel
-
-# 1. Get the absolute path
-
-# 2. Manually register with the OCP Kernel
-mgr = Font_FontMgr.GetInstance_s()
-
-# 3. Load the font from the file
-#    FIX: Pass 'font_path' as a simple Python string. Do not use TCollection_AsciiString.
-font_handle = mgr.CheckFont(font_file)
-
-# 4. Register the font with the manager
-#    This makes it available to the 3D text engine.
-#    Arguments: (Font Handle, Override_if_exists=True)
-if font_handle:
-    mgr.RegisterFont(font_handle, True)
-    print(f"✓ Successfully registered font: {font_handle.FontName().ToCString()}")
-else:
-    print("✗ Failed to load font file.")
+# Font is already available - buildprimitives uses SVG text with font-family
+# No need to register fonts with OCP since we're generating SVG directly
+print(f"✓ Font ready: {font_name}")
 
 class NeckGeometry:
     """
