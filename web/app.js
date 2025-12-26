@@ -109,11 +109,17 @@ async function initializePython() {
         await state.pyodide.runPythonAsync(`
             import micropip
 
+            # Set custom index for OCP.wasm
             micropip.set_index_urls([
                 "https://yeicor.github.io/OCP.wasm",
                 "https://pypi.org/simple"
             ])
 
+            # Install OCP first (required by build123d)
+            print("Installing OCP...")
+            await micropip.install("OCP")
+
+            # Install lib3mf and mock package
             await micropip.install("lib3mf")
             micropip.add_mock_package(
                 "py-lib3mf",
@@ -121,6 +127,7 @@ async function initializePython() {
                 modules={"py_lib3mf": "from lib3mf import *"}
             )
 
+            # Install remaining packages
             await micropip.install([
                 "build123d",
                 "sqlite3",
