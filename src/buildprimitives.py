@@ -356,9 +356,19 @@ class ExportSVG:
                     svg_parts.append(f'<path d="{shape.to_svg_path()}" {style}/>')
 
             elif isinstance(shape, Text):
+                # Check if layer is invisible
                 if layer_name in self.layers:
-                    fill_color = self.layers[layer_name].get('fill_color')
-                    svg_parts.append(shape.to_svg(fill_color, y_flipped=True))
+                    layer = self.layers[layer_name]
+                    fill_color = layer.get('fill_color')
+                    line_color = layer.get('line_color')
+
+                    # Skip if layer is invisible (both colors are None)
+                    if fill_color is None and line_color is None:
+                        continue
+
+                    # Render text with layer's fill color (or line_color if fill is None)
+                    text_color = fill_color if fill_color else line_color
+                    svg_parts.append(shape.to_svg(text_color, y_flipped=True))
                 else:
                     svg_parts.append(shape.to_svg(y_flipped=True))
 
