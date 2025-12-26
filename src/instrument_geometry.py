@@ -104,15 +104,15 @@ class NeckGeometry:
 def calculate_derived_values(params: Dict[str, Any]) -> Dict[str, Any]:
     """
     Calculate derived values from parameters.
-    
+
     Args:
         params: Dictionary of parameter values
-        
+
     Returns:
         Dictionary of derived values (label -> value)
     """
     derived = {}
-    
+
     # Extract values safely
     vsl = params.get('vsl') or 0
     neck_stop = params.get('neck_stop') or 0
@@ -127,11 +127,12 @@ def calculate_derived_values(params: Dict[str, Any]) -> Dict[str, Any]:
     # neck_thickness_at_first = params.get('neck_thickness_at_first') or 0
     # neck_thickness_at_seventh = params.get('neck_thickness_at_seventh') or 0
     bridge_height = params.get('bridge_height') or 0
+    show_rib_reference = params.get('show_rib_reference', True)
 
-    string_height_nut = params.get('string_height_nut') or 0    
+    string_height_nut = params.get('string_height_nut') or 0
     string_height_eof = params.get('string_height_eof') or 0
-    string_height_at_join = (string_height_eof - string_height_nut) * (neck_stop/fingerboard_length) + string_height_nut    
-    
+    string_height_at_join = (string_height_eof - string_height_nut) * (neck_stop/fingerboard_length) + string_height_nut
+
     opposite = arching_height + bridge_height - overstand - fb_thickness_at_join - string_height_at_join
     string_angle_to_ribs = math.atan(opposite / body_stop) * 180 / math.pi
     opposite_string_to_fb = string_height_eof - string_height_nut
@@ -139,7 +140,31 @@ def calculate_derived_values(params: Dict[str, Any]) -> Dict[str, Any]:
     opposite_fb = fb_thickness_at_join - fb_thickness_at_nut
     fingerboard_angle = round(  math.atan(opposite_fb / neck_stop) * 180 / math.pi, 1)
     neck_angle = 90-(string_angle_to_ribs-string_angle_to_fb-fingerboard_angle)
-    derived['Neck Angle'] = round(neck_angle,1)
+    derived['Neck Angle'] = f"{round(neck_angle, 1)}°"
+
+    # Calculate neck end position and nut position for string length
+    neck_angle_rad = neck_angle * math.pi / 180
+    neck_end_x = 0 - neck_stop
+    neck_end_y = overstand - neck_stop * math.cos(neck_angle_rad)
+
+    # Calculate nut position (top of nut)
+    nut_radius = fb_thickness_at_nut + string_height_nut
+    neck_line_angle = math.atan2(neck_end_y - overstand, neck_end_x - 0)
+    nut_top_x = neck_end_x + nut_radius * math.cos(neck_line_angle - math.pi/2)
+    nut_top_y = neck_end_y + nut_radius * math.sin(neck_line_angle - math.pi/2)
+
+    # Calculate bridge position
+    bridge_top_x = body_stop
+    bridge_top_y = arching_height + bridge_height
+
+    # Calculate string length
+    string_length = math.sqrt((bridge_top_x - nut_top_x)**2 + (bridge_top_y - nut_top_y)**2)
+    derived['String Length'] = f"{round(string_length, 1)} mm"
+
+    # Add nut height if rib reference is enabled
+    if show_rib_reference:
+        derived['Nut Height'] = f"{round(nut_top_y, 1)} mm"
+
     return derived
     
     
