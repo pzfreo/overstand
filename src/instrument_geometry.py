@@ -115,7 +115,7 @@ def calculate_derived_values(params: Dict[str, Any]) -> Dict[str, Any]:
 
     # Extract values safely
     vsl = params.get('vsl') or 0
-    neck_stop = params.get('neck_stop') or 0
+    # neck_stop = params.get('neck_stop') or 0
     body_stop = params.get('body_stop') or 0
     arching_height = params.get('arching_height') or 0
     overstand = params.get('overstand') or 0
@@ -131,10 +131,22 @@ def calculate_derived_values(params: Dict[str, Any]) -> Dict[str, Any]:
 
     string_height_nut = params.get('string_height_nut') or 0
     string_height_eof = params.get('string_height_eof') or 0
-    string_height_at_join = (string_height_eof - string_height_nut) * (neck_stop/fingerboard_length) + string_height_nut
+
+    string_height_at_join = (string_height_eof - string_height_nut) * ((vsl-body_stop)/fingerboard_length) + string_height_nut #approximate
 
     opposite = arching_height + bridge_height - overstand - fb_thickness_at_join - string_height_at_join
-    string_angle_to_ribs = math.atan(opposite / body_stop) * 180 / math.pi
+    string_angle_to_ribs_rad = math.atan(opposite / body_stop)
+    print(f"String angle to ribs rad: {string_angle_to_ribs_rad}")
+    string_angle_to_ribs = string_angle_to_ribs_rad * 180 / math.pi
+    print(f"String angle to ribs: {string_angle_to_ribs}")
+    string_to_join = math.sqrt(opposite**2 + body_stop**2)
+    print(f"String to join: {string_to_join}")
+    string_nut_to_join = vsl-string_to_join
+    print(f"String nut to join: {string_nut_to_join}")
+    neck_stop = math.cos(string_angle_to_ribs_rad)*string_nut_to_join
+    print(f"Neck stop: {neck_stop}")
+    
+    
     opposite_string_to_fb = string_height_eof - string_height_nut
     string_angle_to_fb = math.atan(opposite_string_to_fb / fingerboard_length) * 180 / math.pi
     opposite_fb = fb_thickness_at_join - fb_thickness_at_nut
@@ -146,6 +158,7 @@ def calculate_derived_values(params: Dict[str, Any]) -> Dict[str, Any]:
     neck_angle_rad = neck_angle * math.pi / 180
     neck_end_x = 0 - neck_stop
     neck_end_y = overstand - neck_stop * math.cos(neck_angle_rad)
+    derived['Neck Stop'] = round(neck_stop, 1)
 
     # Calculate nut position (top of nut)
     nut_radius = fb_thickness_at_nut + string_height_nut
