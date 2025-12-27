@@ -307,7 +307,7 @@ def generate_side_view_svg(params: Dict[str, Any]) -> str:
     # Add angle annotation between the two lines (use rounded value for display)
     for shape, layer in create_angle_dimension(neck_vertical_line, neck_angled_line,
                                               label=f"{neck_angle_deg:.1f}°",
-                                              arc_radius=12, line_extension=0):
+                                              arc_radius=12, line_extension=0, text_inside=True):
         exporter.add_shape(shape, layer=layer)
 
     # Add fingerboard
@@ -467,6 +467,13 @@ def generate_side_view_svg(params: Dict[str, Any]) -> str:
     for shape, layer in create_horizontal_dimension(nut_feature_line, f"{nut_x_distance:.1f}",
                                                      offset_y=-10, extension_length=3, font_size=DIMENSION_FONT_SIZE):
         exporter.add_shape(shape, layer=layer)
+
+    # Dimension: overstand (vertical, from ribs to body join point)
+    if overstand > 0:  # Only show if overstand is positive
+        overstand_feature_line = Edge.make_line((0, 0), (0, overstand))
+        for shape, layer in create_vertical_dimension(overstand_feature_line, f"{overstand:.1f}",
+                                                       offset_x=8, font_size=DIMENSION_FONT_SIZE):
+            exporter.add_shape(shape, layer=layer)
 
     # Dimension: arching_height (vertical, from top of belly to arch peak - includes belly thickness)
     arch_feature_line = Edge.make_line((body_stop, 0), (body_stop, arching_height))

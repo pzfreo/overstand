@@ -248,7 +248,7 @@ def create_horizontal_dimension(feature_line, label, offset_y=-10,
 
 
 def create_angle_dimension(line1, line2, label=None, arc_radius=15,
-                          font_size=8*PTS_MM, line_extension=5):
+                          font_size=8*PTS_MM, line_extension=5, text_inside=False):
     """
     Create angle dimension shapes from two lines that meet at a junction point.
 
@@ -259,6 +259,7 @@ def create_angle_dimension(line1, line2, label=None, arc_radius=15,
         arc_radius: Radius of the arc showing the angle
         font_size: Font size for dimension text
         line_extension: How far to extend the lines beyond their endpoints
+        text_inside: If True, position text inside the arc instead of outside
 
     Returns:
         List of (shape, layer) tuples to add to exporter
@@ -368,7 +369,12 @@ def create_angle_dimension(line1, line2, label=None, arc_radius=15,
 
     # Position text near the middle of the arc
     mid_angle = (start_angle + end_angle) / 2
-    text_radius = arc_radius + font_size * 1.5
+    if text_inside:
+        # Position text inside the arc
+        text_radius = arc_radius * 0.6
+    else:
+        # Position text outside the arc (default)
+        text_radius = arc_radius + font_size * 1.5
     text_x = jx + text_radius * math.cos(mid_angle)
     text_y = jy + text_radius * math.sin(mid_angle)
 
