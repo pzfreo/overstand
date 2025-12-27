@@ -229,6 +229,10 @@ h1 {
     .preview-panel {
         width: 100%;
     }
+
+    .sticky-generate-section {
+        padding-top: 3.5rem;
+    }
 }
 
 .controls-panel {
