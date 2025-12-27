@@ -203,15 +203,7 @@ INSTRUMENT_PARAMETERS = {
         category='General'
     ),
 
-    # # Instrument Type
-    # 'instrument_type': EnumParameter(
-    #     name='instrument_type',
-    #     label='Instrument Type',
-    #     enum_class=InstrumentType,
-    #     default=InstrumentType.VIOLIN,
-    #     description='Type of instrument (affects default proportions)',
-    #     category='General'
-    # ),
+
 
     # Basic Dimensions
     'vsl': NumericParameter(
@@ -263,7 +255,7 @@ INSTRUMENT_PARAMETERS = {
         category='Basic Dimensions',
         step=0.1,
         visible_when={'calculation_mode': 'BODY_STOP_DRIVEN'},
-        is_output={'BODY_STOP_DRIVEN': False, 'FRET_JOIN_DRIVEN': True}
+        is_output={'BODY_STOP_DRIVEN': True, 'FRET_JOIN_DRIVEN': True}
     ),
 
     'body_length': NumericParameter(
@@ -275,7 +267,7 @@ INSTRUMENT_PARAMETERS = {
         max_val=1000.0,
         description='Length of body from join to saddle',
         category='Basic Dimensions',
-        step=0.1
+        step=1
     ),
 
     'rib_height': NumericParameter(
@@ -287,7 +279,7 @@ INSTRUMENT_PARAMETERS = {
         max_val=500.0,
         description='Rib Height assumed constant (doesn\'t affect calculation)',
         category='Basic Dimensions',
-        step=0.1
+        step=0.5
     ),
 
     'fingerboard_length': NumericParameter(
@@ -299,7 +291,7 @@ INSTRUMENT_PARAMETERS = {
         max_val=1000.0,
         description='Length of fingerboard from nut',
         category='Basic Dimensions',
-        step=0.1
+        step=1
     ),
     
     # 'neck_thickness_at_first': NumericParameter(
@@ -428,7 +420,23 @@ INSTRUMENT_PARAMETERS = {
         max_val=10.0,
         description='String height at the end of the fingerboard',
         category='Basic Dimensions',
-        step=0.1
+        step=0.1,
+        visible_when={'calculation_mode': 'BODY_STOP_DRIVEN'}
+    ),
+
+
+    # String height at 12th fret
+    'string_height_12th_fret': NumericParameter(
+        name='string_height_12th_fret',
+        label='String height at 12th fret',
+        unit='mm',
+        default=4.0,
+        min_val=0.0,
+        max_val=10.0,
+        description='String height at the 12th fret',
+        category='Basic Dimensions',
+        step=0.1,
+        visible_when={'calculation_mode': 'FRET_JOIN_DRIVEN'}
     ),
 
     'fingerboard_width_at_nut': NumericParameter(

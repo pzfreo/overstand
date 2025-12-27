@@ -217,12 +217,14 @@ async function initializePython() {
 
 function generateUI() {
     const container = elements.parametersContainer;
+    // Collect parameters BEFORE clearing DOM
+    const currentParams = collectParameters();  // Get current values
+    const currentMode = currentParams.calculation_mode || 'BODY_STOP_DRIVEN';
+
     container.innerHTML = '';
 
     const categories = state.parameterDefinitions.categories;
     const parameters = state.parameterDefinitions.parameters;
-    const currentParams = collectParameters();  // Get current values
-    const currentMode = currentParams.calculation_mode || 'BODY_STOP_DRIVEN';
 
     for (const category of categories) {
         const section = document.createElement('div');
@@ -238,11 +240,18 @@ function generateUI() {
                 // Check if parameter should be visible
                 const isVisible = checkParameterVisibility(param, currentParams);
 
-                if (isVisible) {
-                    // Check if it's an output in current mode
-                    const isOutput = isParameterOutput(param, currentMode);
-                    section.appendChild(createParameterControl(name, param, isOutput));
+                // Check if it's an output in current mode
+                const isOutput = isParameterOutput(param, currentMode);
+
+                // Create the control for ALL parameters (even if not visible)
+                const control = createParameterControl(name, param, isOutput);
+
+                // Hide it if it doesn't meet visibility conditions
+                if (!isVisible) {
+                    control.style.display = 'none';
                 }
+
+                section.appendChild(control);
             }
         }
 
@@ -428,6 +437,7 @@ function loadPreset() {
     }
 
     hideErrors();
+    updateParameterVisibility();
     updateDerivedValues();
     debouncedGenerate();
 }
@@ -459,7 +469,13 @@ function checkParameterVisibility(param, currentParams) {
 
     // Check each condition
     for (const [condParam, condValue] of Object.entries(param.visible_when)) {
-        const actualValue = currentParams[condParam];
+        let actualValue = currentParams[condParam];
+
+        // If value not found in currentParams, use the parameter's default value
+        if (actualValue === undefined && state.parameterDefinitions.parameters[condParam]) {
+            actualValue = state.parameterDefinitions.parameters[condParam].default;
+        }
+
         if (actualValue !== condValue) {
             return false;
         }
@@ -502,6 +518,19 @@ function updateParameterVisibility() {
                     input.readOnly = false;
                     input.classList.remove('readonly-output');
                     group.classList.remove('param-output');
+                }
+
+                // Update label text to show/hide "(calculated)" indicator
+                const label = group.querySelector('label');
+                if (label) {
+                    const baseText = param.label;
+                    if (isOutput) {
+                        if (!label.textContent.includes('(calculated)')) {
+                            label.textContent = `${baseText} (calculated)`;
+                        }
+                    } else {
+                        label.textContent = baseText;
+                    }
                 }
             }
         }
@@ -899,6 +928,7 @@ function loadParameters(event) {
             elements.presetSelect.value = '';
 
             hideErrors();
+            updateParameterVisibility();
             setStatus('ready', '✅ Parameters loaded successfully');
 
         } catch (error) {
