@@ -194,21 +194,8 @@ def calculate_derived_values(params: Dict[str, Any]) -> Dict[str, Any]:
     
 
 def exporter_to_svg(exp: ExportSVG) -> str:
-    import tempfile
-    import os
-
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.svg', delete=False) as tmp:
-        temp_path = tmp.name
-
-    try:
-        exp.write(temp_path)
-        with open(temp_path, 'r') as f:
-            svg_content = f.read()
-    finally:
-        if os.path.exists(temp_path):
-            os.remove(temp_path)
-
-    return svg_content
+    """Convert ExportSVG to SVG string without temp files."""
+    return exp.write(filename=None)
 
 
 def generate_neck_svg(params: Dict[str, Any]) -> str:

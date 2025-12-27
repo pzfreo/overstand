@@ -4,7 +4,6 @@ Provides functions to create 2D diagrams and export them as SVG.
 """
 
 from build123d import *
-from io import StringIO
 import sys
 
 def generate_plate_svg(length: float, width: float, hole_radius: float) -> str:
@@ -44,32 +43,13 @@ def generate_plate_svg(length: float, width: float, hole_radius: float) -> str:
             Rectangle(length, width)
             Circle(hole_radius, mode=Mode.SUBTRACT)
         
-        # Export to SVG using in-memory approach (no temp files)
+        # Export to SVG directly in memory (no temp files)
         exporter = ExportSVG(scale=1.0)
         exporter.add_shape(builder.sketch)
-        
-        # Capture SVG output to string buffer instead of file
-        svg_buffer = StringIO()
-        
-        # Note: build123d's ExportSVG.write() requires a file path
-        # So we still need temp file approach, but with better cleanup
-        import tempfile
-        import os
-        
-        # Use system temp directory with automatic cleanup
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.svg', delete=False) as tmp:
-            temp_path = tmp.name
-        
-        try:
-            exporter.write(temp_path)
-            
-            with open(temp_path, 'r') as f:
-                svg_text = f.read()
-        finally:
-            # Ensure cleanup even if reading fails
-            if os.path.exists(temp_path):
-                os.remove(temp_path)
-        
+
+        # ExportSVG.write() can return SVG string directly without file I/O
+        svg_text = exporter.write(filename=None)
+
         # Validate SVG output
         if not svg_text or not svg_text.strip().startswith('<'):
             raise RuntimeError("Generated SVG appears to be invalid")
