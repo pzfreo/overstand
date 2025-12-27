@@ -408,6 +408,41 @@ select:focus {
     border-color: #4F46E5;
 }
 
+/* Output/calculated parameter styling */
+.param-output {
+    background-color: #f9fafb;
+    border-left: 3px solid #3b82f6;
+    padding-left: 8px;
+    border-radius: 4px;
+}
+
+.param-output label {
+    color: #3b82f6;
+}
+
+.output-indicator {
+    font-size: 0.7rem;
+    color: #6b7280;
+    font-weight: normal;
+    margin-left: 6px;
+    font-style: italic;
+}
+
+input.readonly-output,
+select.readonly-output {
+    background-color: #f3f4f6;
+    border-color: #d1d5db;
+    color: #4b5563;
+    cursor: not-allowed;
+    font-weight: 600;
+}
+
+input.readonly-output:focus,
+select.readonly-output:focus {
+    outline: none;
+    border-color: #9ca3af;
+}
+
 input[type="range"] {
     padding: 0;
 }

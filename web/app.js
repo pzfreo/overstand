@@ -208,6 +208,8 @@ function generateUI() {
 
     const categories = state.parameterDefinitions.categories;
     const parameters = state.parameterDefinitions.parameters;
+    const currentParams = collectParameters();  // Get current values
+    const currentMode = currentParams.calculation_mode || 'BODY_STOP_DRIVEN';
 
     for (const category of categories) {
         const section = document.createElement('div');
@@ -220,7 +222,14 @@ function generateUI() {
 
         for (const [name, param] of Object.entries(parameters)) {
             if (param.category === category) {
-                section.appendChild(createParameterControl(name, param));
+                // Check if parameter should be visible
+                const isVisible = checkParameterVisibility(param, currentParams);
+
+                if (isVisible) {
+                    // Check if it's an output in current mode
+                    const isOutput = isParameterOutput(param, currentMode);
+                    section.appendChild(createParameterControl(name, param, isOutput));
+                }
             }
         }
 
@@ -228,9 +237,15 @@ function generateUI() {
     }
 }
 
-function createParameterControl(name, param) {
+function createParameterControl(name, param, isOutput = false) {
     const group = document.createElement('div');
     group.className = 'param-group';
+    group.dataset.paramName = name;  // For conditional visibility updates
+
+    // Add visual indicator for output parameters
+    if (isOutput) {
+        group.classList.add('param-output');
+    }
 
     if (param.type === 'number') {
         const labelDiv = document.createElement('div');
@@ -239,6 +254,15 @@ function createParameterControl(name, param) {
         const label = document.createElement('label');
         label.textContent = param.label;
         label.htmlFor = name;
+
+        // Add output indicator to label
+        if (isOutput) {
+            const indicator = document.createElement('span');
+            indicator.className = 'output-indicator';
+            indicator.textContent = '(calculated)';
+            indicator.title = 'This value is calculated based on other parameters';
+            label.appendChild(indicator);
+        }
 
         const unit = document.createElement('span');
         unit.className = 'param-unit';
@@ -256,10 +280,18 @@ function createParameterControl(name, param) {
         input.min = param.min;
         input.max = param.max;
         input.step = param.step;
-        input.step = param.step;
-        input.addEventListener('change', hideErrors);
-        input.addEventListener('input', debounce(updateDerivedValues, 300));
-        input.addEventListener('input', debouncedGenerate);
+
+        // Make output parameters read-only
+        if (isOutput) {
+            input.readOnly = true;
+            input.classList.add('readonly-output');
+        } else {
+            // Only add input listeners if it's an input parameter
+            input.addEventListener('change', hideErrors);
+            input.addEventListener('input', debounce(updateDerivedValues, 300));
+            input.addEventListener('input', debouncedGenerate);
+        }
+
         group.appendChild(input);
 
     } else if (param.type === 'enum') {
@@ -289,6 +321,14 @@ function createParameterControl(name, param) {
         select.addEventListener('change', hideErrors);
         select.addEventListener('change', updateDerivedValues);
         select.addEventListener('change', debouncedGenerate);
+
+        // Special handling for calculation_mode changes
+        if (name === 'calculation_mode') {
+            select.addEventListener('change', () => {
+                updateParameterVisibility();
+            });
+        }
+
         group.appendChild(select);
 
     } else if (param.type === 'boolean') {
@@ -398,6 +438,61 @@ function collectParameters() {
     }
 
     return params;
+}
+
+function checkParameterVisibility(param, currentParams) {
+    // If no visibility condition, always visible
+    if (!param.visible_when) return true;
+
+    // Check each condition
+    for (const [condParam, condValue] of Object.entries(param.visible_when)) {
+        const actualValue = currentParams[condParam];
+        if (actualValue !== condValue) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+function isParameterOutput(param, currentMode) {
+    // If no output specification, it's always an input
+    if (!param.is_output) return false;
+
+    // Check if this param is an output in the current mode
+    return param.is_output[currentMode] === true;
+}
+
+function updateParameterVisibility() {
+    const currentParams = collectParameters();
+    const currentMode = currentParams.calculation_mode;
+
+    for (const [name, param] of Object.entries(state.parameterDefinitions.parameters)) {
+        const group = document.querySelector(`.param-group[data-param-name="${name}"]`);
+        if (!group) continue;
+
+        // Check visibility
+        const isVisible = checkParameterVisibility(param, currentParams);
+        group.style.display = isVisible ? '' : 'none';
+
+        // Update read-only status for visible parameters
+        if (isVisible) {
+            const isOutput = isParameterOutput(param, currentMode);
+            const input = document.getElementById(name);
+
+            if (input) {
+                if (isOutput) {
+                    input.readOnly = true;
+                    input.classList.add('readonly-output');
+                    group.classList.add('param-output');
+                } else {
+                    input.readOnly = false;
+                    input.classList.remove('readonly-output');
+                    group.classList.remove('param-output');
+                }
+            }
+        }
+    }
 }
 
 function generateDimensionsTableHTML(params, derivedValues) {
@@ -780,6 +875,7 @@ async function updateDerivedValues() {
     try {
         const params = collectParameters();
         const paramsJson = JSON.stringify(params);
+        const currentMode = params.calculation_mode || 'BODY_STOP_DRIVEN';
 
         const resultJson = await state.pyodide.runPythonAsync(`
             from instrument_generator import get_derived_values
@@ -794,25 +890,43 @@ async function updateDerivedValues() {
             container.style.display = 'grid';
             container.innerHTML = '';
 
-            for (const [label, value] of Object.entries(result.values)) {
-                const div = document.createElement('div');
-                div.className = 'metric-card';
-
-                // Format value with appropriate unit
-                let formattedValue;
-                if (label === 'Neck Angle') {
-                    formattedValue = `${value}°`;
-                } else if (label === 'String Length' || label === 'Nut Relative to Ribs') {
-                    formattedValue = `${value} mm`;
-                } else {
-                    formattedValue = value;
+            // Update read-only input fields with calculated values
+            for (const [name, param] of Object.entries(state.parameterDefinitions.parameters)) {
+                const isOutput = isParameterOutput(param, currentMode);
+                if (isOutput && result.values[param.label]) {
+                    const input = document.getElementById(name);
+                    if (input) {
+                        input.value = result.values[param.label];
+                    }
                 }
+            }
 
-                div.innerHTML = `
-                    <span class="metric-label">${label}</span>
-                    <span class="metric-value">${formattedValue}</span>
-                `;
-                container.appendChild(div);
+            // Display remaining derived values in metric cards
+            for (const [label, value] of Object.entries(result.values)) {
+                // Skip if this value is already shown in a parameter field
+                const isShownInParam = Object.values(state.parameterDefinitions.parameters)
+                    .some(p => p.label === label && isParameterOutput(p, currentMode));
+
+                if (!isShownInParam) {
+                    const div = document.createElement('div');
+                    div.className = 'metric-card';
+
+                    // Format value with appropriate unit
+                    let formattedValue;
+                    if (label === 'Neck Angle') {
+                        formattedValue = `${value}°`;
+                    } else if (label === 'String Length' || label === 'Nut Relative to Ribs') {
+                        formattedValue = `${value} mm`;
+                    } else {
+                        formattedValue = value;
+                    }
+
+                    div.innerHTML = `
+                        <span class="metric-label">${label}</span>
+                        <span class="metric-value">${formattedValue}</span>
+                    `;
+                    container.appendChild(div);
+                }
             }
         } else {
             container.style.display = 'none';
