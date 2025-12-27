@@ -140,7 +140,7 @@ async function initializePython() {
         // Load Python modules (in dependency order)
         const modules = [
             'buildprimitives.py',
-            'dimension_utils.py',
+            'dimension_helpers.py',
             'instrument_parameters.py',
             'instrument_geometry.py',
             'instrument_generator.py'
@@ -164,7 +164,7 @@ async function initializePython() {
         // Import modules
         await state.pyodide.runPythonAsync(`
             import buildprimitives
-            import dimension_utils
+            import dimension_helpers
             import instrument_parameters
             import instrument_geometry
             import instrument_generator
