@@ -2,6 +2,7 @@
   "presets": [
     "basic_violin.json",
     "modern_viola.json",
-    "TrebleViol.json"
+    "TrebleViol.json",
+    "ArchtopOctaveMandolin.json"
   ]
 }

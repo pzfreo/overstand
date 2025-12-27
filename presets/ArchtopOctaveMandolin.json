@@ -1,0 +1,32 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "timestamp": "2025-12-27T15:00:14.214Z",
+    "description": "Instrument Neck Parameters",
+    "generator": "Instrument Neck Geometry Generator"
+  },
+  "parameters": {
+    "instrument_name": "Archtop Mandolin",
+    "calculation_mode": "FRET_JOIN_DRIVEN",
+    "vsl": 560,
+    "fret_join": 14,
+    "body_stop": 195,
+    "neck_stop": 310.0132112170475,
+    "body_length": 448,
+    "rib_height": 50,
+    "fingerboard_length": 420,
+    "arching_height": 22,
+    "belly_edge_thickness": 3.5,
+    "bridge_height": 20,
+    "overstand": 18,
+    "fb_thickness_at_nut": 6.1,
+    "fb_thickness_at_join": 6.1,
+    "string_height_nut": 0.6,
+    "string_height_eof": 4,
+    "string_height_12th_fret": 3,
+    "fingerboard_width_at_nut": null,
+    "fingerboard_width_at_end": null,
+    "show_measurements": true,
+    "show_rib_reference": true
+  }
+}
