@@ -98,6 +98,7 @@ def calculate_derived_values(params: Dict[str, Any]) -> Dict[str, Any]:
         string_angle_to_ribs = string_angle_to_ribs_rad * 180 / math.pi
         string_nut_to_join = fret_positions[fret_join] 
         neck_stop = math.cos(string_angle_to_ribs_rad)*string_nut_to_join
+        body_stop = math.cos(string_angle_to_ribs_rad)*hypotenuse
         opposite_string_to_join = string_height_at_join - string_height_nut
         string_angle_to_fb = math.atan(opposite_string_to_join / fret_positions[fret_join]) * 180 / math.pi
     else:
