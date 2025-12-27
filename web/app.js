@@ -573,7 +573,18 @@ function generateDimensionsTableHTML(params, derivedValues, derivedFormatted = {
                 if (value == null || isNaN(value)) {
                     displayValue = '<span class="param-unit">—</span>';
                 } else {
-                    displayValue = `${value} <span class="param-unit">${param.unit}</span>`;
+                    // Determine decimal places from step value
+                    let decimals = 1; // default
+                    if (param.step !== undefined) {
+                        const stepStr = param.step.toString();
+                        const decimalIndex = stepStr.indexOf('.');
+                        if (decimalIndex !== -1) {
+                            decimals = stepStr.length - decimalIndex - 1;
+                        } else {
+                            decimals = 0;
+                        }
+                    }
+                    displayValue = `${value.toFixed(decimals)} <span class="param-unit">${param.unit}</span>`;
                 }
             } else if (param.type === 'boolean') {
                 displayValue = value ? 'Yes' : 'No';
