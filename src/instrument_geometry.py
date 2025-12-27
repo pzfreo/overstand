@@ -240,14 +240,13 @@ def generate_side_view_svg(params: Dict[str, Any]) -> str:
     exporter.add_shape(rect, layer="drawing")
 
     # Add arched top curve through three points (schematic/approximate):
-    # - Start from bottom of belly: (0, belly_edge_thickness)
-    # - Peak at body_stop: (body_stop, arching_height)
-    # - End at bottom of belly: (body_length, belly_edge_thickness)
+    # arching_height is measured from the rib reference line (y=0)
+    # The arch rises from the ribs (y=0) to peak at arching_height
     # Note: Using dashed line to indicate this is an approximate representation
     arch_points = [
-        (0, belly_edge_thickness),
+        (0, 0),
         (body_stop, arching_height),
-        (body_length, belly_edge_thickness)
+        (body_length, 0)
     ]
     arch_curve = Spline(*arch_points)
     exporter.add_shape(arch_curve, layer="schematic")
@@ -255,25 +254,6 @@ def generate_side_view_svg(params: Dict[str, Any]) -> str:
     # Add vertical line from arch peak extending by bridge_height
     bridge_line = Edge.make_line((body_stop, arching_height), (body_stop, arching_height + bridge_height))
     exporter.add_shape(bridge_line, layer="drawing")
-
-    # Add leader line pointing up to the peak
-    leader_start = (body_stop, arching_height - 10)
-    leader_end = (body_stop, arching_height)
-    leader_line = Edge.make_line(leader_start, leader_end)
-    exporter.add_shape(leader_line, layer="extensions")
-
-    # Add leader arrowhead (small filled triangle pointing up)
-    arrow_size = 2
-    # Define vertices relative to origin, pointing up
-    arrowhead_vertices = [
-        (0, arrow_size/2),           # Top point
-        (-arrow_size, -arrow_size/2), # Bottom left
-        (arrow_size, -arrow_size/2)   # Bottom right
-    ]
-
-    arrowhead = make_face(Polygon(*arrowhead_vertices))
-    arrowhead = arrowhead.move(Location((body_stop, arching_height)))
-    exporter.add_shape(arrowhead, layer="arrows")
 
     # Add neck angle reference lines
     # Line 1: Vertical from (0, 0) to (0, overstand)
