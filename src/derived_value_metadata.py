@@ -92,6 +92,17 @@ DERIVED_VALUE_METADATA: Dict[str, DerivedValueMetadata] = {
         order=3
     ),
 
+    'Body Stop': DerivedValueMetadata(
+        key='Body Stop',
+        display_name='Body Stop',
+        unit='mm',
+        decimals=1,
+        visible=True,
+        category=DerivedValueCategory.GEOMETRY,
+        description='Horizontal distance from body join to bridge',
+        order=4
+    ),
+
     'Nut Relative to Ribs': DerivedValueMetadata(
         key='Nut Relative to Ribs',
         display_name='Nut Relative to Ribs',
@@ -100,7 +111,7 @@ DERIVED_VALUE_METADATA: Dict[str, DerivedValueMetadata] = {
         visible=True,
         category=DerivedValueCategory.GEOMETRY,
         description='Vertical distance from rib plane to top of nut',
-        order=4
+        order=5
     ),
 
     # Internal calculation values (visible=False)

@@ -980,46 +980,40 @@ async function updateDerivedValues() {
             const metadata = result.metadata || {};
 
             for (const [label, value] of Object.entries(result.values)) {
-                // Skip if this value is already shown in a parameter field
-                const isShownInParam = Object.values(state.parameterDefinitions.parameters)
-                    .some(p => p.label === label && isParameterOutput(p, currentMode));
+                const meta = metadata[label];
 
-                if (!isShownInParam) {
-                    const meta = metadata[label];
+                // Skip if metadata says not visible
+                if (meta && !meta.visible) continue;
 
-                    // Skip if metadata says not visible
-                    if (meta && !meta.visible) continue;
+                const div = document.createElement('div');
+                div.className = 'metric-card';
 
-                    const div = document.createElement('div');
-                    div.className = 'metric-card';
-
-                    // Use pre-formatted value from backend if available
-                    let formattedValue;
-                    if (result.formatted && result.formatted[label]) {
-                        formattedValue = result.formatted[label];
-                    } else if (meta) {
-                        // Format using metadata
-                        formattedValue = `${value.toFixed(meta.decimals)} ${meta.unit}`.trim();
+                // Use pre-formatted value from backend if available
+                let formattedValue;
+                if (result.formatted && result.formatted[label]) {
+                    formattedValue = result.formatted[label];
+                } else if (meta) {
+                    // Format using metadata
+                    formattedValue = `${value.toFixed(meta.decimals)} ${meta.unit}`.trim();
+                } else {
+                    // FALLBACK: Old hard-coded formatting (for backward compatibility)
+                    if (label === 'Neck Angle') {
+                        formattedValue = `${value}°`;
+                    } else if (label === 'String Length' || label === 'Nut Relative to Ribs') {
+                        formattedValue = `${value} mm`;
                     } else {
-                        // FALLBACK: Old hard-coded formatting (for backward compatibility)
-                        if (label === 'Neck Angle') {
-                            formattedValue = `${value}°`;
-                        } else if (label === 'String Length' || label === 'Nut Relative to Ribs') {
-                            formattedValue = `${value} mm`;
-                        } else {
-                            formattedValue = value;
-                        }
+                        formattedValue = value;
                     }
-
-                    const displayName = meta ? meta.display_name : label;
-                    const description = meta ? meta.description : '';
-
-                    div.innerHTML = `
-                        <span class="metric-label" title="${description}">${displayName}</span>
-                        <span class="metric-value">${formattedValue}</span>
-                    `;
-                    container.appendChild(div);
                 }
+
+                const displayName = meta ? meta.display_name : label;
+                const description = meta ? meta.description : '';
+
+                div.innerHTML = `
+                    <span class="metric-label" title="${description}">${displayName}</span>
+                    <span class="metric-value">${formattedValue}</span>
+                `;
+                container.appendChild(div);
             }
         } else {
             container.style.display = 'none';

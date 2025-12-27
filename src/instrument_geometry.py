@@ -110,7 +110,7 @@ def calculate_derived_values(params: Dict[str, Any]) -> Dict[str, Any]:
     nut_top_x = -neck_stop
     nut_top_y = bridge_top_y - math.sin(string_angle_to_ribs_rad)*vsl
     print("nut_top_x, nut_top_y", nut_top_x, nut_top_y)
-    
+
     opposite_fb = fb_thickness_at_join - fb_thickness_at_nut
     fingerboard_angle = math.atan(opposite_fb / neck_stop) * 180 / math.pi
     neck_angle = 90-(string_angle_to_ribs-string_angle_to_fb-fingerboard_angle)
@@ -120,6 +120,7 @@ def calculate_derived_values(params: Dict[str, Any]) -> Dict[str, Any]:
     neck_angle_rad = neck_angle * math.pi / 180
     neck_end_x = 0 - neck_stop + math.cos(neck_angle_rad)*fb_thickness_at_nut
     neck_end_y = overstand - neck_stop * math.cos(neck_angle_rad)
+    derived['Body Stop'] = body_stop
     derived['Neck Stop'] = neck_stop
     derived['Neck Angle (rad)'] = neck_angle_rad
     derived['Neck End X'] = neck_end_x
