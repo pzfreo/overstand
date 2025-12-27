@@ -4,11 +4,8 @@ Instrument Neck Geometry Generator
 This is where your Build123d geometry expertise goes.
 """
 
-from buildprimitives import (
-    ExportSVG, Line, Circle, Arc, Text, Polyline, Edge,
-    Location, LineType, Axis, Plane,
-    FONT_NAME, TITLE_FONT_SIZE, FOOTER_FONT_SIZE, PTS_MM  # Font constants
-)
+from buildprimitives import *
+from buildprimitives import FONT_NAME, TITLE_FONT_SIZE, FOOTER_FONT_SIZE, PTS_MM  # Font constants
 import math
 from typing import Dict, Any, Tuple
 from dimension_helpers import (

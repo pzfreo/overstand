@@ -5,11 +5,8 @@ Provides functions to create dimension lines, arrows, and text annotations
 for horizontal, vertical, diagonal, and angular measurements.
 """
 
-from buildprimitives import (
-    ExportSVG, Line, Circle, Arc, Text, Polyline, Edge,
-    Location, LineType, Axis, Plane,
-    FONT_NAME, DIMENSION_FONT_SIZE, PTS_MM  # Font constants
-)
+from buildprimitives import *
+from buildprimitives import FONT_NAME, DIMENSION_FONT_SIZE, PTS_MM  # Font constants
 import math
 from typing import List, Tuple
 
