@@ -197,7 +197,6 @@ def generate_side_view_svg(params: Dict[str, Any]) -> str:
     instrument_name = params.get('instrument_name', 'Instrument')
     generator_url = params.get('_generator_url', 'https://github.com/pzfreo/diagram-creator')
     show_measurements = params.get('show_measurements', True)
-    show_rib_reference = params.get('show_rib_reference', True)
 
     derived = calculate_derived_values(params)
     body_stop = derived.get('Body Stop', body_stop) #calculated body_stop should work for Mandolins
@@ -229,10 +228,6 @@ def generate_side_view_svg(params: Dict[str, Any]) -> str:
     exporter.add_layer("drawing",fill_color=None, line_color=(0,0,0),line_type=LineType.CONTINUOUS)
     exporter.add_layer("schematic",fill_color=None, line_color=(0,0,0),line_type=LineType.DASHED)
     exporter.add_layer("schematic_dotted",fill_color=None, line_color=(100,100,100),line_type=LineType.DOTTED)
-
-    # Reference layer - dotted line, invisible if show_rib_reference is False
-    ref_color = (0,0,0) if show_rib_reference else None
-    exporter.add_layer("reference",fill_color=None, line_color=ref_color,line_type=LineType.HIDDEN)
 
     # Dimension layers - invisible if show_measurements is False
     dim_color = (255,0,0) if show_measurements else None
@@ -338,10 +333,10 @@ def generate_side_view_svg(params: Dict[str, Any]) -> str:
     # Using precomputed nut_top and bridge_top positions from derived dictionary
 
     # Add horizontal reference line from top of ribs (0,0) extending 20mm beyond nut
-    # This is a dotted reference line (controlled by show_rib_reference parameter)
+    # This reference line is part of the measurements system
     reference_line_end_x = nut_top_x - 20
     reference_line = Edge.make_line((0, 0), (reference_line_end_x, 0))
-    exporter.add_shape(reference_line, layer="reference")
+    exporter.add_shape(reference_line, layer="extensions")
 
     # Draw string line
     string_line = Edge.make_line((nut_top_x, nut_top_y), (bridge_top_x, bridge_top_y))
@@ -349,8 +344,7 @@ def generate_side_view_svg(params: Dict[str, Any]) -> str:
 
 
     # Dimension: vertical distance from ribs (y=0) to top of nut
-    # Only show if both measurements and rib reference are enabled
-    if show_measurements and show_rib_reference:
+    if show_measurements:
         rib_to_nut_feature_line = Edge.make_line((reference_line_end_x, 0), (reference_line_end_x, nut_top_y))
         for shape, layer in create_vertical_dimension(rib_to_nut_feature_line,
                                                        f"{nut_top_y:.1f}",
