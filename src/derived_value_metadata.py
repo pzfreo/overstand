@@ -119,8 +119,8 @@ DERIVED_VALUE_METADATA: Dict[str, DerivedValueMetadata] = {
         display_name='Sagitta at Nut',
         unit='mm',
         decimals=2,
-        visible=True,
-        category=DerivedValueCategory.GEOMETRY,
+        visible=False,
+        category=DerivedValueCategory.INTERNAL,
         description='Height of fingerboard arc at nut due to radius',
         order=20
     ),
@@ -130,8 +130,8 @@ DERIVED_VALUE_METADATA: Dict[str, DerivedValueMetadata] = {
         display_name='Sagitta at Join',
         unit='mm',
         decimals=2,
-        visible=True,
-        category=DerivedValueCategory.GEOMETRY,
+        visible=False,
+        category=DerivedValueCategory.INTERNAL,
         description='Height of fingerboard arc at body join due to radius',
         order=21
     ),
