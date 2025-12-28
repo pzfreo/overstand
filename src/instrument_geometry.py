@@ -248,7 +248,7 @@ def calculate_derived_values(params: Dict[str, Any]) -> Dict[str, Any]:
 def calculate_fret_positions(vsl: float, no_frets: int) -> list[float]:
     fret_positions = []
     for i in range(no_frets):
-        fret_positions.append(vsl -(vsl / (2 ** (i / 12))))
+        fret_positions.append(vsl -(vsl / (2 ** ((i + 1) / 12))))
     return fret_positions
 
 
