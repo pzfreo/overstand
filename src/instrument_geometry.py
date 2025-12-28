@@ -160,6 +160,78 @@ def calculate_derived_values(params: Dict[str, Any]) -> Dict[str, Any]:
     derived['Fingerboard Bottom End Y'] = fb_bottom_end_y
     derived['Fingerboard Thickness at End'] = fb_thickness_at_end
 
+    # Calculate fingerboard top right corner for string height calculation
+    perp_angle = fb_direction_angle + math.pi/2
+    fb_top_right_x = fb_bottom_end_x + fb_thickness_at_end * math.cos(perp_angle)
+    fb_top_right_y = fb_bottom_end_y + fb_thickness_at_end * math.sin(perp_angle)
+
+    # Calculate nut perpendicular distance (for dimension annotation)
+    # Neck direction vector
+    neck_dx = neck_end_x - 0
+    neck_dy = neck_end_y - overstand
+
+    # Perpendicular to neck (rotated 90 degrees counterclockwise)
+    perp_neck_dx = -neck_dy
+    perp_neck_dy = neck_dx
+
+    # String direction vector
+    string_dx = bridge_top_x - nut_top_x
+    string_dy = bridge_top_y - nut_top_y
+
+    # Find intersection of string line with perpendicular line at body join
+    det = string_dx * perp_neck_dy - string_dy * perp_neck_dx
+
+    if abs(det) > 1e-10:  # Lines are not parallel
+        t = ((0 - nut_top_x) * perp_neck_dy - (overstand - nut_top_y) * perp_neck_dx) / det
+        intersect_x = nut_top_x + t * string_dx
+        intersect_y = nut_top_y + t * string_dy
+        nut_to_perp_distance = math.sqrt(
+            (intersect_x - nut_top_x)**2 + (intersect_y - nut_top_y)**2
+        )
+    else:
+        intersect_x = 0.0
+        intersect_y = 0.0
+        nut_to_perp_distance = 0.0
+
+    derived['Nut Perpendicular Intersection X'] = intersect_x
+    derived['Nut Perpendicular Intersection Y'] = intersect_y
+    derived['Nut to Perpendicular Distance'] = nut_to_perp_distance
+
+    # Calculate string height above end of fingerboard
+    # Vector from nut to fingerboard end
+    fb_dx = fb_bottom_end_x - neck_end_x
+    fb_dy = fb_bottom_end_y - neck_end_y
+
+    # Find parameter t along string line for position above fingerboard end
+    if string_dx != 0:
+        t = fb_dx / string_dx
+    else:
+        t = fb_dy / string_dy if string_dy != 0 else 0
+
+    string_x_at_fb_end = nut_top_x + t * string_dx
+    string_y_at_fb_end = nut_top_y + t * string_dy
+
+    # Calculate perpendicular distance from string point to fingerboard top surface
+    vec_x = string_x_at_fb_end - fb_top_right_x
+    vec_y = string_y_at_fb_end - fb_top_right_y
+
+    # Perpendicular direction to fingerboard
+    perp_dx = math.cos(perp_angle)
+    perp_dy = math.sin(perp_angle)
+
+    # Project vector onto perpendicular direction (dot product)
+    string_height_at_fb_end = vec_x * perp_dx + vec_y * perp_dy
+
+    # Point on fingerboard surface directly below string
+    fb_surface_point_x = string_x_at_fb_end - string_height_at_fb_end * perp_dx
+    fb_surface_point_y = string_y_at_fb_end - string_height_at_fb_end * perp_dy
+
+    derived['String X at Fingerboard End'] = string_x_at_fb_end
+    derived['String Y at Fingerboard End'] = string_y_at_fb_end
+    derived['Fingerboard Surface Point X'] = fb_surface_point_x
+    derived['Fingerboard Surface Point Y'] = fb_surface_point_y
+    derived['String Height at Fingerboard End'] = string_height_at_fb_end
+
     return derived
     
 def calculate_fret_positions(vsl: float, no_frets: int) -> list[float]:
@@ -326,127 +398,6 @@ def _add_document_text(exporter: ExportSVG, instrument_name: str, generator_url:
     footer_x = body_length / 2
     footer_text = footer_text.move(Location((footer_x, footer_y)))
     exporter.add_shape(footer_text, layer="text")
-
-
-def _calculate_nut_perpendicular_distance(neck_end_x: float, neck_end_y: float,
-                                         nut_top_x: float, nut_top_y: float,
-                                         bridge_top_x: float, bridge_top_y: float,
-                                         overstand: float) -> Tuple[float, float, float]:
-    """
-    Calculate perpendicular distance from nut to where string crosses a perpendicular to neck at body join.
-
-    Args:
-        neck_end_x: X coordinate of neck end
-        neck_end_y: Y coordinate of neck end
-        nut_top_x: X coordinate of nut top
-        nut_top_y: Y coordinate of nut top
-        bridge_top_x: X coordinate of bridge top
-        bridge_top_y: Y coordinate of bridge top
-        overstand: Overstand distance
-
-    Returns:
-        Tuple of (intersection_x, intersection_y, distance)
-        Returns (0, 0, 0) if lines are parallel
-    """
-    # Neck direction vector
-    neck_dx = neck_end_x - 0
-    neck_dy = neck_end_y - overstand
-
-    # Perpendicular to neck (rotated 90 degrees counterclockwise)
-    perp_neck_dx = -neck_dy
-    perp_neck_dy = neck_dx
-
-    # String direction vector
-    string_dx = bridge_top_x - nut_top_x
-    string_dy = bridge_top_y - nut_top_y
-
-    # Find intersection of string line with perpendicular line at body join
-    # String: P = (nut_top_x, nut_top_y) + t * (string_dx, string_dy)
-    # Perpendicular: Q = (0, overstand) + s * (perp_neck_dx, perp_neck_dy)
-    # Solve: nut_top_x + t*string_dx = 0 + s*perp_neck_dx
-    #        nut_top_y + t*string_dy = overstand + s*perp_neck_dy
-
-    # Using Cramer's rule to solve the 2x2 system
-    det = string_dx * perp_neck_dy - string_dy * perp_neck_dx
-
-    if abs(det) > 1e-10:  # Lines are not parallel
-        t = ((0 - nut_top_x) * perp_neck_dy - (overstand - nut_top_y) * perp_neck_dx) / det
-
-        # Calculate intersection point
-        intersect_x = nut_top_x + t * string_dx
-        intersect_y = nut_top_y + t * string_dy
-
-        # Calculate distance along string from nut to intersection
-        distance = math.sqrt(
-            (intersect_x - nut_top_x)**2 + (intersect_y - nut_top_y)**2
-        )
-
-        return intersect_x, intersect_y, distance
-
-    return 0.0, 0.0, 0.0
-
-
-def _calculate_string_height_at_fingerboard_end(nut_top_x: float, nut_top_y: float,
-                                                bridge_top_x: float, bridge_top_y: float,
-                                                neck_end_x: float, neck_end_y: float,
-                                                fb_bottom_end_x: float, fb_bottom_end_y: float,
-                                                fb_top_right_x: float, fb_top_right_y: float,
-                                                fb_direction_angle: float) -> Tuple[float, float, float, float, float]:
-    """
-    Calculate string height above end of fingerboard (perpendicular to fingerboard surface).
-
-    Args:
-        nut_top_x: X coordinate of nut top
-        nut_top_y: Y coordinate of nut top
-        bridge_top_x: X coordinate of bridge top
-        bridge_top_y: Y coordinate of bridge top
-        neck_end_x: X coordinate of neck end
-        neck_end_y: Y coordinate of neck end
-        fb_bottom_end_x: X coordinate of fingerboard bottom end
-        fb_bottom_end_y: Y coordinate of fingerboard bottom end
-        fb_top_right_x: X coordinate of fingerboard top right
-        fb_top_right_y: Y coordinate of fingerboard top right
-        fb_direction_angle: Fingerboard direction angle
-
-    Returns:
-        Tuple of (string_x_at_fb_end, string_y_at_fb_end, fb_surface_point_x, fb_surface_point_y, string_height)
-    """
-    # String direction vector
-    string_dx = bridge_top_x - nut_top_x
-    string_dy = bridge_top_y - nut_top_y
-
-    # Vector from nut to fingerboard end (along fingerboard)
-    fb_dx = fb_bottom_end_x - neck_end_x
-    fb_dy = fb_bottom_end_y - neck_end_y
-
-    # Find parameter t along string line for the position above fingerboard end
-    # Project the fingerboard endpoint onto the string line direction
-    if string_dx != 0:
-        t = fb_dx / string_dx
-    else:
-        t = fb_dy / string_dy if string_dy != 0 else 0
-
-    string_x_at_fb_end = nut_top_x + t * string_dx
-    string_y_at_fb_end = nut_top_y + t * string_dy
-
-    # Calculate perpendicular distance from string point to fingerboard top surface
-    # Vector from fingerboard top surface to string
-    vec_x = string_x_at_fb_end - fb_top_right_x
-    vec_y = string_y_at_fb_end - fb_top_right_y
-
-    # Perpendicular direction to fingerboard (fb_direction_angle + pi/2)
-    perp_angle = fb_direction_angle + math.pi/2
-    perp_dx = math.cos(perp_angle)
-    perp_dy = math.sin(perp_angle)
-
-    # Project vector onto perpendicular direction (dot product)
-    string_height = vec_x * perp_dx + vec_y * perp_dy
-
-    # Point on fingerboard surface directly below string (for dimension line)
-    fb_surface_point_x = string_x_at_fb_end - string_height * perp_dx
-    fb_surface_point_y = string_y_at_fb_end - string_height * perp_dy
-
-    return string_x_at_fb_end, string_y_at_fb_end, fb_surface_point_x, fb_surface_point_y, string_height
 
 
 def _add_dimensions(exporter: ExportSVG, show_measurements: bool,
@@ -647,18 +598,15 @@ def generate_side_view_svg(params: Dict[str, Any]) -> str:
         exporter, nut_top_x, nut_top_y, bridge_top_x, bridge_top_y
     )
 
-    # Calculate values needed for dimensions
-    intersect_x, intersect_y, nut_to_perp_distance = _calculate_nut_perpendicular_distance(
-        neck_end_x, neck_end_y, nut_top_x, nut_top_y,
-        bridge_top_x, bridge_top_y, overstand
-    )
-
-    (string_x_at_fb_end, string_y_at_fb_end, fb_surface_point_x,
-     fb_surface_point_y, string_height_at_fb_end) = _calculate_string_height_at_fingerboard_end(
-        nut_top_x, nut_top_y, bridge_top_x, bridge_top_y,
-        neck_end_x, neck_end_y, fb_bottom_end_x, fb_bottom_end_y,
-        fb_top_right_x, fb_top_right_y, fb_direction_angle
-    )
+    # Extract calculated dimension values from derived dictionary
+    intersect_x = derived.get('Nut Perpendicular Intersection X', 0)
+    intersect_y = derived.get('Nut Perpendicular Intersection Y', 0)
+    nut_to_perp_distance = derived.get('Nut to Perpendicular Distance', 0)
+    string_x_at_fb_end = derived.get('String X at Fingerboard End', 0)
+    string_y_at_fb_end = derived.get('String Y at Fingerboard End', 0)
+    fb_surface_point_x = derived.get('Fingerboard Surface Point X', 0)
+    fb_surface_point_y = derived.get('Fingerboard Surface Point Y', 0)
+    string_height_at_fb_end = derived.get('String Height at Fingerboard End', 0)
 
     # Add dimensions
     _add_dimensions(
