@@ -22,7 +22,8 @@ export async function downloadPDF(collectParameters, sanitizeFilename) {
             'top': 'top-view',
             'side': 'side-view',
             'cross_section': 'cross-section',
-            'dimensions': 'dimensions'
+            'dimensions': 'dimensions',
+            'fret_positions': 'fret-positions'
         };
 
         const params = collectParameters();
@@ -43,6 +44,30 @@ export async function downloadPDF(collectParameters, sanitizeFilename) {
                 styles: { fontSize: 9 }
             });
             doc.save(`${filename}_dimensions.pdf`);
+            return;
+        }
+
+        if (currentView === 'fret_positions') {
+            const fretData = state.views.fret_positions;
+            if (!fretData || !fretData.available) {
+                alert('Fret positions not available for this instrument family.');
+                return;
+            }
+            const doc = new jsPDF();
+            doc.setFontSize(16);
+            doc.text(`${instrumentName} - Fret Positions`, 14, 15);
+            doc.setFontSize(10);
+            doc.text(`Generated: ${new Date().toLocaleDateString()}`, 14, 22);
+            doc.text(`Vibrating String Length: ${fretData.vsl} mm`, 14, 27);
+            doc.text(`Number of Frets: ${fretData.no_frets}`, 14, 32);
+            doc.autoTable({
+                html: '.fret-table',
+                startY: 37,
+                theme: 'grid',
+                headStyles: { fillColor: [79, 70, 229] },
+                styles: { fontSize: 9 }
+            });
+            doc.save(`${filename}_fret-positions.pdf`);
             return;
         }
 
