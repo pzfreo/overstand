@@ -235,11 +235,10 @@ INSTRUMENT_PARAMETERS = {
     'no_frets': NumericParameter(
         name='no_frets',
         label='Number of Frets',
-        default=None,
+        default=7,
         min_val=0,
         max_val=30,
         step=1,
-        decimals=0,
         unit='',
         visible_when={'instrument_family': ['VIOL', 'GUITAR_MANDOLIN']},
         description='Number of frets to calculate positions for',
