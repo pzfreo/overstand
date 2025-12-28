@@ -174,80 +174,37 @@ def exporter_to_svg(exp: ExportSVG) -> str:
     return exp.write(filename=None)
 
 
-
-
-def generate_side_view_svg(params: Dict[str, Any]) -> str:
-    vsl = params.get('vsl')
-    # neck_stop = params.get('neck_stop')
-    body_stop = params.get('body_stop')
-    arching_height = params.get('arching_height')
-    body_length = params.get('body_length')
-    rib_height = params.get('rib_height')
-    neck_thickness_at_first = params.get('neck_thickness_at_first')
-    neck_thickness_at_seventh = params.get('neck_thickness_at_seventh')
-    bridge_height = params.get('bridge_height')
-    belly_edge_thickness = params.get('belly_edge_thickness', 3.5)  # Default to 3.5mm if not provided
-    body_width = params.get('body_width')
-    overstand = params.get('overstand', 0)
-    fb_thickness_at_nut = params.get('fb_thickness_at_nut', 5.0)
-    fb_thickness_at_join = params.get('fb_thickness_at_join', 7.0)
-    string_height_nut = params.get('string_height_nut', 0.5)
-    string_height_eof = params.get('string_height_eof', 4.0)
-    fingerboard_length = params.get('fingerboard_length', 270.0)
-    instrument_name = params.get('instrument_name', 'Instrument')
-    generator_url = params.get('_generator_url', 'https://github.com/pzfreo/diagram-creator')
-    show_measurements = params.get('show_measurements', True)
-
-    derived = calculate_derived_values(params)
-    body_stop = derived.get('Body Stop', body_stop) #calculated body_stop should work for Mandolins
-    neck_angle_deg = derived.get('Neck Angle', 0)
-    neck_stop = derived.get('Neck Stop', 0)
-    string_length = derived.get('String Length', 0)
-    nut_top_y = derived.get('Nut Relative to Ribs', 0)
-
-    # Extract geometry values from derived dictionary
-    neck_angle_rad = derived.get('Neck Angle (rad)', 0)
-    neck_end_x = derived.get('Neck End X', 0)
-    neck_end_y = derived.get('Neck End Y', 0)
-    nut_radius = derived.get('Nut Draw Radius', 0)
-    neck_line_angle = derived.get('Neck Line Angle', 0)
-    nut_top_x = derived.get('Nut Top X', 0)
-    nut_top_y = derived.get('Nut Top Y', 0)
-    bridge_top_x = derived.get('Bridge Top X', 0)
-    bridge_top_y = derived.get('Bridge Top Y', 0)
-    fb_direction_angle = derived.get('Fingerboard Direction Angle', 0)
-    fb_bottom_end_x = derived.get('Fingerboard Bottom End X', 0)
-    fb_bottom_end_y = derived.get('Fingerboard Bottom End Y', 0)
-    fb_thickness_at_end = derived.get('Fingerboard Thickness at End', 0)
-
-    
-
-    # Export to SVG
-    exporter = ExportSVG(scale=1.0,unit=Unit.MM, line_weight=0.5)
-    exporter.add_layer("text",fill_color=(0,0,255),line_type=LineType.HIDDEN)
-    exporter.add_layer("drawing",fill_color=None, line_color=(0,0,0),line_type=LineType.CONTINUOUS)
-    exporter.add_layer("schematic",fill_color=None, line_color=(0,0,0),line_type=LineType.DASHED)
-    exporter.add_layer("schematic_dotted",fill_color=None, line_color=(100,100,100),line_type=LineType.DOTTED)
+def _setup_exporter(show_measurements: bool) -> ExportSVG:
+    """Create and configure SVG exporter with all necessary layers."""
+    exporter = ExportSVG(scale=1.0, unit=Unit.MM, line_weight=0.5)
+    exporter.add_layer("text", fill_color=(0,0,255), line_type=LineType.HIDDEN)
+    exporter.add_layer("drawing", fill_color=None, line_color=(0,0,0), line_type=LineType.CONTINUOUS)
+    exporter.add_layer("schematic", fill_color=None, line_color=(0,0,0), line_type=LineType.DASHED)
+    exporter.add_layer("schematic_dotted", fill_color=None, line_color=(100,100,100), line_type=LineType.DOTTED)
 
     # Dimension layers - invisible if show_measurements is False
     dim_color = (255,0,0) if show_measurements else None
-    exporter.add_layer("dimensions",fill_color=dim_color, line_color=dim_color,line_type=LineType.DASHED)
-    exporter.add_layer("extensions",fill_color=None, line_color=dim_color,line_type=LineType.CONTINUOUS)
-    exporter.add_layer("arrows",fill_color=dim_color, line_color=dim_color,line_type=LineType.CONTINUOUS)
+    exporter.add_layer("dimensions", fill_color=dim_color, line_color=dim_color, line_type=LineType.DASHED)
+    exporter.add_layer("extensions", fill_color=None, line_color=dim_color, line_type=LineType.CONTINUOUS)
+    exporter.add_layer("arrows", fill_color=dim_color, line_color=dim_color, line_type=LineType.CONTINUOUS)
 
+    return exporter
+
+
+def _draw_body(exporter: ExportSVG, body_length: float, belly_edge_thickness: float,
+               rib_height: float, body_stop: float, arching_height: float) -> None:
+    """Draw body geometry: belly edge, ribs, and arched top."""
     # Add belly edge thickness rectangle at top
     belly_rect = Rectangle(width=body_length, height=belly_edge_thickness)
     belly_rect = belly_rect.move(Location((body_length/2, belly_edge_thickness/2)))
     exporter.add_shape(belly_rect, layer="drawing")
 
     # Add rectangle for body (ribs) with top at belly edge thickness
-    # Rectangle is centered by default, so we need to move it
     rect = Rectangle(width=body_length, height=rib_height)
     rect = rect.move(Location((body_length/2, belly_edge_thickness - rib_height/2)))
     exporter.add_shape(rect, layer="drawing")
 
-    # Add arched top as smooth interpolating spline:
-    # The spline passes through the belly edges and peaks exactly at arching_height
+    # Add arched top as smooth interpolating spline
     arch_spline = Spline.interpolate_three_points(
         (0, belly_edge_thickness),           # Left edge
         (body_stop, arching_height),         # Peak (curve passes through here)
@@ -255,30 +212,27 @@ def generate_side_view_svg(params: Dict[str, Any]) -> str:
     )
     exporter.add_shape(arch_spline, layer="schematic")
 
+
+def _draw_neck(exporter: ExportSVG, overstand: float, neck_end_x: float, neck_end_y: float,
+               bridge_height: float, body_stop: float, arching_height: float,
+               nut_radius: float, neck_line_angle: float, neck_angle_deg: float) -> Tuple:
+    """Draw neck structure including angles and nut. Returns neck lines for dimension annotation."""
     # Add vertical line from arch peak extending by bridge_height
     bridge_line = Edge.make_line((body_stop, arching_height), (body_stop, arching_height + bridge_height))
     exporter.add_shape(bridge_line, layer="drawing")
 
-    # Add neck angle reference lines
-    # Line 1: Vertical from (0, 0) to (0, overstand)
+    # Add vertical line from ribs (y=0) extending to overstand
     neck_vertical_line = Edge.make_line((0, 0), (0, overstand))
     exporter.add_shape(neck_vertical_line, layer="drawing")
 
-    # Line 2: From (0, overstand) at neck_angle, going down and left for length neck_stop
-    # Using precomputed values from derived dictionary
+    # Add angled line from top of vertical line (ribs+overstand) to neck end
     neck_angled_line = Edge.make_line((0, overstand), (neck_end_x, neck_end_y))
     exporter.add_shape(neck_angled_line, layer="drawing")
 
     # Add nut as a quarter circle at the end of the neck
-    # The quarter circle is centered at the nut position and extends perpendicular to the neck surface
-    # Using precomputed nut_radius and neck_line_angle from derived dictionary
+    start_angle = neck_line_angle - math.pi/2
+    end_angle = start_angle + math.pi/2
 
-    # The quarter circle extends perpendicular to the neck surface, away from body and above neck
-    # Rotated 180 degrees to extend away from body (left) and above the neck
-    start_angle = neck_line_angle - math.pi/2  # Perpendicular outward (rotated 180°)
-    end_angle = start_angle + math.pi/2  # Quarter circle (90 degrees)
-
-    # Create the quarter circle as a proper SVG arc on dotted layer
     nut_arc = Arc.make_arc(
         center=(neck_end_x, neck_end_y),
         radius=nut_radius,
@@ -287,7 +241,7 @@ def generate_side_view_svg(params: Dict[str, Any]) -> str:
     )
     exporter.add_shape(nut_arc, layer="schematic_dotted")
 
-    # Add radial lines from center to arc endpoints to complete the pie slice (also dotted)
+    # Add radial lines from center to arc endpoints
     arc_start_x = neck_end_x + nut_radius * math.cos(start_angle)
     arc_start_y = neck_end_y + nut_radius * math.sin(start_angle)
     arc_end_x = neck_end_x + nut_radius * math.cos(end_angle)
@@ -299,41 +253,51 @@ def generate_side_view_svg(params: Dict[str, Any]) -> str:
     radius_line_2 = Edge.make_line((neck_end_x, neck_end_y), (arc_end_x, arc_end_y))
     exporter.add_shape(radius_line_2, layer="schematic_dotted")
 
-    # Add angle annotation between the two lines (use rounded value for display)
+    # Add angle annotation between the two lines
     for shape, layer in create_angle_dimension(neck_vertical_line, neck_angled_line,
                                               label=f"{neck_angle_deg:.1f}°",
-                                              arc_radius=12, line_extension=0, text_inside=True):
+                                              arc_radius=15, font_size=DIMENSION_FONT_SIZE,
+                                              text_inside=True):
         exporter.add_shape(shape, layer=layer)
 
-    # Add fingerboard
-    # Fingerboard bottom: runs along the neck surface from nut toward body for length fingerboard_length
-    # Using precomputed fingerboard geometry from derived dictionary
+    return neck_vertical_line, neck_angled_line
+
+
+def _draw_fingerboard(exporter: ExportSVG, neck_end_x: float, neck_end_y: float,
+                      fb_bottom_end_x: float, fb_bottom_end_y: float,
+                      fb_thickness_at_nut: float, fb_thickness_at_end: float,
+                      fb_direction_angle: float) -> Tuple:
+    """Draw fingerboard as 4-sided polygon. Returns top edge endpoints for dimension calculations."""
+    # Bottom edge: from nut to body join along neck surface
     fb_bottom_line = Edge.make_line((neck_end_x, neck_end_y), (fb_bottom_end_x, fb_bottom_end_y))
     exporter.add_shape(fb_bottom_line, layer="drawing")
 
-    # Fingerboard left edge (at nut): perpendicular to bottom, length fb_thickness_at_nut
-    fb_top_left_x = neck_end_x + fb_thickness_at_nut * math.cos(fb_direction_angle + math.pi/2)
-    fb_top_left_y = neck_end_y + fb_thickness_at_nut * math.sin(fb_direction_angle + math.pi/2)
-    fb_left_edge = Edge.make_line((neck_end_x, neck_end_y), (fb_top_left_x, fb_top_left_y))
+    # Calculate perpendicular direction (90° counterclockwise from fingerboard direction)
+    perp_angle = fb_direction_angle + math.pi/2
+
+    # Left edge: nut thickness perpendicular to neck surface
+    fb_top_nut_x = neck_end_x + fb_thickness_at_nut * math.cos(perp_angle)
+    fb_top_nut_y = neck_end_y + fb_thickness_at_nut * math.sin(perp_angle)
+    fb_left_edge = Edge.make_line((neck_end_x, neck_end_y), (fb_top_nut_x, fb_top_nut_y))
     exporter.add_shape(fb_left_edge, layer="drawing")
 
-    # Fingerboard top edge: using precomputed thickness at end
-
-    # Top right corner: offset perpendicular from bottom right corner
-    fb_top_right_x = fb_bottom_end_x + fb_thickness_at_end * math.cos(fb_direction_angle + math.pi/2)
-    fb_top_right_y = fb_bottom_end_y + fb_thickness_at_end * math.sin(fb_direction_angle + math.pi/2)
-    fb_top_edge = Edge.make_line((fb_top_left_x, fb_top_left_y), (fb_top_right_x, fb_top_right_y))
-    exporter.add_shape(fb_top_edge, layer="drawing")
-
-    # Fingerboard right edge: closes the rectangle
-    fb_right_edge = Edge.make_line((fb_bottom_end_x, fb_bottom_end_y), (fb_top_right_x, fb_top_right_y))
+    # Right edge: body join thickness
+    fb_top_end_x = fb_bottom_end_x + fb_thickness_at_end * math.cos(perp_angle)
+    fb_top_end_y = fb_bottom_end_y + fb_thickness_at_end * math.sin(perp_angle)
+    fb_right_edge = Edge.make_line((fb_bottom_end_x, fb_bottom_end_y), (fb_top_end_x, fb_top_end_y))
     exporter.add_shape(fb_right_edge, layer="drawing")
 
-    # Add strings from top of nut to top of bridge
-    # Using precomputed nut_top and bridge_top positions from derived dictionary
+    # Top edge: connect nut top to body join top
+    fb_top_edge = Edge.make_line((fb_top_nut_x, fb_top_nut_y), (fb_top_end_x, fb_top_end_y))
+    exporter.add_shape(fb_top_edge, layer="drawing")
 
+    return fb_top_end_x, fb_top_end_y
+
+
+def _draw_string_and_references(exporter: ExportSVG, nut_top_x: float, nut_top_y: float,
+                                bridge_top_x: float, bridge_top_y: float) -> Tuple:
+    """Draw string line and horizontal reference line. Returns reference line end x and string line."""
     # Add horizontal reference line from top of ribs (0,0) extending 20mm beyond nut
-    # This reference line is part of the measurements system
     reference_line_end_x = nut_top_x - 20
     reference_line = Edge.make_line((0, 0), (reference_line_end_x, 0))
     exporter.add_shape(reference_line, layer="extensions")
@@ -342,22 +306,48 @@ def generate_side_view_svg(params: Dict[str, Any]) -> str:
     string_line = Edge.make_line((nut_top_x, nut_top_y), (bridge_top_x, bridge_top_y))
     exporter.add_shape(string_line, layer="drawing")
 
+    return reference_line_end_x, string_line
 
-    # Dimension: vertical distance from ribs (y=0) to top of nut
-    if show_measurements:
-        rib_to_nut_feature_line = Edge.make_line((reference_line_end_x, 0), (reference_line_end_x, nut_top_y))
-        for shape, layer in create_vertical_dimension(rib_to_nut_feature_line,
-                                                       f"{nut_top_y:.1f}",
-                                                       offset_x=-8, font_size=DIMENSION_FONT_SIZE):
-            exporter.add_shape(shape, layer=layer)
 
-    # Add diagonal dimension for string length (using precomputed value from derived dictionary)
-    for shape, layer in create_diagonal_dimension(string_line, f"{string_length:.1f}",
-                                                   offset_distance=10, font_size=DIMENSION_FONT_SIZE):
-        exporter.add_shape(shape, layer=layer)
+def _add_document_text(exporter: ExportSVG, instrument_name: str, generator_url: str,
+                       body_length: float, rib_height: float, belly_edge_thickness: float,
+                       arching_height: float, bridge_height: float) -> None:
+    """Add document title and generator attribution."""
+    # Title at top center
+    title_text = Text(instrument_name, TITLE_FONT_SIZE, font=FONT_NAME)
+    title_y = arching_height + bridge_height + 25
+    title_x = body_length / 2
+    title_text = title_text.move(Location((title_x, title_y)))
+    exporter.add_shape(title_text, layer="text")
 
-    # Add dimension from nut to where string crosses a perpendicular to neck at body join
-    # The perpendicular is at (0, overstand) and perpendicular to the neck surface
+    # Footer at bottom
+    footer_text = Text(generator_url, FOOTER_FONT_SIZE, font=FONT_NAME)
+    footer_y = belly_edge_thickness - rib_height - 15
+    footer_x = body_length / 2
+    footer_text = footer_text.move(Location((footer_x, footer_y)))
+    exporter.add_shape(footer_text, layer="text")
+
+
+def _calculate_nut_perpendicular_distance(neck_end_x: float, neck_end_y: float,
+                                         nut_top_x: float, nut_top_y: float,
+                                         bridge_top_x: float, bridge_top_y: float,
+                                         overstand: float) -> Tuple[float, float, float]:
+    """
+    Calculate perpendicular distance from nut to where string crosses a perpendicular to neck at body join.
+
+    Args:
+        neck_end_x: X coordinate of neck end
+        neck_end_y: Y coordinate of neck end
+        nut_top_x: X coordinate of nut top
+        nut_top_y: Y coordinate of nut top
+        bridge_top_x: X coordinate of bridge top
+        bridge_top_y: Y coordinate of bridge top
+        overstand: Overstand distance
+
+    Returns:
+        Tuple of (intersection_x, intersection_y, distance)
+        Returns (0, 0, 0) if lines are parallel
+    """
     # Neck direction vector
     neck_dx = neck_end_x - 0
     neck_dy = neck_end_y - overstand
@@ -387,28 +377,41 @@ def generate_side_view_svg(params: Dict[str, Any]) -> str:
         intersect_y = nut_top_y + t * string_dy
 
         # Calculate distance along string from nut to intersection
-        nut_to_perp_distance = math.sqrt(
+        distance = math.sqrt(
             (intersect_x - nut_top_x)**2 + (intersect_y - nut_top_y)**2
         )
 
-        # Create dimension line along this portion of the string (above the full string dimension)
-        nut_to_perp_line = Edge.make_line((nut_top_x, nut_top_y), (intersect_x, intersect_y))
-        for shape, layer in create_diagonal_dimension(nut_to_perp_line,
-                                                       f"{nut_to_perp_distance:.1f}",
-                                                       offset_distance=20, font_size=DIMENSION_FONT_SIZE):
-            exporter.add_shape(shape, layer=layer)
+        return intersect_x, intersect_y, distance
 
-    # Calculate string height above end of fingerboard (perpendicular to fingerboard surface)
-    # Find the position along the fingerboard bottom at fingerboard_length
-    # This is the same as fb_bottom_end position
+    return 0.0, 0.0, 0.0
 
-    # Find where the string crosses at this position along the fingerboard
-    # We need to find the intersection or projection
-    # String line goes from (nut_top_x, nut_top_y) to (bridge_top_x, bridge_top_y)
-    # We want to find the string position at the same distance along the fingerboard as fb_bottom_end
 
-    # Use parametric approach: find string position at the x,y position of fingerboard end
-    # Calculate where string intersects with perpendicular from fingerboard end
+def _calculate_string_height_at_fingerboard_end(nut_top_x: float, nut_top_y: float,
+                                                bridge_top_x: float, bridge_top_y: float,
+                                                neck_end_x: float, neck_end_y: float,
+                                                fb_bottom_end_x: float, fb_bottom_end_y: float,
+                                                fb_top_right_x: float, fb_top_right_y: float,
+                                                fb_direction_angle: float) -> Tuple[float, float, float, float, float]:
+    """
+    Calculate string height above end of fingerboard (perpendicular to fingerboard surface).
+
+    Args:
+        nut_top_x: X coordinate of nut top
+        nut_top_y: Y coordinate of nut top
+        bridge_top_x: X coordinate of bridge top
+        bridge_top_y: Y coordinate of bridge top
+        neck_end_x: X coordinate of neck end
+        neck_end_y: Y coordinate of neck end
+        fb_bottom_end_x: X coordinate of fingerboard bottom end
+        fb_bottom_end_y: Y coordinate of fingerboard bottom end
+        fb_top_right_x: X coordinate of fingerboard top right
+        fb_top_right_y: Y coordinate of fingerboard top right
+        fb_direction_angle: Fingerboard direction angle
+
+    Returns:
+        Tuple of (string_x_at_fb_end, string_y_at_fb_end, fb_surface_point_x, fb_surface_point_y, string_height)
+    """
+    # String direction vector
     string_dx = bridge_top_x - nut_top_x
     string_dy = bridge_top_y - nut_top_y
 
@@ -437,14 +440,71 @@ def generate_side_view_svg(params: Dict[str, Any]) -> str:
     perp_dy = math.sin(perp_angle)
 
     # Project vector onto perpendicular direction (dot product)
-    string_height_at_fb_end = vec_x * perp_dx + vec_y * perp_dy
+    string_height = vec_x * perp_dx + vec_y * perp_dy
 
     # Point on fingerboard surface directly below string (for dimension line)
-    fb_surface_point_x = string_x_at_fb_end - string_height_at_fb_end * perp_dx
-    fb_surface_point_y = string_y_at_fb_end - string_height_at_fb_end * perp_dy
+    fb_surface_point_x = string_x_at_fb_end - string_height * perp_dx
+    fb_surface_point_y = string_y_at_fb_end - string_height * perp_dy
 
-    # Add dimension annotations using helper functions
-    # (DIMENSION_FONT_SIZE already defined above)
+    return string_x_at_fb_end, string_y_at_fb_end, fb_surface_point_x, fb_surface_point_y, string_height
+
+
+def _add_dimensions(exporter: ExportSVG, show_measurements: bool,
+                    reference_line_end_x: float, nut_top_x: float, nut_top_y: float,
+                    bridge_top_x: float, bridge_top_y: float, string_line,
+                    string_length: float, neck_end_x: float, neck_end_y: float,
+                    overstand: float, body_stop: float, arching_height: float,
+                    bridge_height: float, body_length: float, rib_height: float,
+                    belly_edge_thickness: float, fb_surface_point_x: float,
+                    fb_surface_point_y: float, string_x_at_fb_end: float,
+                    string_y_at_fb_end: float, string_height_at_fb_end: float,
+                    intersect_x: float, intersect_y: float,
+                    nut_to_perp_distance: float) -> None:
+    """
+    Add all dimension annotations to the drawing.
+
+    Args:
+        exporter: SVG exporter to add shapes to
+        show_measurements: Whether to show certain measurements
+        reference_line_end_x: X coordinate of reference line end
+        nut_top_x, nut_top_y: Nut top coordinates
+        bridge_top_x, bridge_top_y: Bridge top coordinates
+        string_line: String line edge
+        string_length: Calculated string length
+        neck_end_x, neck_end_y: Neck end coordinates
+        overstand: Overstand distance
+        body_stop: Body stop position
+        arching_height: Arching height
+        bridge_height: Bridge height
+        body_length: Total body length
+        rib_height: Rib height
+        belly_edge_thickness: Belly edge thickness
+        fb_surface_point_x, fb_surface_point_y: Fingerboard surface point coordinates
+        string_x_at_fb_end, string_y_at_fb_end: String position at fingerboard end
+        string_height_at_fb_end: String height at fingerboard end
+        intersect_x, intersect_y: Intersection point coordinates
+        nut_to_perp_distance: Distance from nut to perpendicular
+    """
+    # Dimension: vertical distance from ribs (y=0) to top of nut
+    if show_measurements:
+        rib_to_nut_feature_line = Edge.make_line((reference_line_end_x, 0), (reference_line_end_x, nut_top_y))
+        for shape, layer in create_vertical_dimension(rib_to_nut_feature_line,
+                                                       f"{nut_top_y:.1f}",
+                                                       offset_x=-8, font_size=DIMENSION_FONT_SIZE):
+            exporter.add_shape(shape, layer=layer)
+
+    # Add diagonal dimension for string length (using precomputed value from derived dictionary)
+    for shape, layer in create_diagonal_dimension(string_line, f"{string_length:.1f}",
+                                                   offset_distance=10, font_size=DIMENSION_FONT_SIZE):
+        exporter.add_shape(shape, layer=layer)
+
+    # Add dimension from nut to where string crosses a perpendicular to neck at body join
+    if nut_to_perp_distance > 0:  # Only add if calculation succeeded
+        nut_to_perp_line = Edge.make_line((nut_top_x, nut_top_y), (intersect_x, intersect_y))
+        for shape, layer in create_diagonal_dimension(nut_to_perp_line,
+                                                       f"{nut_to_perp_distance:.1f}",
+                                                       offset_distance=20, font_size=DIMENSION_FONT_SIZE):
+            exporter.add_shape(shape, layer=layer)
 
     # Dimension: string height above end of fingerboard (perpendicular)
     string_height_feature_line = Edge.make_line((fb_surface_point_x, fb_surface_point_y),
@@ -518,26 +578,106 @@ def generate_side_view_svg(params: Dict[str, Any]) -> str:
                                                    offset_x=15, font_size=DIMENSION_FONT_SIZE):
         exporter.add_shape(shape, layer=layer)
 
-    # Title text - centered horizontally, 2.5cm above the highest point
-    # Highest point is the top of the bridge line (plus some margin for dimension text)
-    max_y = arching_height + bridge_height
-    title_gap = 25  # 2.5cm gap to account for dimension lines and text
-    title_text = Text(instrument_name, TITLE_FONT_SIZE, font=FONT_NAME)
-    # Center the title (approximate centering based on character width)
-    title_width_approx = len(instrument_name) * TITLE_FONT_SIZE * 0.6
-    title_text = title_text.move(Location((body_length/2 - title_width_approx/2, max_y + title_gap)))
-    exporter.add_shape(title_text, layer="text")
 
-    # Find the minimum y coordinate to place footer below everything
-    # The lowest point is from the dimension lines below the body
-    bottom_y = belly_edge_thickness - rib_height
-    min_y = bottom_y - 30 - 15  # Below the body_length dimension line (-30) and gap (-15)
+def generate_side_view_svg(params: Dict[str, Any]) -> str:
+    """
+    Generate side view SVG of instrument neck geometry.
 
-    # Footer text - small text with generator URL
-    footer_text = Text(f"Generated by {generator_url}", FOOTER_FONT_SIZE, font=FONT_NAME)
-    footer_text = footer_text.move(Location((0, min_y)))
-    exporter.add_shape(footer_text, layer="text")
+    Orchestrates the drawing of body, neck, fingerboard, string,
+    dimensions, and document text by calling specialized helper functions.
 
+    Args:
+        params: Dictionary of instrument parameters
+
+    Returns:
+        SVG string representation of the side view
+    """
+    # Extract parameters
+    instrument_name = params.get('instrument_name', 'Instrument')
+    generator_url = params.get('_generator_url', 'https://github.com/pzfreo/diagram-creator')
+    show_measurements = params.get('show_measurements', True)
+
+    # Calculate derived values
+    derived = calculate_derived_values(params)
+    body_stop = derived.get('Body Stop', params.get('body_stop'))
+    neck_angle_deg = derived.get('Neck Angle', 0)
+    string_length = derived.get('String Length', 0)
+
+    # Extract geometry values from derived dictionary
+    neck_end_x = derived.get('Neck End X', 0)
+    neck_end_y = derived.get('Neck End Y', 0)
+    nut_radius = derived.get('Nut Draw Radius', 0)
+    neck_line_angle = derived.get('Neck Line Angle', 0)
+    nut_top_x = derived.get('Nut Top X', 0)
+    nut_top_y = derived.get('Nut Top Y', 0)
+    bridge_top_x = derived.get('Bridge Top X', 0)
+    bridge_top_y = derived.get('Bridge Top Y', 0)
+    fb_direction_angle = derived.get('Fingerboard Direction Angle', 0)
+    fb_bottom_end_x = derived.get('Fingerboard Bottom End X', 0)
+    fb_bottom_end_y = derived.get('Fingerboard Bottom End Y', 0)
+    fb_thickness_at_end = derived.get('Fingerboard Thickness at End', 0)
+
+    # Extract parameter values needed for drawing
+    body_length = params.get('body_length')
+    belly_edge_thickness = params.get('belly_edge_thickness', 3.5)
+    rib_height = params.get('rib_height')
+    arching_height = params.get('arching_height')
+    bridge_height = params.get('bridge_height')
+    overstand = params.get('overstand', 0)
+    fb_thickness_at_nut = params.get('fb_thickness_at_nut', 5.0)
+
+    # Setup exporter with layers
+    exporter = _setup_exporter(show_measurements)
+
+    # Draw components in order
+    _draw_body(exporter, body_length, belly_edge_thickness, rib_height,
+               body_stop, arching_height)
+
+    neck_vertical_line, neck_angled_line = _draw_neck(
+        exporter, overstand, neck_end_x, neck_end_y, bridge_height,
+        body_stop, arching_height, nut_radius, neck_line_angle, neck_angle_deg
+    )
+
+    fb_top_right_x, fb_top_right_y = _draw_fingerboard(
+        exporter, neck_end_x, neck_end_y, fb_bottom_end_x, fb_bottom_end_y,
+        fb_thickness_at_nut, fb_thickness_at_end, fb_direction_angle
+    )
+
+    reference_line_end_x, string_line = _draw_string_and_references(
+        exporter, nut_top_x, nut_top_y, bridge_top_x, bridge_top_y
+    )
+
+    # Calculate values needed for dimensions
+    intersect_x, intersect_y, nut_to_perp_distance = _calculate_nut_perpendicular_distance(
+        neck_end_x, neck_end_y, nut_top_x, nut_top_y,
+        bridge_top_x, bridge_top_y, overstand
+    )
+
+    (string_x_at_fb_end, string_y_at_fb_end, fb_surface_point_x,
+     fb_surface_point_y, string_height_at_fb_end) = _calculate_string_height_at_fingerboard_end(
+        nut_top_x, nut_top_y, bridge_top_x, bridge_top_y,
+        neck_end_x, neck_end_y, fb_bottom_end_x, fb_bottom_end_y,
+        fb_top_right_x, fb_top_right_y, fb_direction_angle
+    )
+
+    # Add dimensions
+    _add_dimensions(
+        exporter, show_measurements, reference_line_end_x,
+        nut_top_x, nut_top_y, bridge_top_x, bridge_top_y, string_line,
+        string_length, neck_end_x, neck_end_y, overstand,
+        body_stop, arching_height, bridge_height, body_length,
+        rib_height, belly_edge_thickness, fb_surface_point_x,
+        fb_surface_point_y, string_x_at_fb_end, string_y_at_fb_end,
+        string_height_at_fb_end, intersect_x, intersect_y,
+        nut_to_perp_distance
+    )
+
+    # Add document text
+    _add_document_text(exporter, instrument_name, generator_url,
+                       body_length, rib_height, belly_edge_thickness,
+                       arching_height, bridge_height)
+
+    # Generate and return SVG
     return exporter_to_svg(exporter)
     
 
