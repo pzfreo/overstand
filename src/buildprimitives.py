@@ -69,6 +69,61 @@ class Edge:
         return f"M {self.p1[0]},{self.p1[1]} L {self.p2[0]},{self.p2[1]}"
 
 
+class Arc:
+    """Represents a circular arc segment"""
+
+    def __init__(self, center: Tuple[float, float], radius: float,
+                 start_angle: float, end_angle: float):
+        """
+        Create an arc.
+
+        Args:
+            center: Center point (x, y)
+            radius: Arc radius
+            start_angle: Start angle in radians
+            end_angle: End angle in radians
+        """
+        self.center = center
+        self.radius = radius
+        self.start_angle = start_angle
+        self.end_angle = end_angle
+
+    @staticmethod
+    def make_arc(center: Tuple[float, float], radius: float,
+                 start_angle: float, end_angle: float) -> 'Arc':
+        """Create an arc from center, radius, and angles"""
+        return Arc(center, radius, start_angle, end_angle)
+
+    def position_at(self, t: float) -> Point:
+        """Get position along the arc (t=0 is start, t=1 is end)"""
+        angle = self.start_angle + t * (self.end_angle - self.start_angle)
+        x = self.center[0] + self.radius * math.cos(angle)
+        y = self.center[1] + self.radius * math.sin(angle)
+        return Point(x, y)
+
+    def to_svg_path(self) -> str:
+        """Convert arc to SVG path data using arc command"""
+        # Calculate start and end points
+        start_x = self.center[0] + self.radius * math.cos(self.start_angle)
+        start_y = self.center[1] + self.radius * math.sin(self.start_angle)
+        end_x = self.center[0] + self.radius * math.cos(self.end_angle)
+        end_y = self.center[1] + self.radius * math.sin(self.end_angle)
+
+        # Determine if this is a large arc (> 180 degrees)
+        angle_diff = self.end_angle - self.start_angle
+        # Normalize to 0-2π range
+        while angle_diff < 0:
+            angle_diff += 2 * math.pi
+        while angle_diff > 2 * math.pi:
+            angle_diff -= 2 * math.pi
+
+        large_arc_flag = 1 if angle_diff > math.pi else 0
+        sweep_flag = 1  # Always sweep in positive angle direction
+
+        # SVG arc command: A rx ry x-axis-rotation large-arc-flag sweep-flag x y
+        return f"M {start_x},{start_y} A {self.radius},{self.radius} 0 {large_arc_flag} {sweep_flag} {end_x},{end_y}"
+
+
 class Rectangle:
     """Represents a rectangle (centered by default)"""
 
@@ -320,6 +375,37 @@ class ExportSVG:
                     max_x = max(max_x, px)
                     min_y = min(min_y, py)
                     max_y = max(max_y, py)
+            elif isinstance(shape, Arc):
+                # Calculate bounds of arc by checking start, end, and potential extrema
+                points = []
+                # Start and end points
+                points.append((shape.center[0] + shape.radius * math.cos(shape.start_angle),
+                               shape.center[1] + shape.radius * math.sin(shape.start_angle)))
+                points.append((shape.center[0] + shape.radius * math.cos(shape.end_angle),
+                               shape.center[1] + shape.radius * math.sin(shape.end_angle)))
+
+                # Check if arc crosses 0°, 90°, 180°, or 270° (extrema points)
+                for critical_angle in [0, math.pi/2, math.pi, 3*math.pi/2]:
+                    # Normalize angles to same range
+                    start = shape.start_angle % (2*math.pi)
+                    end = shape.end_angle % (2*math.pi)
+                    crit = critical_angle % (2*math.pi)
+
+                    # Check if critical angle is within arc range
+                    if start <= end:
+                        if start <= crit <= end:
+                            points.append((shape.center[0] + shape.radius * math.cos(critical_angle),
+                                          shape.center[1] + shape.radius * math.sin(critical_angle)))
+                    else:  # Arc wraps around 0
+                        if crit >= start or crit <= end:
+                            points.append((shape.center[0] + shape.radius * math.cos(critical_angle),
+                                          shape.center[1] + shape.radius * math.sin(critical_angle)))
+
+                for px, py in points:
+                    min_x = min(min_x, px)
+                    max_x = max(max_x, px)
+                    min_y = min(min_y, py)
+                    max_y = max(max_y, py)
             elif isinstance(shape, Text):
                 # Rough text bounds estimation
                 text_width = len(shape.text) * shape.font_size * 0.6
@@ -366,7 +452,7 @@ class ExportSVG:
                     print(f"Skipping shape on invisible layer: {layer_name}")
                     continue
 
-            if isinstance(shape, (Edge, Rectangle, Spline, Polygon)):
+            if isinstance(shape, (Edge, Arc, Rectangle, Spline, Polygon)):
                 style = self._get_stroke_style(layer_name)
                 # Check if shape should be filled (Polygon with filled=True)
                 if isinstance(shape, Polygon) and shape.filled:
@@ -409,6 +495,7 @@ class ExportSVG:
 # Export all commonly used items for "from buildprimitives import *"
 __all__ = [
     'Edge',
+    'Arc',
     'Rectangle',
     'Spline',
     'Polygon',
