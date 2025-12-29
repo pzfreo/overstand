@@ -746,6 +746,29 @@ input[type="checkbox"] {
     }
 }
 
+/* Mobile devices - wrap tabs to multiple rows */
+@media (max-width: 768px) {
+    .view-tabs {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .view-tab {
+        flex: 1 1 calc(50% - 4px);  /* 2 tabs per row */
+        min-width: 120px;
+        padding: 8px 12px;
+        font-size: 0.85rem;
+    }
+}
+
+/* Very small devices - single column */
+@media (max-width: 480px) {
+    .view-tab {
+        flex: 1 1 100%;  /* Full width, stack vertically */
+        font-size: 0.9rem;
+    }
+}
+
 .calculated-metrics {
     margin-top: 1rem;
     padding-top: 0.75rem;

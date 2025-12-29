@@ -166,13 +166,13 @@ def generate_radius_template_svg(params: Dict[str, Any]) -> str:
     # Generate text cutouts using matplotlib TextPath
     # Text positioned at TOP (flat edge), readable orientation
     radius_str = f"{fingerboard_radius:.0f}mm"
-    char_height = 4.0
+    char_height = 12.0  # 12pt font size for better readability
 
     # Estimate text width for centering (approximate)
     text_width = len(radius_str) * char_height * 0.6
     text_x = -text_width / 2
     # Position text near the top flat edge, with proper baseline
-    text_y = template_height - 8
+    text_y = template_height - 15  # More padding for larger text
 
     # Get text as bezier curve paths
     text_path_d = _text_to_svg_path_with_textpath(radius_str, text_x, text_y, char_height)
