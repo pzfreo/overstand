@@ -777,7 +777,7 @@ def generate_top_view_svg(params: Dict[str, Any]) -> str:
 
 def generate_cross_section_svg(params: Dict[str, Any]) -> str:
     """
-    
+
     Args:
         params: Validated parameter dictionary
 
@@ -787,13 +787,93 @@ def generate_cross_section_svg(params: Dict[str, Any]) -> str:
     exporter = ExportSVG(scale=1.0)
     exporter.add_shape(Text("Cross section",10,font=FONT_NAME))
     return exporter_to_svg(exporter)
-    
-    
+
+
+def generate_radius_template_svg(params: Dict[str, Any]) -> str:
+    """
+    Generate fingerboard radius checking template for 3D printing.
+
+    Creates a rectangle with circular arc cutout based on:
+    - fingerboard_radius (radius of the arc)
+    - fingerboard_width_at_end (chord width)
+    - Template is 10mm wider than fingerboard, minimum 25mm high
+
+    Args:
+        params: Dictionary of instrument parameters
+
+    Returns:
+        SVG string of the template
+    """
+    # Extract parameters
+    fingerboard_radius = params.get('fingerboard_radius', 41.0)
+    fb_width_at_end = params.get('fingerboard_width_at_end', 42.0)
+
+    # Calculate template dimensions
+    template_width = fb_width_at_end + 10.0
+    half_template_width = template_width / 2.0
+
+    # Calculate arc depth (sagitta for the template width, not fingerboard width)
+    if half_template_width >= fingerboard_radius:
+        # Edge case: radius too small for template width
+        arc_depth = fingerboard_radius  # Approximate
+        template_height = 25.0
+    else:
+        arc_depth = fingerboard_radius - math.sqrt(
+            fingerboard_radius**2 - half_template_width**2
+        )
+        # Ensure minimum 25mm height
+        template_height = max(25.0, arc_depth + 5.0)
+
+    # Setup SVG exporter
+    exporter = ExportSVG(scale=1.0, unit=Unit.MM, line_weight=0.5)
+    exporter.add_layer("drawing", fill_color=None, line_color=(0, 0, 0))
+    exporter.add_layer("text", fill_color=(0, 0, 0), line_color=None)
+
+    # Generate points for the template outline
+    points = []
+
+    # Define corners
+    bottom_left = (-half_template_width, 0)
+    bottom_right = (half_template_width, 0)
+    top_right = (half_template_width, template_height)
+    top_left = (-half_template_width, template_height)
+
+    # Bottom and side edges
+    points.append(bottom_left)
+    points.append(bottom_right)
+    points.append(top_right)
+
+    # Arc along top edge (from right to left)
+    num_arc_points = 30  # More points for smoother arc
+    arc_center_y = template_height - fingerboard_radius + arc_depth
+
+    for i in range(num_arc_points + 1):
+        t = i / num_arc_points
+        # Calculate angle: arc goes from right to left
+        angle_span = 2 * math.asin(half_template_width / fingerboard_radius)
+        angle = -angle_span/2 + t * angle_span
+
+        x = fingerboard_radius * math.sin(angle)
+        y = arc_center_y + fingerboard_radius * math.cos(angle)
+        points.append((x, y))
+
+    points.append(top_left)
+
+    # Create polygon outline
+    template_polygon = Polygon(points, filled=False)
+    exporter.add_shape(template_polygon, layer="drawing")
+
+    # Add radius label centered near bottom
+    radius_text = Text(f"{fingerboard_radius:.0f}mm", font_size=8.0, font=FONT_NAME)
+    radius_text = radius_text.move(Location(0, 5))
+    exporter.add_shape(radius_text, layer="text")
+
+    return exporter_to_svg(exporter)
 
 
 def generate_multi_view_svg(params: Dict[str, Any]) -> dict:
     """
-    Generates all three views for violin neck.
+    Generates all views for violin neck including radius template.
 
     Args:
         params: Validated parameter dictionary
@@ -803,13 +883,15 @@ def generate_multi_view_svg(params: Dict[str, Any]) -> dict:
         {
             'side': SVG string,
             'top': SVG string,
-            'cross_section': SVG string
+            'cross_section': SVG string,
+            'radius_template': SVG string
         }
     """
     return {
         'side': generate_side_view_svg(params),
         'top': generate_top_view_svg(params),
-        'cross_section': generate_cross_section_svg(params)
+        'cross_section': generate_cross_section_svg(params),
+        'radius_template': generate_radius_template_svg(params)
     }
 
 
