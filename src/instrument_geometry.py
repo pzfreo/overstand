@@ -876,10 +876,11 @@ def generate_radius_template_svg(params: Dict[str, Any]) -> str:
     template_polygon = Polygon(rotated_points, filled=False)
     exporter.add_shape(template_polygon, layer="drawing")
 
-    # Add radius label centered near bottom (smaller text)
+    # Add radius label centered near top (smaller text)
     # Keep text upright (not rotated with the shape)
+    # After 180° rotation, flat edge is at top, so position text there
     radius_text = Text(f"{fingerboard_radius:.0f}mm", font_size=6.0, font=FONT_NAME)
-    radius_text = radius_text.move(Location((0, 5)))
+    radius_text = radius_text.move(Location((0, template_height - 8)))
     exporter.add_shape(radius_text, layer="text")
 
     return exporter_to_svg(exporter)
