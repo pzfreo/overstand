@@ -158,8 +158,6 @@ def calculate_derived_values(params: Dict[str, Any]) -> Dict[str, Any]:
         string_nut_to_join = fret_positions[fret_join] 
         neck_stop = math.cos(string_angle_to_ribs_rad)*string_nut_to_join
         body_stop = math.cos(string_angle_to_ribs_rad)*hypotenuse
-        print("body_stop", body_stop)
-        print("neck_stop", neck_stop)
         opposite_string_to_join = string_height_at_join - string_height_nut
         string_angle_to_fb = math.atan(opposite_string_to_join / fret_positions[fret_join]) * 180 / math.pi
     else:
@@ -168,7 +166,6 @@ def calculate_derived_values(params: Dict[str, Any]) -> Dict[str, Any]:
     bridge_top_x = body_stop
     nut_top_x = -neck_stop
     nut_top_y = bridge_top_y - math.sin(string_angle_to_ribs_rad)*vsl
-    print("nut_top_x, nut_top_y", nut_top_x, nut_top_y)
 
     opposite_fb = fb_thickness_at_join - fb_thickness_at_nut
     fingerboard_angle = math.atan(opposite_fb / neck_stop) * 180 / math.pi
@@ -190,7 +187,6 @@ def calculate_derived_values(params: Dict[str, Any]) -> Dict[str, Any]:
     neck_line_angle = math.atan2(neck_end_y - overstand, neck_end_x - 0)
     # nut_top_x = neck_end_x + nut_radius * math.cos(neck_line_angle - math.pi/2)
     # nut_top_y = neck_end_y + nut_radius * math.sin(neck_line_angle - math.pi/2)
-    print("nut_top_x, nut_top_y", nut_top_x, nut_top_y) 
 
     derived['Nut Draw Radius'] = nut_draw_radius
     derived['Neck Line Angle'] = neck_line_angle

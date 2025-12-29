@@ -1,7 +1,6 @@
 import { state } from './state.js';
 
 export async function downloadPDF(collectParameters, sanitizeFilename) {
-    console.log('Starting PDF download...');
     if (!state || !state.views || !state.views[state.currentView]) {
         alert('Please generate a template first.');
         return;
@@ -135,7 +134,6 @@ export async function downloadPDF(collectParameters, sanitizeFilename) {
             document.body.removeChild(svgElement);
         }
 
-        console.log(`PDF: ${selectedFormat.name.toUpperCase()} ${selectedOrientation}, SVG size: ${svgWidth}x${svgHeight}mm`);
         doc.save(`${filename}_${viewNames[currentView]}_${selectedFormat.name}.pdf`);
 
     } catch (error) {

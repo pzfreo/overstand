@@ -490,8 +490,6 @@ class ExportSVG:
 
                 # Skip entire shape if layer is invisible (both colors are None)
                 if fill_color is None and line_color is None:
-                    # Debug: print skipped layers
-                    print(f"Skipping shape on invisible layer: {layer_name}")
                     continue
 
             if isinstance(shape, (Edge, Arc, Rectangle, Spline, Polygon)):

@@ -132,7 +132,6 @@ async function initializePython() {
             if (fontResponse.ok) {
                 const fontData = await fontResponse.arrayBuffer();
                 state.pyodide.FS.writeFile('/tmp/AllertaStencil-Regular.ttf', new Uint8Array(fontData));
-                console.log('Font loaded successfully into Pyodide filesystem');
             } else {
                 console.warn('Could not load AllertaStencil font');
             }

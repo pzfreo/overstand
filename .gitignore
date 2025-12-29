@@ -1,5 +1,36 @@
+# Python
 __pycache__/
 *.pyc
-.DS_Store
 venv/
+
+# macOS
+.DS_Store
+
+# Output files
 output.svg
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*~
+
+# Build artifacts
+*.egg-info/
+build/
+dist/
+*.whl
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Web/Pyodide cache
+web/.dist/
+*.dist/
+
+# Backup files
+*.bak
+*.bak2
+*.backup
