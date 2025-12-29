@@ -8,7 +8,7 @@ from buildprimitives import *
 from buildprimitives import FONT_NAME, TITLE_FONT_SIZE, FOOTER_FONT_SIZE, PTS_MM  # Font constants
 from instrument_parameters import InstrumentFamily
 import math
-from typing import Dict, Any, Tuple
+from typing import Dict, Any, Tuple, List
 from dimension_helpers import (
     create_dimension_arrows,
     create_vertical_dimension,
@@ -789,6 +789,125 @@ def generate_cross_section_svg(params: Dict[str, Any]) -> str:
     return exporter_to_svg(exporter)
 
 
+def _create_digit_segments(digit: int, x: float, y: float, height: float) -> List[List[Tuple[float, float]]]:
+    """
+    Create 7-segment display style digit geometry.
+    Returns list of rectangles (each as list of 4 corner points) for the digit.
+
+    Args:
+        digit: Digit 0-9 to render
+        x, y: Bottom-left position of digit
+        height: Height of digit
+
+    Returns:
+        List of rectangles, each as [(x1,y1), (x2,y2), (x3,y3), (x4,y4)]
+    """
+    w = height * 0.5  # Width of digit
+    seg_thickness = height * 0.12  # Thickness of each segment
+    seg_length = w * 0.8  # Length of horizontal segments
+    seg_height = (height - 3 * seg_thickness) / 2  # Length of vertical segments
+
+    # Define segment positions (7-segment display layout)
+    # Segments: top, top-right, bottom-right, bottom, bottom-left, top-left, middle
+    segments = {
+        'top': [(x + (w - seg_length) / 2, y + height - seg_thickness),
+                (x + (w + seg_length) / 2, y + height - seg_thickness),
+                (x + (w + seg_length) / 2, y + height),
+                (x + (w - seg_length) / 2, y + height)],
+        'top_right': [(x + w - seg_thickness, y + height - seg_thickness),
+                      (x + w, y + height - seg_thickness),
+                      (x + w, y + height / 2 + seg_thickness / 2),
+                      (x + w - seg_thickness, y + height / 2 + seg_thickness / 2)],
+        'bottom_right': [(x + w - seg_thickness, y + height / 2 - seg_thickness / 2),
+                         (x + w, y + height / 2 - seg_thickness / 2),
+                         (x + w, y + seg_thickness),
+                         (x + w - seg_thickness, y + seg_thickness)],
+        'bottom': [(x + (w - seg_length) / 2, y),
+                   (x + (w + seg_length) / 2, y),
+                   (x + (w + seg_length) / 2, y + seg_thickness),
+                   (x + (w - seg_length) / 2, y + seg_thickness)],
+        'bottom_left': [(x, y + seg_thickness),
+                        (x + seg_thickness, y + seg_thickness),
+                        (x + seg_thickness, y + height / 2 - seg_thickness / 2),
+                        (x, y + height / 2 - seg_thickness / 2)],
+        'top_left': [(x, y + height / 2 + seg_thickness / 2),
+                     (x + seg_thickness, y + height / 2 + seg_thickness / 2),
+                     (x + seg_thickness, y + height - seg_thickness),
+                     (x, y + height - seg_thickness)],
+        'middle': [(x + (w - seg_length) / 2, y + height / 2 - seg_thickness / 2),
+                   (x + (w + seg_length) / 2, y + height / 2 - seg_thickness / 2),
+                   (x + (w + seg_length) / 2, y + height / 2 + seg_thickness / 2),
+                   (x + (w - seg_length) / 2, y + height / 2 + seg_thickness / 2)]
+    }
+
+    # Define which segments are active for each digit
+    digit_patterns = {
+        0: ['top', 'top_right', 'bottom_right', 'bottom', 'bottom_left', 'top_left'],
+        1: ['top_right', 'bottom_right'],
+        2: ['top', 'top_right', 'middle', 'bottom_left', 'bottom'],
+        3: ['top', 'top_right', 'middle', 'bottom_right', 'bottom'],
+        4: ['top_left', 'middle', 'top_right', 'bottom_right'],
+        5: ['top', 'top_left', 'middle', 'bottom_right', 'bottom'],
+        6: ['top', 'top_left', 'middle', 'bottom_left', 'bottom', 'bottom_right'],
+        7: ['top', 'top_right', 'bottom_right'],
+        8: ['top', 'top_right', 'bottom_right', 'bottom', 'bottom_left', 'top_left', 'middle'],
+        9: ['top', 'top_right', 'top_left', 'middle', 'bottom_right', 'bottom']
+    }
+
+    pattern = digit_patterns.get(digit, [])
+    return [segments[seg] for seg in pattern]
+
+
+def _create_text_cutouts(text: str, x: float, y: float, char_height: float) -> List[List[Tuple[float, float]]]:
+    """
+    Create geometric cutouts for text (numbers only, simplified 'mm' as 'm').
+
+    Returns list of rectangles for all characters.
+    """
+    cutouts = []
+    char_width = char_height * 0.5
+    spacing = char_height * 0.15
+    current_x = x
+
+    for char in text:
+        if char.isdigit():
+            digit_rects = _create_digit_segments(int(char), current_x, y, char_height)
+            cutouts.extend(digit_rects)
+            current_x += char_width + spacing
+        elif char == 'm':
+            # Simple 'm' shape - two vertical bars
+            m_width = char_height * 0.6
+            bar_width = char_height * 0.12
+            bar_height = char_height * 0.7
+
+            # Left bar
+            cutouts.append([
+                (current_x, y),
+                (current_x + bar_width, y),
+                (current_x + bar_width, y + bar_height),
+                (current_x, y + bar_height)
+            ])
+            # Middle bar
+            mid_x = current_x + (m_width - bar_width) / 2
+            cutouts.append([
+                (mid_x, y),
+                (mid_x + bar_width, y),
+                (mid_x + bar_width, y + bar_height),
+                (mid_x, y + bar_height)
+            ])
+            # Right bar
+            right_x = current_x + m_width - bar_width
+            cutouts.append([
+                (right_x, y),
+                (right_x + bar_width, y),
+                (right_x + bar_width, y + bar_height),
+                (right_x, y + bar_height)
+            ])
+            current_x += m_width + spacing
+
+    return cutouts
+
+
 def generate_radius_template_svg(params: Dict[str, Any]) -> str:
     """
     Generate fingerboard radius checking template for 3D printing.
@@ -797,6 +916,7 @@ def generate_radius_template_svg(params: Dict[str, Any]) -> str:
     - fingerboard_radius (radius of the arc)
     - fingerboard_width_at_end (chord width)
     - Template is 10mm wider than fingerboard, minimum 25mm high
+    - Text appears as cutout holes using geometric digit shapes
 
     Args:
         params: Dictionary of instrument parameters
@@ -823,12 +943,6 @@ def generate_radius_template_svg(params: Dict[str, Any]) -> str:
         )
         # Ensure minimum 25mm height
         template_height = max(25.0, arc_depth + 5.0)
-
-    # Setup SVG exporter
-    exporter = ExportSVG(scale=1.0, unit=Unit.MM, line_weight=0.5)
-    exporter.add_layer("drawing", fill_color=None, line_color=(0, 0, 0))
-    # Text layer with white fill to create cutout/hole effect in 3D print
-    exporter.add_layer("text", fill_color=(255, 255, 255), line_color=None)
 
     # Generate points for the template outline
     points = []
@@ -873,18 +987,46 @@ def generate_radius_template_svg(params: Dict[str, Any]) -> str:
     # For 180° rotation: (x, y) -> (-x, template_height - y)
     rotated_points = [(-x, template_height - y) for x, y in points]
 
-    # Create polygon outline with rotated points (filled for 3D printing)
-    template_polygon = Polygon(rotated_points, filled=True)
-    exporter.add_shape(template_polygon, layer="drawing")
+    # Create text cutouts
+    radius_str = f"{fingerboard_radius:.0f}mm"
+    char_height = 4.0
+    # Estimate text width for centering
+    text_width = len(radius_str) * char_height * 0.6
+    text_x = -text_width / 2
+    text_y = template_height - 8
 
-    # Add radius label centered near top (smaller text)
-    # Keep text upright (not rotated with the shape)
-    # After 180° rotation, flat edge is at top, so position text there
-    radius_text = Text(f"{fingerboard_radius:.0f}mm", font_size=6.0, font=FONT_NAME)
-    radius_text = radius_text.move(Location((0, template_height - 8)))
-    exporter.add_shape(radius_text, layer="text")
+    text_cutouts = _create_text_cutouts(radius_str, text_x, text_y, char_height)
 
-    return exporter_to_svg(exporter)
+    # Rotate text cutouts too
+    rotated_cutouts = []
+    for rect in text_cutouts:
+        rotated_rect = [(-x, template_height - y) for x, y in rect]
+        # Reverse winding order for holes (counter-clockwise)
+        rotated_cutouts.append(list(reversed(rotated_rect)))
+
+    # Build compound SVG path with holes using fill-rule="evenodd"
+    # Outer path (clockwise) + inner paths (counter-clockwise) = holes
+    path_data = "M " + " L ".join([f"{x},{y}" for x, y in rotated_points]) + " Z"
+
+    # Add each cutout as a subpath
+    for cutout in rotated_cutouts:
+        path_data += " M " + " L ".join([f"{x},{y}" for x, y in cutout]) + " Z"
+
+    # Calculate bounds for SVG viewBox
+    all_x = [p[0] for p in rotated_points] + [p[0] for rect in rotated_cutouts for p in rect]
+    all_y = [p[1] for p in rotated_points] + [p[1] for rect in rotated_cutouts for p in rect]
+    min_x, max_x = min(all_x), max(all_x)
+    min_y, max_y = min(all_y), max(all_y)
+
+    margin = 2
+    viewBox = f"{min_x - margin} {min_y - margin} {max_x - min_x + 2*margin} {max_y - min_y + 2*margin}"
+
+    # Create manual SVG with compound path
+    svg = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="{viewBox}">
+  <path d="{path_data}" fill="black" fill-rule="evenodd" stroke="black" stroke-width="0.5"/>
+</svg>'''
+
+    return svg
 
 
 def generate_multi_view_svg(params: Dict[str, Any]) -> dict:
