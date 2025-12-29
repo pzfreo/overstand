@@ -30,23 +30,6 @@ from dimension_helpers import (
     DIMENSION_FONT_SIZE
 )
 
-# class NeckGeometry:
-#     """
-#     Generates neck geometry from validated parameters.
-    
-#     This class contains all the lutherie-specific geometry generation.
-#     Each method focuses on one component (neck, scroll, pegbox, etc.)
-#     """
-    
-#     def __init__(self, params: Dict[str, Any]):
-#         """
-#         Initialize with validated parameters.
-
-#         Args:
-#             params: Dictionary of parameter values from instrument_parameters.py
-#         """
-#         self.params = params
-
 
 def calculate_sagitta(radius: float, width: float) -> float:
     """

@@ -535,47 +535,7 @@ def validate_parameters(params: Dict[str, Any]) -> tuple[bool, List[str]]:
     
     # Extract values with defaults
     width_nut = params.get('width_at_nut', 24.0)
-    
-    # Rule 1: Width must increase from nut to heel
-    # if width_heel <= width_nut:
-    #     errors.append(
-    #         f"Width at heel ({width_heel}mm) must be greater than "
-    #         f"width at nut ({width_nut}mm)"
-    #     )
-    
-    # Rule 2: Width taper should be reasonable (traditional proportions)
-    # width_diff = width_heel - width_nut
-    # if width_diff < 1.5:
-    #     errors.append(
-    #         f"Width taper ({width_diff:.1f}mm) is too small. "
-    #         "Traditional necks taper at least 2-3mm"
-    #     )
-    # if width_diff > 6.0:
-    #     errors.append(
-    #         f"Width taper ({width_diff:.1f}mm) is too large. "
-    #         "Typical range is 2-5mm"
-    #     )
-    
-    # Rule 3: Thickness must increase from nut to heel
-    # if thick_heel <= thick_nut:
-    #     errors.append(
-    #         f"Thickness at heel ({thick_heel}mm) must be greater than "
-    #         f"thickness at nut ({thick_nut}mm)"
-    #     )
-    
-    # Rule 7: Aspect ratio check (prevent awkward proportions)
-    # aspect_ratio = thick_nut / width_nut
-    # if aspect_ratio < 0.65:
-    #     errors.append(
-    #         f"Neck is too flat (thickness/width = {aspect_ratio:.2f}). "
-    #         "Should be at least 0.70 for comfortable playing"
-    #     )
-    # if aspect_ratio > 0.95:
-    #     errors.append(
-    #         f"Neck is too thick (thickness/width = {aspect_ratio:.2f}). "
-    #         "Should be at most 0.90 for normal hands"
-    #     )
-    
+
     return len(errors) == 0, errors
 
 
