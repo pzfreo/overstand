@@ -872,8 +872,8 @@ def generate_radius_template_svg(params: Dict[str, Any]) -> str:
     # For 180° rotation: (x, y) -> (-x, template_height - y)
     rotated_points = [(-x, template_height - y) for x, y in points]
 
-    # Create polygon outline with rotated points
-    template_polygon = Polygon(rotated_points, filled=False)
+    # Create polygon outline with rotated points (filled for 3D printing)
+    template_polygon = Polygon(rotated_points, filled=True)
     exporter.add_shape(template_polygon, layer="drawing")
 
     # Add radius label centered near top (smaller text)
