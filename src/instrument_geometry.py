@@ -987,13 +987,13 @@ def generate_radius_template_svg(params: Dict[str, Any]) -> str:
     # For 180° rotation: (x, y) -> (-x, template_height - y)
     rotated_points = [(-x, template_height - y) for x, y in points]
 
-    # Create text cutouts
+    # Create text cutouts (before rotation, at bottom position)
     radius_str = f"{fingerboard_radius:.0f}mm"
     char_height = 4.0
     # Estimate text width for centering
     text_width = len(radius_str) * char_height * 0.6
     text_x = -text_width / 2
-    text_y = template_height - 8
+    text_y = 8  # Position at bottom before rotation (will be at top after 180° rotation)
 
     text_cutouts = _create_text_cutouts(radius_str, text_x, text_y, char_height)
 
@@ -1001,11 +1001,10 @@ def generate_radius_template_svg(params: Dict[str, Any]) -> str:
     rotated_cutouts = []
     for rect in text_cutouts:
         rotated_rect = [(-x, template_height - y) for x, y in rect]
-        # Reverse winding order for holes (counter-clockwise)
-        rotated_cutouts.append(list(reversed(rotated_rect)))
+        rotated_cutouts.append(rotated_rect)
 
     # Build compound SVG path with holes using fill-rule="evenodd"
-    # Outer path (clockwise) + inner paths (counter-clockwise) = holes
+    # Main outer path + inner cutout paths = holes
     path_data = "M " + " L ".join([f"{x},{y}" for x, y in rotated_points]) + " Z"
 
     # Add each cutout as a subpath
@@ -1021,9 +1020,11 @@ def generate_radius_template_svg(params: Dict[str, Any]) -> str:
     margin = 2
     viewBox = f"{min_x - margin} {min_y - margin} {max_x - min_x + 2*margin} {max_y - min_y + 2*margin}"
 
-    # Create manual SVG with compound path
+    # Create manual SVG with compound path and white background for visibility
     svg = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="{viewBox}">
-  <path d="{path_data}" fill="black" fill-rule="evenodd" stroke="black" stroke-width="0.5"/>
+  <rect x="{min_x - margin}" y="{min_y - margin}" width="{max_x - min_x + 2*margin}" height="{max_y - min_y + 2*margin}" fill="white"/>
+  <path d="{path_data}" fill="black" fill-rule="evenodd" stroke="none"/>
+  <path d="M {' L '.join([f'{x},{y}' for x, y in rotated_points])} Z" fill="none" stroke="black" stroke-width="0.5"/>
 </svg>'''
 
     return svg
