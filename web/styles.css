@@ -6,38 +6,41 @@
 
     /* Semantic colors */
     --color-success: #10b981;
-    --color-success-dark: var(--color-success-dark);
-    --color-success-darker: var(--color-success-darker);
-    --color-success-light: var(--color-success-light);
+    --color-success-dark: #059669;
+    --color-success-darker: #065f46;
+    --color-success-light: #d1fae5;
+    
     --color-error: #ef4444;
-    --color-error-light: var(--color-error-light);
-    --color-error-lighter: var(--color-error-lighter);
-    --color-error-dark: var(--color-error-dark);
-    --color-error-darker: var(--color-error-darker);
-    --color-error-darkest: var(--color-error-darkest);
+    --color-error-light: #fee2e2;
+    --color-error-lighter: #fef2f2;
+    --color-error-dark: #dc2626;
+    --color-error-darker: #991b1b;
+    --color-error-darkest: #7f1d1d;
+    
     --color-warning: #f59e0b;
-    --color-blue: var(--color-blue);
-    --color-blue-dark: var(--color-blue-dark);
-    --color-blue-darker: var(--color-blue-darker);
-    --color-blue-darkest: var(--color-blue-darkest);
-    --color-blue-light: var(--color-blue-light);
+    
+    --color-blue: #3b82f6;
+    --color-blue-dark: #2563eb;
+    --color-blue-darker: #1d4ed8;
+    --color-blue-darkest: #1e3a8a;
+    --color-blue-light: #dbeafe;
 
     /* Grays */
     --color-gray-900: #111827;
-    --color-gray-800: var(--color-gray-800);
+    --color-gray-800: #1f2937;
     --color-gray-700: #374151;
-    --color-gray-600: var(--color-gray-600);
+    --color-gray-600: #4b5563;
     --color-gray-500: #6b7280;
-    --color-gray-400: var(--color-gray-400);
+    --color-gray-400: #9ca3af;
     --color-gray-300: #d1d5db;
     --color-gray-200: #e5e7eb;
-    --color-gray-100: var(--color-gray-100);
+    --color-gray-100: #f3f4f6;
     --color-gray-50: #f9fafb;
-    --color-gray-faint: var(--color-gray-faint);
+    --color-gray-faint: #fcfdfe;
 
     /* Other colors */
-    --color-white: var(--color-white);
-    --color-black: var(--color-black);
+    --color-white: #ffffff;
+    --color-black: #000000;
     --color-yellow-50: #fef3c7;
     --color-yellow-900: #92400e;
 
