@@ -8,9 +8,22 @@
  * - Presets: Network-first with cache fallback
  */
 
-const CACHE_NAME = 'neck-generator-v2';
+const CACHE_NAME = 'neck-generator-v3';
 const PYODIDE_CACHE = 'pyodide-runtime-v1';
 const CDN_CACHE = 'cdn-libraries-v1';
+
+// List of app files to use network-first strategy (always fresh)
+const NETWORK_FIRST_FILES = [
+  'index.html',
+  'app.js',
+  'ui.js',
+  'state.js',
+  'pdf_export.js',
+  'pwa_manager.js',
+  'constants.js',
+  'styles.css',
+  'version.json'
+];
 
 // Get the base path (works both locally and on GitHub Pages)
 const BASE_PATH = self.location.pathname.substring(0, self.location.pathname.lastIndexOf('/') + 1);
@@ -117,9 +130,36 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Strategy 1: App Shell & Python Modules - Cache First
-  // These files are essential and rarely change, so serve from cache for speed
-  if (APP_SHELL.includes(url.pathname) || PYTHON_MODULES.includes(url.pathname)) {
+  // Strategy 1a: Network First for App Files (JS, CSS, HTML)
+  // Always fetch latest version, fallback to cache if offline
+  const fileName = url.pathname.split('/').pop();
+  if (NETWORK_FIRST_FILES.includes(fileName)) {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          // Cache the fresh response
+          return caches.open(CACHE_NAME).then((cache) => {
+            cache.put(request, response.clone());
+            return response;
+          });
+        })
+        .catch(() => {
+          // Network failed, try cache
+          return caches.match(request).then((response) => {
+            if (response) {
+              console.log('[ServiceWorker] Serving from cache (offline):', fileName);
+              return response;
+            }
+            throw new Error(`${fileName} not available offline`);
+          });
+        })
+    );
+    return;
+  }
+
+  // Strategy 1b: Cache First for Python Modules only
+  // These files are larger and change less frequently
+  if (PYTHON_MODULES.includes(url.pathname)) {
     event.respondWith(
       caches.match(request)
         .then((response) => {

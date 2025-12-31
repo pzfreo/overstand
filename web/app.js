@@ -78,6 +78,23 @@ async function loadPresetsFromDirectory() {
     return presets;
 }
 
+async function loadVersionInfo() {
+    try {
+        const response = await fetch('version.json');
+        if (response.ok) {
+            const versionData = await response.json();
+            const versionEl = document.getElementById('version-info');
+            if (versionEl) {
+                versionEl.textContent = `v${versionData.version} (${versionData.commit})`;
+                versionEl.title = `Build #${versionData.buildNumber}\nBuilt: ${new Date(versionData.buildTime).toLocaleString()}`;
+            }
+            console.log('Version:', versionData);
+        }
+    } catch (e) {
+        console.warn('Could not load version info:', e);
+    }
+}
+
 async function initializePython() {
     try {
         ui.setStatus('loading', 'Loading Python engine...');
@@ -405,6 +422,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     registerServiceWorker();
     initInstallPrompt();
+    loadVersionInfo();
     initializePython();
 });
 
