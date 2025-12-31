@@ -250,7 +250,7 @@ header {
     bottom: 0;
     background: rgba(15, 23, 42, 0.7);
     /* backdrop-filter causes sidebar blur on mobile Firefox */
-    z-index: 999;
+    z-index: 1001;  /* Between app-container (0) and controls-panel (1002) */
     opacity: 0;
     visibility: hidden;
     /* Prevent blocking/blurring when inactive */
@@ -351,6 +351,11 @@ header {
 
     .sidebar-overlay {
         display: block;
+    }
+
+    .sidebar-overlay.active {
+        /* Don't block clicks on the sidebar - only the right side */
+        left: min(480px, 100vw - 1px);
     }
 
     .preview-panel {
