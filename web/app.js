@@ -78,24 +78,6 @@ async function loadPresetsFromDirectory() {
     return presets;
 }
 
-async function loadVersionInfo() {
-    try {
-        const response = await fetch('version.json');
-        if (response.ok) {
-            const versionData = await response.json();
-            const versionEl = document.getElementById('version-info');
-            if (versionEl) {
-                versionEl.textContent = `v${versionData.version} (${versionData.commit})`;
-                versionEl.title = `Build #${versionData.buildNumber}\nBuilt: ${new Date(versionData.buildTime).toLocaleString()}`;
-            }
-            console.log('✅ Version:', versionData);
-            console.log('✅ App.js loaded successfully');
-        }
-    } catch (e) {
-        console.warn('Could not load version info:', e);
-    }
-}
-
 async function initializePython() {
     try {
         ui.setStatus('loading', 'Loading Python engine...');
@@ -380,18 +362,8 @@ function handleLoadParameters(event) {
 
 // Initialize on load
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('🚀 DOMContentLoaded fired');
-
-    // Safety check: Remove any stuck mobile menu classes on load
-    const controlsPanel = document.getElementById('controls-panel');
-    const sidebarOverlay = document.getElementById('sidebar-overlay');
-    if (controlsPanel) controlsPanel.classList.remove('mobile-open');
-    if (sidebarOverlay) sidebarOverlay.classList.remove('active');
-    console.log('🔧 Removed any stuck menu classes');
-
     // Initialize DOM element references first
     initElements();
-    console.log('✅ Elements initialized');
 
     const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
     const shortcut = document.getElementById('gen-btn-shortcut');
@@ -422,42 +394,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const controlsPanel = document.getElementById('controls-panel');
     const sidebarOverlay = document.getElementById('sidebar-overlay');
 
-    console.log('📱 Mobile menu elements:', {
-        mobileMenuBtn: !!mobileMenuBtn,
-        mobileCloseBtn: !!mobileCloseBtn,
-        controlsPanel: !!controlsPanel,
-        sidebarOverlay: !!sidebarOverlay,
-        overlayClasses: sidebarOverlay?.className
-    });
-
     if (mobileMenuBtn && mobileCloseBtn && controlsPanel && sidebarOverlay) {
-        const open = () => {
-            console.log('📱 Opening mobile menu');
-            controlsPanel.classList.add('mobile-open');
-            sidebarOverlay.classList.add('active');
-            document.body.style.overflow = 'hidden';
-        };
-        const close = () => {
-            console.log('📱 Closing mobile menu');
-            controlsPanel.classList.remove('mobile-open');
-            sidebarOverlay.classList.remove('active');
-            document.body.style.overflow = '';
-        };
-        mobileMenuBtn.addEventListener('click', () => {
-            console.log('📱 Menu button clicked');
-            controlsPanel.classList.contains('mobile-open') ? close() : open();
-        });
+        const open = () => { controlsPanel.classList.add('mobile-open'); sidebarOverlay.classList.add('active'); document.body.style.overflow = 'hidden'; };
+        const close = () => { controlsPanel.classList.remove('mobile-open'); sidebarOverlay.classList.remove('active'); document.body.style.overflow = ''; };
+        mobileMenuBtn.addEventListener('click', () => controlsPanel.classList.contains('mobile-open') ? close() : open());
         mobileCloseBtn.addEventListener('click', close);
         sidebarOverlay.addEventListener('click', close);
         document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && controlsPanel.classList.contains('mobile-open')) close(); });
-        console.log('✅ Mobile menu listeners attached');
-    } else {
-        console.error('❌ Mobile menu elements not found!');
     }
 
     registerServiceWorker();
     initInstallPrompt();
-    loadVersionInfo();
     initializePython();
 });
 

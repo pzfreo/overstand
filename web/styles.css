@@ -145,13 +145,6 @@ header {
     border-left: 4px solid var(--color-primary);
 }
 
-.version-info {
-    margin-left: auto;
-    font-size: 0.75rem;
-    color: var(--color-gray-500);
-    font-family: 'Courier New', monospace;
-}
-
 .spinner {
     width: 18px;
     height: 18px;
@@ -255,8 +248,8 @@ header {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(15, 23, 42, 0.7);
-    /* Removed backdrop-filter to prevent blurring sidebar on mobile */
+    background: rgba(15, 23, 42, 0.4);
+    backdrop-filter: blur(4px);
     z-index: 999;
     opacity: 0;
     visibility: hidden;
