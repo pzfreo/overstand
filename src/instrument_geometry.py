@@ -681,9 +681,9 @@ def _add_document_text(exporter: ExportSVG, instrument_name: str, generator_url:
     title_text = title_text.move(Location((title_x, title_y)))
     exporter.add_shape(title_text, layer="text")
 
-    # Footer at bottom
+    # Footer at bottom (increased offset to ensure it's below all dimensions)
     footer_text = Text(generator_url, FOOTER_FONT_SIZE, font=FONT_NAME)
-    footer_y = belly_edge_thickness - rib_height - 15
+    footer_y = belly_edge_thickness - rib_height - 35
     footer_x = body_length / 2
     footer_text = footer_text.move(Location((footer_x, footer_y)))
     exporter.add_shape(footer_text, layer="text")
