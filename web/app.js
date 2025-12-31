@@ -382,6 +382,13 @@ function handleLoadParameters(event) {
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🚀 DOMContentLoaded fired');
 
+    // Safety check: Remove any stuck mobile menu classes on load
+    const controlsPanel = document.getElementById('controls-panel');
+    const sidebarOverlay = document.getElementById('sidebar-overlay');
+    if (controlsPanel) controlsPanel.classList.remove('mobile-open');
+    if (sidebarOverlay) sidebarOverlay.classList.remove('active');
+    console.log('🔧 Removed any stuck menu classes');
+
     // Initialize DOM element references first
     initElements();
     console.log('✅ Elements initialized');
