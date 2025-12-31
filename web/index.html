@@ -85,72 +85,73 @@
                         </div>
                     </div>
 
-                    <div class="scrollable-params">
-                        <div id="calculated-fields" class="calculated-metrics" style="display: none;">
-                            <!-- Calculated fields will appear here -->
-                        </div>
-                        <div id="parameters-container">
-                            <!-- Parameters will be generated here -->
-                        </div>
-                    </div>
                 </div>
 
-                <div class="preview-panel">
-                    <div class="view-controls-header">
-                        <div id="view-tabs" class="view-tabs">
-                            <button class="view-tab active" data-view="side">Side View</button>
-                            <button class="view-tab" data-view="top" disabled
-                                style="opacity: 0.3; cursor: not-allowed;">Top
-                                View (Coming Soon)</button>
-                            <button class="view-tab" data-view="cross_section" disabled
-                                style="opacity: 0.3; cursor: not-allowed;">Cross-Section (Coming Soon)</button>
-                            <button class="view-tab" data-view="dimensions">Dimensions</button>
-                            <button class="view-tab" data-view="fret_positions">Fret Positions</button>
-                            <button class="view-tab" data-view="radius_template">Radius Template</button>
-                        </div>
-
-                        <div id="zoom-controls" class="zoom-controls">
-                            <button class="zoom-btn" id="zoom-in" title="Zoom In">+</button>
-                            <button class="zoom-btn" id="zoom-out" title="Zoom Out">−</button>
-                            <button class="zoom-btn" id="zoom-reset" title="Reset View">⟲</button>
-                        </div>
-
-                        <div id="download-buttons" class="download-buttons">
-                            <button class="btn-svg" id="dl-svg" disabled>⬇️ SVG</button>
-                            <button class="btn-pdf" id="dl-pdf" disabled>📄 PDF</button>
-                        </div>
+                <div class="scrollable-params">
+                    <div id="calculated-fields" class="calculated-metrics" style="display: none;">
+                        <!-- Calculated fields will appear here -->
                     </div>
-
-                    <div id="preview-container">
-                        <div class="preview-placeholder">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z" />
-                                <circle cx="12" cy="12" r="3" />
-                            </svg>
-                            <div style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem;">
-                                Neck Template Preview
-                            </div>
-                            <div style="font-size: 0.9rem;">
-                                Adjust parameters and click Generate
-                            </div>
-                        </div>
-                    </div>
-
-                    <div id="error-panel" class="error-panel">
-                        <h3>⚠️ Validation Errors</h3>
-                        <ul id="error-list"></ul>
+                    <div id="parameters-container">
+                        <!-- Parameters will be generated here -->
                     </div>
                 </div>
             </div>
+
+            <div class="preview-panel">
+                <div class="view-controls-header">
+                    <div id="view-tabs" class="view-tabs">
+                        <button class="view-tab active" data-view="side">Side View</button>
+                        <button class="view-tab" data-view="top" disabled style="opacity: 0.3; cursor: not-allowed;">Top
+                            View (Coming Soon)</button>
+                        <button class="view-tab" data-view="cross_section" disabled
+                            style="opacity: 0.3; cursor: not-allowed;">Cross-Section (Coming Soon)</button>
+                        <button class="view-tab" data-view="dimensions">Dimensions</button>
+                        <button class="view-tab" data-view="fret_positions">Fret Positions</button>
+                        <button class="view-tab" data-view="radius_template">Radius Template</button>
+                    </div>
+
+                    <div id="zoom-controls" class="zoom-controls">
+                        <button class="zoom-btn" id="zoom-in" title="Zoom In">+</button>
+                        <button class="zoom-btn" id="zoom-out" title="Zoom Out">−</button>
+                        <button class="zoom-btn" id="zoom-reset" title="Reset View">⟲</button>
+                    </div>
+
+                    <div id="download-buttons" class="download-buttons">
+                        <button class="btn-svg" id="dl-svg" disabled>⬇️ SVG</button>
+                        <button class="btn-pdf" id="dl-pdf" disabled>📄 PDF</button>
+                    </div>
+                </div>
+
+                <div id="preview-container">
+                    <div class="preview-placeholder">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z" />
+                            <circle cx="12" cy="12" r="3" />
+                        </svg>
+                        <div style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem;">
+                            Neck Template Preview
+                        </div>
+                        <div style="font-size: 0.9rem;">
+                            Adjust parameters and click Generate
+                        </div>
+                    </div>
+                </div>
+
+                <div id="error-panel" class="error-panel">
+                    <h3>⚠️ Validation Errors</h3>
+                    <ul id="error-list"></ul>
+                </div>
+            </div>
         </div>
+    </div>
 
-        <!-- PDF libs -->
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/svg2pdf.js@2.2.4/dist/svg2pdf.umd.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
+    <!-- PDF libs -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/svg2pdf.js@2.2.4/dist/svg2pdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
 
-        <!-- Main Application Script -->
-        <script type="module" src="app.js"></script>
+    <!-- Main Application Script -->
+    <script type="module" src="app.js"></script>
 </body>
 
 </html>
