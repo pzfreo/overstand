@@ -6,11 +6,14 @@
  * - Pyodide Runtime: Cache-first for large Python runtime (~20-30MB)
  * - CDN Libraries: Stale-while-revalidate for external dependencies
  * - Presets: Network-first with cache fallback
+ *
+ * Build script replaces __BUILD_ID__ and __ENVIRONMENT__ at build time
  */
 
-const CACHE_NAME = 'neck-generator-v4';
+const CACHE_NAME = 'neck-generator-v__BUILD_ID__';
 const PYODIDE_CACHE = 'pyodide-runtime-v1';
 const CDN_CACHE = 'cdn-libraries-v1';
+const ENVIRONMENT = '__ENVIRONMENT__';
 
 // Get the base path (works both locally and on GitHub Pages)
 const BASE_PATH = self.location.pathname.substring(0, self.location.pathname.lastIndexOf('/') + 1);
@@ -65,7 +68,7 @@ const CDN_URLS = [
  * Install event - cache app shell and Python modules immediately
  */
 self.addEventListener('install', (event) => {
-  console.log('[ServiceWorker] Installing...');
+  console.log(`[ServiceWorker] Installing... (${ENVIRONMENT}, ${CACHE_NAME})`);
 
   event.waitUntil(
     caches.open(CACHE_NAME)
@@ -75,7 +78,14 @@ self.addEventListener('install', (event) => {
       })
       .then(() => {
         console.log('[ServiceWorker] Installation complete');
-        return self.skipWaiting();
+        // In preview environments, skip waiting immediately for faster updates
+        // In production, let the PWA manager control the update
+        if (ENVIRONMENT === 'preview' || ENVIRONMENT === 'development') {
+          console.log('[ServiceWorker] Preview/dev mode - skipping waiting immediately');
+          return self.skipWaiting();
+        }
+        // Production waits for user confirmation via PWA manager
+        return Promise.resolve();
       })
       .catch((error) => {
         console.error('[ServiceWorker] Installation failed:', error);
@@ -87,7 +97,7 @@ self.addEventListener('install', (event) => {
  * Activate event - clean up old caches
  */
 self.addEventListener('activate', (event) => {
-  console.log('[ServiceWorker] Activating...');
+  console.log(`[ServiceWorker] Activating... (${ENVIRONMENT}, ${CACHE_NAME})`);
 
   event.waitUntil(
     caches.keys()
@@ -105,7 +115,7 @@ self.addEventListener('activate', (event) => {
         );
       })
       .then(() => {
-        console.log('[ServiceWorker] Activation complete');
+        console.log(`[ServiceWorker] Activation complete - Cache: ${CACHE_NAME}`);
         return self.clients.claim();
       })
   );

@@ -1,4 +1,4 @@
-name: Test and Deploy
+name: Test
 
 on:
   push:
@@ -8,15 +8,8 @@ on:
   # Allow manual trigger from the Actions tab
   workflow_dispatch:
 
-# Permissions for deployment (only used if deploying)
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-concurrency:
-  group: "pages"
-  cancel-in-progress: false
+# Note: Deployment is handled by Vercel
+# This workflow only runs tests to ensure code quality
 
 jobs:
   test:
@@ -48,70 +41,8 @@ jobs:
         with:
           fail_ci_if_error: false
 
-  deploy:
-    name: Deploy to GitHub Pages
-    needs: test  # Only runs if tests pass
-    # Only deploy on push to main (not on PRs or manual workflow_dispatch on branches)
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-
-      # --- BUILD STEP ---
-      - name: Generate Version Info
-        run: |
-          # Generate version.json with build information
-          VERSION="1.0.${{ github.run_number }}"
-          COMMIT="${{ github.sha }}"
-          BUILD_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-
-          cat > web/version.json << EOF
-          {
-            "version": "${VERSION}",
-            "commit": "${COMMIT:0:7}",
-            "commitFull": "${COMMIT}",
-            "buildTime": "${BUILD_TIME}",
-            "buildNumber": ${{ github.run_number }}
-          }
-          EOF
-
-          echo "::notice::🚀 Building version ${VERSION} (commit ${COMMIT:0:7})"
-
-      - name: Prepare Site
-        run: |
-          # 1. Create a clean 'public' directory for deployment
-          mkdir public
-
-          # 2. Copy the web interface
-          cp -r web/* public/
-
-          # 3. Copy all Python logic files INTO the public folder
-          cp src/*.py public/
-
-          # 4. Copy presets directory for instrument configurations
-          cp -r presets public/
-
-          # 5. Copy PWA assets
-          cp web/manifest.json public/manifest.json
-          cp web/service-worker.js public/service-worker.js
-          cp web/favicon.ico public/favicon.ico
-          mkdir -p public/icons
-          cp -r web/icons/* public/icons/
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: 'public'
-
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+  # Deployment is now handled by Vercel
+  # Vercel automatically:
+  # - Deploys main branch to production
+  # - Creates preview deployments for all PRs
+  # - Runs the build script (scripts/build.sh) for each deployment
