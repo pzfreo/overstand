@@ -12,14 +12,23 @@ A web-based parametric 2D CAD diagram generator powered by Build123d and Pyodide
 
 ## 🚀 Quick Start
 
-### Option 1: GitHub Pages (Easiest)
+### Option 1: Vercel Deployment (Recommended)
+
+1. Fork this repository
+2. Connect to Vercel at https://vercel.com
+3. Vercel will auto-deploy with preview URLs for all PRs
+4. Visit your production URL at `https://overstand.tools`
+
+See `VERCEL_SETUP.md` for detailed setup instructions.
+
+### Option 2: GitHub Pages
 
 1. Fork this repository
 2. Enable GitHub Pages in repository Settings → Pages
 3. Set source to `main` branch and `/web` folder
 4. Visit `https://yourusername.github.io/diagram-creator`
 
-### Option 2: Local Development
+### Option 3: Local Development
 
 ```bash
 # Clone the repository
