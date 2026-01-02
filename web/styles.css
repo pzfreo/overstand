@@ -284,7 +284,7 @@ header {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(15, 23, 42, 0.3);  /* Lighter overlay to reduce grayed-out appearance */
+    background: rgba(15, 23, 42, 0.15);  /* Very light overlay for subtle visual feedback */
     /* backdrop-filter causes sidebar blur on mobile Firefox */
     z-index: 1001;  /* Between app-container (0) and controls-panel (1002) */
     opacity: 0;
@@ -365,6 +365,7 @@ header {
         z-index: 1003 !important;
         box-shadow: var(--shadow-xl) !important;
         border-radius: 0 var(--radius-xl) var(--radius-xl) 0 !important;
+        background: var(--color-surface) !important; /* Bright white background on mobile */
     }
 
     .controls-panel.mobile-open,
