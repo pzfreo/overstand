@@ -10,7 +10,8 @@ export const state = {
     presets: null,
     derivedValues: null,      // Stores calculated derived values
     derivedMetadata: null,    // Stores metadata for derived values
-    derivedFormatted: null    // Stores formatted derived values from backend
+    derivedFormatted: null,   // Stores formatted derived values from backend
+    parametersModified: false // Tracks if parameters have been changed since load/save
 };
 
 // Make state available globally for libraries like pdf-export that might still need it in transition

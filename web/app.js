@@ -32,13 +32,19 @@ function debouncedGenerate() {
     }, 500);
 }
 
+function markParametersModified() {
+    state.parametersModified = true;
+}
+
 const UI_CALLBACKS = {
     collectParameters,
     onInputChange: debounce(() => {
+        markParametersModified();
         updateDerivedValues();
         debouncedGenerate();
     }, 300),
     onEnumChange: (e) => {
+        markParametersModified();
         updateDerivedValues();
         debouncedGenerate();
     },
@@ -172,6 +178,14 @@ async function initializePython() {
         updateDerivedValues();
         generateNeck();
 
+        // Initialize previousValue for preset selector (first preset is selected by default)
+        if (elements.presetSelect && elements.presetSelect.value) {
+            elements.presetSelect.dataset.previousValue = elements.presetSelect.value;
+        }
+
+        // Parameters start unmodified (we just loaded defaults)
+        state.parametersModified = false;
+
         elements.genBtn.disabled = false;
     } catch (error) {
         ui.setStatus('error', '❌ Initialization failed');
@@ -183,6 +197,24 @@ async function initializePython() {
 async function loadPreset() {
     const presetId = elements.presetSelect.value;
     if (!presetId) return;
+
+    // Warn user if they have unsaved changes
+    if (state.parametersModified) {
+        const presetName = state.uiMetadata?.presets?.[presetId]?.display_name || presetId;
+        const message = `You have unsaved changes. Loading "${presetName}" will overwrite your current parameter values.\n\nDo you want to continue?`;
+
+        if (!confirm(message)) {
+            // User cancelled - revert the dropdown selection
+            // Find the current instrument_family to restore dropdown
+            const currentFamily = document.getElementById('instrument_family')?.value;
+            if (currentFamily && elements.presetSelect) {
+                // Don't trigger another change event
+                const previousValue = elements.presetSelect.dataset.previousValue || '';
+                elements.presetSelect.value = previousValue;
+            }
+            return;
+        }
+    }
 
     let parameters = null;
 
@@ -227,6 +259,14 @@ async function loadPreset() {
             if (element.type === 'checkbox') element.checked = value;
             else element.value = value;
         }
+    }
+
+    // Reset modified flag - we just loaded a preset
+    state.parametersModified = false;
+
+    // Store current preset selection for cancellation
+    if (elements.presetSelect) {
+        elements.presetSelect.dataset.previousValue = presetId;
     }
 
     ui.hideErrors();
@@ -403,6 +443,9 @@ function saveParameters() {
     };
     const filename = `${getInstrumentFilename()}_params_${new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5)}.json`;
     downloadFile(JSON.stringify(saveData, null, 2), filename, 'application/json');
+
+    // Reset modified flag - we just saved
+    state.parametersModified = false;
 }
 
 function handleLoadParameters(event) {
@@ -421,6 +464,10 @@ function handleLoadParameters(event) {
                 }
             }
             elements.presetSelect.value = '';
+
+            // Reset modified flag - we just loaded a file
+            state.parametersModified = false;
+
             ui.hideErrors();
             ui.updateParameterVisibility(collectParameters());
             updateDerivedValues();
