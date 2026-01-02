@@ -117,8 +117,10 @@ async function initializePython() {
 
         ui.setStatus('loading', 'Loading instrument neck modules...');
         const modules = [
-            'constants.py', 'buildprimitives.py', 'dimension_helpers.py', 'derived_value_metadata.py',
-            'instrument_parameters.py', 'ui_metadata.py', 'radius_template.py', 'instrument_geometry.py', 'instrument_generator.py',
+            'constants.py', 'buildprimitives.py', 'dimension_helpers.py',
+            'parameter_registry.py',  // NEW: Must load before instrument_parameters and derived_value_metadata
+            'derived_value_metadata.py', 'instrument_parameters.py', 'ui_metadata.py',
+            'radius_template.py', 'instrument_geometry.py', 'instrument_generator.py',
             'geometry_engine.py', 'svg_renderer.py', 'view_generator.py'
         ];
 
