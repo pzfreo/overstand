@@ -1,0 +1,34 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "timestamp": "2026-01-02T12:55:25.150873Z",
+    "description": "Standard mandolin dimensions (fret-join driven)",
+    "preset_id": "mandolin",
+    "display_name": "Mandolin",
+    "family": "GUITAR_MANDOLIN",
+    "icon": "\ud83c\udfb8"
+  },
+  "parameters": {
+    "arching_height": 12.0,
+    "belly_edge_thickness": 3.5,
+    "body_length": 280.0,
+    "body_stop": 195.0,
+    "bridge_height": 15.0,
+    "fb_visible_height_at_join": 5.0,
+    "fb_visible_height_at_nut": 5.0,
+    "fingerboard_length": 270.0,
+    "fingerboard_radius": 300.0,
+    "fingerboard_width_at_end": 40.0,
+    "fingerboard_width_at_nut": 28.0,
+    "fret_join": 12,
+    "instrument_family": "GUITAR_MANDOLIN",
+    "instrument_name": "Default Mandolin",
+    "no_frets": 21,
+    "overstand": 5.0,
+    "rib_height": 35.0,
+    "show_measurements": true,
+    "string_height_12th_fret": 4.0,
+    "string_height_nut": 0.6,
+    "vsl": 330.0
+  }
+}

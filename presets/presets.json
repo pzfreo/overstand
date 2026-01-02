@@ -1,8 +1,16 @@
 {
   "presets": [
-    "basic_violin.json",
-    "modern_viola.json",
-    "TrebleViol.json",
-    "ArchtopOctaveMandolin.json"
-  ]
+    "archtop_guitar.json",
+    "bass_viol.json",
+    "cello.json",
+    "custom.json",
+    "mandola.json",
+    "mandolin.json",
+    "octave_mandolin.json",
+    "tenor_viol.json",
+    "treble_viol.json",
+    "viola.json",
+    "violin.json"
+  ],
+  "generated": "2026-01-02T12:55:25.152387Z"
 }

@@ -10,7 +10,7 @@ using the same format as the save/load functionality.
 import csv
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 
 def export_presets_from_csv(csv_path='instrument_presets_full.csv', output_dir='presets'):
     """Export presets from CSV to JSON files"""
@@ -68,7 +68,7 @@ def export_presets_from_csv(csv_path='instrument_presets_full.csv', output_dir='
         preset_data = {
             "metadata": {
                 "version": "1.0",
-                "timestamp": datetime.utcnow().isoformat() + "Z",
+                "timestamp": datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z'),
                 "description": description,
                 "preset_id": preset_id,
                 "display_name": display_name,
@@ -91,7 +91,7 @@ def export_presets_from_csv(csv_path='instrument_presets_full.csv', output_dir='
     # Create presets.json manifest
     manifest = {
         "presets": preset_files,
-        "generated": datetime.utcnow().isoformat() + "Z"
+        "generated": datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
     }
 
     manifest_path = os.path.join(output_dir, 'presets.json')

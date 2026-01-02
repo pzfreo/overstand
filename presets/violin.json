@@ -1,0 +1,32 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "timestamp": "2026-01-02T12:55:25.152112Z",
+    "description": "Standard violin dimensions based on Stradivari models",
+    "preset_id": "violin",
+    "display_name": "Violin",
+    "family": "VIOLIN",
+    "icon": "\ud83c\udfbb"
+  },
+  "parameters": {
+    "arching_height": 15.0,
+    "belly_edge_thickness": 3.5,
+    "body_length": 355.0,
+    "body_stop": 195.0,
+    "bridge_height": 33.0,
+    "fb_visible_height_at_join": 4.0,
+    "fb_visible_height_at_nut": 2.0,
+    "fingerboard_length": 270.0,
+    "fingerboard_radius": 41.0,
+    "fingerboard_width_at_end": 42.0,
+    "fingerboard_width_at_nut": 24.0,
+    "instrument_family": "VIOLIN",
+    "instrument_name": "Default Violin",
+    "overstand": 12.0,
+    "rib_height": 40.0,
+    "show_measurements": true,
+    "string_height_eof": 4.0,
+    "string_height_nut": 0.6,
+    "vsl": 325.0
+  }
+}

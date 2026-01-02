@@ -1,0 +1,33 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "timestamp": "2026-01-02T12:55:25.151358Z",
+    "description": "Tenor viol dimensions",
+    "preset_id": "tenor_viol",
+    "display_name": "Tenor Viol",
+    "family": "VIOL",
+    "icon": "\ud83c\udfbb"
+  },
+  "parameters": {
+    "arching_height": 16.0,
+    "belly_edge_thickness": 3.5,
+    "body_length": 480.0,
+    "body_stop": 240.0,
+    "bridge_height": 35.0,
+    "fb_visible_height_at_join": 7.0,
+    "fb_visible_height_at_nut": 5.0,
+    "fingerboard_length": 360.0,
+    "fingerboard_radius": 62.0,
+    "fingerboard_width_at_end": 55.0,
+    "fingerboard_width_at_nut": 44.0,
+    "instrument_family": "VIOL",
+    "instrument_name": "Default Tenor Viol",
+    "no_frets": 7,
+    "overstand": 12.0,
+    "rib_height": 100.0,
+    "show_measurements": true,
+    "string_height_eof": 5.0,
+    "string_height_nut": 0.6,
+    "vsl": 400.0
+  }
+}
