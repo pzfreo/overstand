@@ -15,10 +15,10 @@ def test_calculate_derived_values_violin():
     params['instrument_family'] = InstrumentFamily.VIOLIN.name
     result = calculate_derived_values(params)
 
-    assert 'Neck Stop' in result
-    assert 'Body Stop' in result
-    assert result['Neck Stop'] > 0
-    assert result['Body Stop'] > 0
+    assert 'neck_stop' in result
+    assert 'body_stop' in result
+    assert result['neck_stop'] > 0
+    assert result['body_stop'] > 0
 
 
 def test_viol_derived_values():
@@ -29,10 +29,10 @@ def test_viol_derived_values():
     result = calculate_derived_values(params)
 
     # Check that basic geometric values are calculated
-    assert 'Neck Stop' in result
-    assert 'Body Stop' in result
-    assert result['Neck Stop'] > 0
-    assert result['Body Stop'] > 0
+    assert 'neck_stop' in result
+    assert 'body_stop' in result
+    assert result['neck_stop'] > 0
+    assert result['body_stop'] > 0
 
 
 def test_string_angle_calculation():
@@ -41,11 +41,11 @@ def test_string_angle_calculation():
     params['instrument_family'] = InstrumentFamily.VIOLIN.name
     result = calculate_derived_values(params)
 
-    assert 'String Angle to Ribs' in result
-    assert 'String Angle to Fingerboard' in result
+    assert 'string_angle_to_ribs' in result
+    assert 'string_angle_to_fingerboard' in result
     # String angles should be reasonable (between 0 and 90 degrees)
-    assert 0 < result['String Angle to Ribs'] < 90
-    assert 0 < result['String Angle to Fingerboard'] < 90
+    assert 0 < result['string_angle_to_ribs'] < 90
+    assert 0 < result['string_angle_to_fingerboard'] < 90
 
 
 def test_neck_line_angle_calculation():

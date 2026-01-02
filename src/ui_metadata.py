@@ -168,12 +168,12 @@ SECTIONS = {
         default_expanded=True,
         order=10,
         parameter_names=[
-            'Neck Angle',
-            'Neck Stop',
-            'Body Stop',
-            'Nut Relative to Ribs',
-            'Total FB Thickness at Nut',
-            'Total FB Thickness at Join'
+            'neck_angle',
+            'neck_stop',
+            'body_stop',
+            'nut_relative_to_ribs',
+            'fb_thickness_at_nut',
+            'fb_thickness_at_join'
         ],
         description='Primary calculated values'
     ),
@@ -186,35 +186,66 @@ SECTIONS = {
         default_expanded=False,
         order=11,
         parameter_names=[
-            'Sagitta at Nut',
-            'Sagitta at Join',
-            'String Angle to Ribs',
-            'String Angle to Fingerboard',
-            'Neck Angle (rad)',
-            'Neck End X',
-            'Neck End Y',
-            'Nut Draw Radius',
-            'Neck Line Angle',
-            'Nut Top X',
-            'Nut Top Y',
-            'Bridge Top X',
-            'Bridge Top Y',
-            'Fingerboard Direction Angle',
-            'Fingerboard Bottom End X',
-            'Fingerboard Bottom End Y',
-            'Fingerboard Thickness at End',
-            'Nut Perpendicular Intersection X',
-            'Nut Perpendicular Intersection Y',
-            'Nut to Perpendicular Distance',
-            'String X at Fingerboard End',
-            'String Y at Fingerboard End',
-            'Fingerboard Surface Point X',
-            'Fingerboard Surface Point Y',
-            'String Height at Fingerboard End'
+            'sagitta_at_nut',
+            'sagitta_at_join',
+            'string_angle_to_ribs',
+            'string_angle_to_fingerboard',
+            'neck_angle_rad',
+            'neck_end_x',
+            'neck_end_y',
+            'nut_draw_radius',
+            'neck_line_angle',
+            'nut_top_x',
+            'nut_top_y',
+            'bridge_top_x',
+            'bridge_top_y',
+            'fb_direction_angle',
+            'fb_bottom_end_x',
+            'fb_bottom_end_y',
+            'fb_thickness_at_end',
+            'nut_perpendicular_intersection_x',
+            'nut_perpendicular_intersection_y',
+            'nut_to_perpendicular_distance',
+            'string_x_at_fb_end',
+            'string_y_at_fb_end',
+            'fb_surface_point_x',
+            'fb_surface_point_y',
+            'string_height_at_fb_end'
         ],
         description='Internal geometry and detailed calculations for advanced users'
     )
 }
+
+
+# ============================================
+# VALIDATION
+# ============================================
+
+def validate_sections():
+    """
+    Validate that all section parameter_names reference valid parameters in the registry.
+
+    This catches configuration errors at module load time.
+    Raises ValueError if any section references an unknown parameter.
+    """
+    from parameter_registry import PARAMETER_REGISTRY
+
+    errors = []
+
+    for section_id, section in SECTIONS.items():
+        for param_name in section.parameter_names:
+            if param_name not in PARAMETER_REGISTRY:
+                errors.append(
+                    f"Section '{section_id}' references unknown parameter '{param_name}'"
+                )
+
+    if errors:
+        error_msg = "UI Section Validation Failed:\n  " + "\n  ".join(errors)
+        raise ValueError(error_msg)
+
+
+# Run validation at module load
+validate_sections()
 
 
 # ============================================

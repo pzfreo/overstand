@@ -10,35 +10,15 @@ from typing import List, Dict, Any, Optional
 from enum import Enum
 import json
 
-
-# ============================================
-# ENUMERATIONS (Dropdown Options)
-# ============================================
-
-
-class StringCount(Enum):
-    """Number of strings"""
-    FOUR = "4 (Violin/Viola/Cello)"
-    FIVE = "5 (Five-string Violin/Viola/Cello)"
-    SIX = "6 (6 String Viol)"
-    SEVEN = "7 (7 String Viol)"
-
-class InstrumentType(Enum):
-    """Type of bowed instrument"""
-    VIOLIN = "Violin"
-    VIOLA = "Viola"
-    CELLO = "Cello"
-    PARDESSUS = "Pardessus"
-    TREBLE = "Treble Viol"
-    TENOR = "Tenor Viol"
-    BASS = "Bass Viol"
-    OTHER = "Other"
-
-class InstrumentFamily(Enum):
-    """Instrument family - determines calculation approach"""
-    VIOLIN = "Violin Family (Body Stop Driven)"
-    VIOL = "Viol Family (Body Stop Driven)"
-    GUITAR_MANDOLIN = "Guitar/Mandolin Family (Fret Join Driven)"
+# Import from parameter registry (single source of truth)
+from parameter_registry import (
+    InstrumentFamily,
+    StringCount,
+    InstrumentType,
+    PARAMETER_REGISTRY,
+    ParameterRole,
+    ParameterType
+)
 
 
 # ============================================
@@ -180,338 +160,79 @@ class StringParameter:
 
 
 # ============================================
-# PARAMETER DEFINITIONS - YOUR FOCUS AREA
+# PARAMETER DEFINITIONS - GENERATED FROM REGISTRY
 # ============================================
 
-INSTRUMENT_PARAMETERS = {
-    # Instrument Family (first question)
-    'instrument_family': EnumParameter(
-        name='instrument_family',
-        label='Instrument Family',
-        enum_class=InstrumentFamily,
-        default=InstrumentFamily.VIOLIN,
-        description='Select instrument family - determines calculation approach for neck/body dimensions',
-        category='General'
-    ),
+def _generate_instrument_parameters():
+    """
+    Generate INSTRUMENT_PARAMETERS from the unified parameter registry.
 
-    # Instrument Name
-    'instrument_name': StringParameter(
-        name='instrument_name',
-        label='Instrument Name',
-        default='My Instrument',
-        description='Name/label for this instrument (used in filenames)',
-        category='General',
-        max_length=50
-    ),
+    This creates backward-compatible parameter objects (NumericParameter, EnumParameter, etc.)
+    from the registry's UnifiedParameter definitions.
+    """
+    params = {}
 
+    for key, unified in PARAMETER_REGISTRY.items():
+        # Skip output-only parameters
+        if unified.role == ParameterRole.OUTPUT_ONLY:
+            continue
 
+        # Get the input metadata dict from the unified parameter
+        metadata = unified.to_input_metadata()
 
-    # Basic Dimensions
-    'vsl': NumericParameter(
-        name='vsl',
-        label='Vibrating String Length',
-        unit='mm',
-        default=325.0,
-        min_val=10.0,
-        max_val=1000.0,
-        description='Total length from nut to bridge along string path',
-        category='Basic Dimensions',
-        step=0.5
-    ),
+        # Create the appropriate parameter type
+        if unified.param_type == ParameterType.NUMERIC:
+            params[key] = NumericParameter(
+                name=metadata['name'],
+                label=metadata['label'],
+                unit=metadata['unit'],
+                default=metadata['default'],
+                min_val=metadata['min_val'],
+                max_val=metadata['max_val'],
+                description=metadata['description'],
+                category=metadata['category'],
+                step=metadata['step'],
+                visible_when=metadata.get('visible_when'),
+                is_output=metadata.get('is_output')
+            )
+        elif unified.param_type == ParameterType.ENUM:
+            params[key] = EnumParameter(
+                name=metadata['name'],
+                label=metadata['label'],
+                enum_class=metadata['enum_class'],
+                default=metadata['default'],
+                description=metadata['description'],
+                category=metadata['category'],
+                visible_when=metadata.get('visible_when'),
+                is_output=metadata.get('is_output')
+            )
+        elif unified.param_type == ParameterType.BOOLEAN:
+            params[key] = BooleanParameter(
+                name=metadata['name'],
+                label=metadata['label'],
+                default=metadata['default'],
+                description=metadata['description'],
+                category=metadata['category'],
+                visible_when=metadata.get('visible_when'),
+                is_output=metadata.get('is_output')
+            )
+        elif unified.param_type == ParameterType.STRING:
+            params[key] = StringParameter(
+                name=metadata['name'],
+                label=metadata['label'],
+                default=metadata['default'],
+                description=metadata['description'],
+                category=metadata['category'],
+                max_length=metadata['max_length'],
+                visible_when=metadata.get('visible_when'),
+                is_output=metadata.get('is_output')
+            )
 
-    'fret_join': NumericParameter(
-        name='fret_join',
-        label='Fret at Body Join',
-        unit='fret #',
-        default=12,
-        min_val=1,
-        max_val=24,
-        step=1,
-        description='Which fret is located at the neck/body junction',
-        category='Basic Dimensions',
-        visible_when={'instrument_family': 'GUITAR_MANDOLIN'}
-    ),
-
-    'no_frets': NumericParameter(
-        name='no_frets',
-        label='Number of Frets',
-        default=7,
-        min_val=0,
-        max_val=30,
-        step=1,
-        unit='',
-        visible_when={'instrument_family': ['VIOL', 'GUITAR_MANDOLIN']},
-        description='Number of frets to calculate positions for',
-        category='Construction'
-    ),
-
-    'body_stop': NumericParameter(
-        name='body_stop',
-        label='Body Stop',
-        unit='mm',
-        default=195.0,
-        min_val=10.0,
-        max_val=500.0,
-        description='Length from where neck meets body to bridge',
-        category='Basic Dimensions',
-        step=0.1,
-        is_output={'VIOLIN': False, 'VIOL': False, 'GUITAR_MANDOLIN': True}
-    ),
-
-    'neck_stop': NumericParameter(
-        name='neck_stop',
-        label='Neck Stop',
-        unit='mm',
-        default=130.0,
-        min_val=10.0,
-        max_val=500.0,
-        description='Length from nut to where neck meets body',
-        category='Basic Dimensions',
-        step=0.1,
-        visible_when={'instrument_family': ['VIOLIN', 'VIOL']},
-        is_output={'VIOLIN': True, 'VIOL': True, 'GUITAR_MANDOLIN': True}
-    ),
-
-    'body_length': NumericParameter(
-        name='body_length',
-        label='Body Length',
-        unit='mm',
-        default=355.0,
-        min_val=10.0,
-        max_val=1000.0,
-        description='Length of body from join to saddle',
-        category='Basic Dimensions',
-        step=1
-    ),
-
-    'rib_height': NumericParameter(
-        name='rib_height',
-        label='Rib Height',
-        unit='mm',
-        default=30.0,
-        min_val=10.0,
-        max_val=500.0,
-        description='Rib Height assumed constant (doesn\'t affect calculation)',
-        category='Basic Dimensions',
-        step=0.5
-    ),
-
-    'fingerboard_length': NumericParameter(
-        name='fingerboard_length',
-        label='Fingerboard Length',
-        unit='mm',
-        default=270.0,
-        min_val=20.0,
-        max_val=1000.0,
-        description='Length of fingerboard from nut',
-        category='Basic Dimensions',
-        step=1
-    ),
-    
-    # 'neck_thickness_at_first': NumericParameter(
-    #     name='neck_thickness_at_first',
-    #     label='Neck Thickness at First Fret',
-    #     unit='mm',
-    #     default=19.0,
-    #     min_val=16.0,
-    #     max_val=23.0,
-    #     description='Neck thickness at the top of the fingerboard where the first fret would be on a viol',
-    #     category='Basic Dimensions',
-    #     step=0.1
-    # ),
-    
-    # 'neck_thickness_at_seventh': NumericParameter(
-    #     name='neck_thickness_at_seventh',
-    #     label='Neck Thickness at Seventh',
-    #     unit='mm',
-    #     default=22.0,
-    #     min_val=19.0,
-    #     max_val=26.0,
-    #     description='Neck thickness at the heel of the neck where the seventh fret would be on a viol',
-    #     category='Basic Dimensions',
-    #     step=0.1
-    # ),
-    
-
-    # Arching height
-    'arching_height': NumericParameter(
-        name='arching_height',
-        label='Arching Height',
-        unit='mm',
-        default=15.0,
-        min_val=0.0,
-        max_val=100.0,
-        description='Height of arching from top of ribs to bridge location',
-        category='Basic Dimensions',
-        step=0.1
-    ),
-
-    # Belly edge thickness
-    'belly_edge_thickness': NumericParameter(
-        name='belly_edge_thickness',
-        label='Belly Edge Thickness',
-        unit='mm',
-        default=3.5,
-        min_val=0.0,
-        max_val=10.0,
-        description='Thickness of belly (top plate) at the edge',
-        category='Basic Dimensions',
-        step=0.1
-    ),
-
-    # Bridge Height
-    'bridge_height': NumericParameter(
-        name='bridge_height',
-        label='Bridge Height',
-        unit='mm',
-        default=33.0,
-        min_val=0.0,
-        max_val=100.0,
-        description='Height of bridge above arching',
-        category='Basic Dimensions',
-        step=0.1
-    ),
-
-    # overstand Inc top thickness.
-    'overstand': NumericParameter(
-        name='overstand',
-        label='Overstand',
-        unit='mm',
-        default=12.0,
-        min_val=0.0,
-        max_val=100.0,
-        description='Height of fingerboard above ribs at neck join',
-        category='Basic Dimensions',
-        step=0.1
-    ),
-
-    # Fingerboard radius
-    'fingerboard_radius': NumericParameter(
-        name='fingerboard_radius',
-        label='Fingerboard Radius',
-        unit='mm',
-        default=41.0,
-        min_val=20.0,
-        max_val=1000.0,
-        description='Radius of fingerboard curvature (larger = flatter). Typical: Violin 41mm, Viol 60-80mm, Guitar 300mm',
-        category='Basic Dimensions',
-        step=1.0
-    ),
-
-    # Fingerboard visible height at nut
-    'fb_visible_height_at_nut': NumericParameter(
-        name='fb_visible_height_at_nut',
-        label='Fingerboard visible height at nut',
-        unit='mm',
-        default=4.0,
-        min_val=0.0,
-        max_val=100.0,
-        description='Height of the flat visible side of fingerboard at nut',
-        category='Basic Dimensions',
-        step=0.1
-    ),
-
-    # Fingerboard visible height at body join
-    'fb_visible_height_at_join': NumericParameter(
-        name='fb_visible_height_at_join',
-        label='Fingerboard visible height at body join',
-        unit='mm',
-        default=6.0,
-        min_val=0.0,
-        max_val=100.0,
-        description='Height of the flat visible side of fingerboard at body join',
-        category='Basic Dimensions',
-        step=0.1
-    ),
-
-    # String height at nut
-    'string_height_nut': NumericParameter(
-        name='string_height_nut',
-        label='String height at nut',
-        unit='mm',
-        default=0.6,
-        min_val=0.0,
-        max_val=10.0,
-        description='String height at nut',
-        category='Basic Dimensions',
-        step=0.1
-    ),
-
-    # String height at end of fingerboard
-    'string_height_eof': NumericParameter(
-        name='string_height_eof',
-        label='String height at end of fb',
-        unit='mm',
-        default=4.0,
-        min_val=0.0,
-        max_val=10.0,
-        description='String height at the end of the fingerboard',
-        category='Basic Dimensions',
-        step=0.1,
-        visible_when={'instrument_family': ['VIOLIN', 'VIOL']}
-    ),
+    return params
 
 
-    # String height at 12th fret
-    'string_height_12th_fret': NumericParameter(
-        name='string_height_12th_fret',
-        label='String height at 12th fret',
-        unit='mm',
-        default=4.0,
-        min_val=0.0,
-        max_val=10.0,
-        description='String height at the 12th fret',
-        category='Basic Dimensions',
-        step=0.1,
-        visible_when={'instrument_family': 'GUITAR_MANDOLIN'}
-    ),
-
-    'fingerboard_width_at_nut': NumericParameter(
-        name='fingerboard_width_at_nut',
-        label='Width at Nut',
-        unit='mm',
-        default=24.0,
-        min_val=10.0,
-        max_val=100.0,
-        description='Width of fingerboard at the nut',
-        category='Fingerboard Dimensions',
-        step=0.1
-    ),
-    
-    'fingerboard_width_at_end': NumericParameter(
-        name='fingerboard_width_at_end',
-        label='Fingerboard width at end',
-        unit='mm',
-        default=30.0,
-        min_val=10.0,
-        max_val=100.0,
-        description='Fingerboard width at bridge end of fingerboard',
-        category='Fingerboard Dimensions',
-        step=0.1
-    ),
-
-    # 'string_count': EnumParameter(
-    #     name='string_count',
-    #     label='Number of Strings',
-    #     enum_class=StringCount,
-    #     default=StringCount.FOUR,
-    #     description='Number of strings',
-    #     category='Nut'
-    # ),
-    
-    # Fingerboard
-    
-    # Advanced Options
-    
-    'show_measurements': BooleanParameter(
-        name='show_measurements',
-        label='Show Measurements',
-        default=True,
-        description='Display dimension annotations',
-        category='Display Options'
-    ),
-
-}
+# Generate INSTRUMENT_PARAMETERS from registry
+INSTRUMENT_PARAMETERS = _generate_instrument_parameters()
 
 
 # ============================================

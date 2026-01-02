@@ -387,14 +387,16 @@ async function updateDerivedValues() {
                 for (const [name, param] of Object.entries(state.parameterDefinitions.parameters)) {
                     if (ui.isParameterOutput(param, currentMode)) {
                         const input = document.getElementById(name);
-                        if (input && result.values[param.label] != null) {
-                            input.value = !isNaN(result.values[param.label]) ? result.values[param.label] : '';
+                        // Use 'name' (snake_case key) instead of param.label (display name)
+                        if (input && result.values[name] != null) {
+                            input.value = !isNaN(result.values[name]) ? result.values[name] : '';
                         }
                     }
                 }
 
                 for (const [label, value] of Object.entries(result.values)) {
-                    if (label.includes('_')) continue;
+                    // Note: All keys now use snake_case from parameter registry
+                    // Visibility is controlled by metadata.visible flag, not key format
                     const meta = (result.metadata || {})[label];
                     if (!meta || !meta.visible) continue;
 
@@ -419,10 +421,11 @@ function updateCoreMetricsPanel(values, metadata, params) {
 
     // Define core metrics to display (in order, with primary flag for neck angle)
     // In Fret Join mode, show "Body Stop" instead of "Neck Stop"
+    // Note: Keys use snake_case to match backend parameter registry
     const coreMetrics = [
-        { key: 'Neck Angle', primary: true },
-        { key: isFretJoinMode ? 'Body Stop' : 'Neck Stop' },
-        { key: 'Nut Relative to Ribs' }
+        { key: 'neck_angle', primary: true },
+        { key: isFretJoinMode ? 'body_stop' : 'neck_stop' },
+        { key: 'nut_relative_to_ribs' }
     ];
 
     panel.innerHTML = '';

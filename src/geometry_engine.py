@@ -55,10 +55,6 @@ def calculate_fingerboard_thickness(params: Dict[str, Any]) -> Dict[str, Any]:
     result['sagitta_at_join'] = sagitta_at_join
     result['fb_thickness_at_nut'] = fb_thickness_at_nut
     result['fb_thickness_at_join'] = fb_thickness_at_join
-    result['Sagitta at Nut'] = sagitta_at_nut
-    result['Sagitta at Join'] = sagitta_at_join
-    result['Total FB Thickness at Nut'] = fb_thickness_at_nut
-    result['Total FB Thickness at Join'] = fb_thickness_at_join
 
     return result
 
@@ -86,12 +82,12 @@ def calculate_string_angles_violin(params: Dict[str, Any], vsl: float, fb_thickn
     opposite_string_to_fb = string_height_eof - string_height_nut
     string_angle_to_fb = math.atan(opposite_string_to_fb / fingerboard_length) * 180 / math.pi
 
-    result['Body Stop'] = body_stop
-    result['Neck Stop'] = neck_stop
+    result['body_stop'] = body_stop
+    result['neck_stop'] = neck_stop
     result['string_angle_to_ribs_rad'] = string_angle_to_ribs_rad
     result['string_angle_to_fb'] = string_angle_to_fb
-    result['String Angle to Ribs'] = string_angle_to_ribs
-    result['String Angle to Fingerboard'] = string_angle_to_fb
+    result['string_angle_to_ribs'] = string_angle_to_ribs
+    result['string_angle_to_fingerboard'] = string_angle_to_fb
 
     return result
 
@@ -119,12 +115,12 @@ def calculate_string_angles_guitar(params: Dict[str, Any], vsl: float, fret_posi
     opposite_string_to_join = string_height_at_join - string_height_nut
     string_angle_to_fb = math.atan(opposite_string_to_join / fret_positions[fret_join]) * 180 / math.pi
 
-    result['Body Stop'] = body_stop
-    result['Neck Stop'] = neck_stop
+    result['body_stop'] = body_stop
+    result['neck_stop'] = neck_stop
     result['string_angle_to_ribs_rad'] = string_angle_to_ribs_rad
     result['string_angle_to_fb'] = string_angle_to_fb
-    result['String Angle to Ribs'] = string_angle_to_ribs
-    result['String Angle to Fingerboard'] = string_angle_to_fb
+    result['string_angle_to_ribs'] = string_angle_to_ribs
+    result['string_angle_to_fingerboard'] = string_angle_to_fb
 
     return result
 
@@ -156,19 +152,12 @@ def calculate_neck_geometry(params: Dict[str, Any], vsl: float, neck_stop: float
     nut_draw_radius = fb_thickness_at_nut + string_height_nut
     neck_line_angle = math.atan2(neck_end_y - overstand, neck_end_x - 0)
 
-    result['Neck Angle'] = neck_angle
-    result['Neck Stop'] = neck_stop
-    result['Neck Angle (rad)'] = neck_angle_rad
-    result['Neck End X'] = neck_end_x
-    result['Neck End Y'] = neck_end_y
-    result['Nut Draw Radius'] = nut_draw_radius
-    result['Neck Line Angle'] = neck_line_angle
-    result['Nut Top X'] = nut_top_x
-    result['Nut Top Y'] = nut_top_y
-    result['Bridge Top X'] = bridge_top_x
-    result['Bridge Top Y'] = bridge_top_y
+    result['neck_angle'] = neck_angle
+    result['neck_stop'] = neck_stop
+    result['neck_angle_rad'] = neck_angle_rad
     result['neck_end_x'] = neck_end_x
     result['neck_end_y'] = neck_end_y
+    result['nut_draw_radius'] = nut_draw_radius
     result['neck_line_angle'] = neck_line_angle
     result['nut_top_x'] = nut_top_x
     result['nut_top_y'] = nut_top_y
@@ -176,8 +165,8 @@ def calculate_neck_geometry(params: Dict[str, Any], vsl: float, neck_stop: float
     result['bridge_top_y'] = bridge_top_y
 
     string_length = math.sqrt((bridge_top_x - nut_top_x)**2 + (bridge_top_y - nut_top_y)**2)
-    result['String Length'] = string_length
-    result['Nut Relative to Ribs'] = nut_top_y
+    result['string_length'] = string_length
+    result['nut_relative_to_ribs'] = nut_top_y
 
     return result
 
@@ -195,10 +184,10 @@ def calculate_fingerboard_geometry(params: Dict[str, Any], neck_stop: float, nec
     fb_bottom_end_y = neck_end_y + fingerboard_length * math.sin(fb_direction_angle)
     fb_thickness_at_end = fb_thickness_at_nut + (fb_thickness_at_join - fb_thickness_at_nut) * (fingerboard_length / neck_stop)
 
-    result['Fingerboard Direction Angle'] = fb_direction_angle
-    result['Fingerboard Bottom End X'] = fb_bottom_end_x
-    result['Fingerboard Bottom End Y'] = fb_bottom_end_y
-    result['Fingerboard Thickness at End'] = fb_thickness_at_end
+    result['fingerboard_direction_angle'] = fb_direction_angle
+    result['fingerboard_bottom_end_x'] = fb_bottom_end_x
+    result['fingerboard_bottom_end_y'] = fb_bottom_end_y
+    result['fingerboard_thickness_at_end'] = fb_thickness_at_end
     result['fb_direction_angle'] = fb_direction_angle
     result['fb_bottom_end_x'] = fb_bottom_end_x
     result['fb_bottom_end_y'] = fb_bottom_end_y
@@ -241,9 +230,9 @@ def calculate_string_height_and_dimensions(params: Dict[str, Any], neck_end_x: f
         intersect_y = 0.0
         nut_to_perp_distance = 0.0
 
-    result['Nut Perpendicular Intersection X'] = intersect_x
-    result['Nut Perpendicular Intersection Y'] = intersect_y
-    result['Nut to Perpendicular Distance'] = nut_to_perp_distance
+    result['nut_perpendicular_intersection_x'] = intersect_x
+    result['nut_perpendicular_intersection_y'] = intersect_y
+    result['nut_to_perpendicular_distance'] = nut_to_perp_distance
 
     fb_dx = fb_bottom_end_x - neck_end_x
     fb_dy = fb_bottom_end_y - neck_end_y
@@ -267,11 +256,11 @@ def calculate_string_height_and_dimensions(params: Dict[str, Any], neck_end_x: f
     fb_surface_point_x = string_x_at_fb_end - string_height_at_fb_end * perp_dx
     fb_surface_point_y = string_y_at_fb_end - string_height_at_fb_end * perp_dy
 
-    result['String X at Fingerboard End'] = string_x_at_fb_end
-    result['String Y at Fingerboard End'] = string_y_at_fb_end
-    result['Fingerboard Surface Point X'] = fb_surface_point_x
-    result['Fingerboard Surface Point Y'] = fb_surface_point_y
-    result['String Height at Fingerboard End'] = string_height_at_fb_end
+    result['string_x_at_fingerboard_end'] = string_x_at_fb_end
+    result['string_y_at_fingerboard_end'] = string_y_at_fb_end
+    result['fingerboard_surface_point_x'] = fb_surface_point_x
+    result['fingerboard_surface_point_y'] = fb_surface_point_y
+    result['string_height_at_fingerboard_end'] = string_height_at_fb_end
 
     return result
 
