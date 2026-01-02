@@ -306,13 +306,8 @@ async function generateNeck() {
     elements.genBtn.disabled = true;
     ui.setStatus('generating', '⚙️ Updating preview...');
 
-    if (window.innerWidth <= 1024) {
-        const panel = document.getElementById('controls-panel');
-        if (panel) panel.classList.remove('mobile-open');
-        const overlay = document.getElementById('sidebar-overlay');
-        if (overlay) overlay.classList.remove('active');
-        document.body.style.overflow = '';
-    }
+    // Mobile panel auto-close removed - panel now only closes when user taps edit icon
+    // This allows users to batch-edit multiple parameters without the panel closing after each change
 
     try {
         const params = collectParameters();
