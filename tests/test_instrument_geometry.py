@@ -15,10 +15,10 @@ def test_calculate_derived_values_violin():
     params['instrument_family'] = InstrumentFamily.VIOLIN.name
     result = calculate_derived_values(params)
 
-    assert 'neck_stop' in result
-    assert 'body_stop' in result
-    assert result['neck_stop'] > 0
-    assert result['body_stop'] > 0
+    assert 'Neck Stop' in result
+    assert 'Body Stop' in result
+    assert result['Neck Stop'] > 0
+    assert result['Body Stop'] > 0
 
 
 def test_viol_derived_values():
@@ -29,10 +29,10 @@ def test_viol_derived_values():
     result = calculate_derived_values(params)
 
     # Check that basic geometric values are calculated
-    assert 'neck_stop' in result
-    assert 'body_stop' in result
-    assert result['neck_stop'] > 0
-    assert result['body_stop'] > 0
+    assert 'Neck Stop' in result
+    assert 'Body Stop' in result
+    assert result['Neck Stop'] > 0
+    assert result['Body Stop'] > 0
 
 
 def test_string_angle_calculation():

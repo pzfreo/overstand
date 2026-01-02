@@ -57,7 +57,7 @@ def calculate_derived_values(params: Dict[str, Any]) -> Dict[str, Any]:
         raise ValueError("Invalid calculation mode")
 
     derived.update(angle_result)
-    neck_stop = angle_result['neck_stop']
+    neck_stop = angle_result['Neck Stop']
     string_angle_to_ribs_rad = angle_result['string_angle_to_ribs_rad']
     string_angle_to_fb = angle_result['string_angle_to_fb']
 
@@ -65,7 +65,7 @@ def calculate_derived_values(params: Dict[str, Any]) -> Dict[str, Any]:
         params, vsl, neck_stop, string_angle_to_ribs_rad, string_angle_to_fb,
         fb_thickness_at_nut, fb_thickness_at_join
     )
-    neck_result['body_stop'] = angle_result['body_stop']
+    neck_result['Body Stop'] = angle_result['Body Stop']
     derived.update(neck_result)
 
     fb_geom_result = geometry_engine.calculate_fingerboard_geometry(
@@ -113,12 +113,12 @@ def generate_side_view_svg(params: Dict[str, Any], show_measurements: bool = Tru
     
     svg_renderer.draw_body(
         exporter, params.get('body_length', 0), params.get('belly_edge_thickness', 0),
-        params.get('rib_height', 0), derived['body_stop'], params.get('arching_height', 0)
+        params.get('rib_height', 0), derived['Body Stop'], params.get('arching_height', 0)
     )
-    
+
     svg_renderer.draw_neck(
         exporter, params.get('overstand', 0), derived['neck_end_x'], derived['neck_end_y'],
-        params.get('bridge_height', 0), derived['body_stop'], params.get('arching_height', 0),
+        params.get('bridge_height', 0), derived['Body Stop'], params.get('arching_height', 0),
         derived['Nut Draw Radius'], derived['neck_line_angle'], derived['Neck Angle']
     )
     
@@ -147,7 +147,7 @@ def generate_side_view_svg(params: Dict[str, Any], show_measurements: bool = Tru
         reference_line_end_x, derived['nut_top_x'], derived['nut_top_y'],
         derived['bridge_top_x'], derived['bridge_top_y'], string_line,
         derived['String Length'], derived['neck_end_x'], derived['neck_end_y'],
-        params.get('overstand', 0), derived['body_stop'], params.get('arching_height', 0),
+        params.get('overstand', 0), derived['Body Stop'], params.get('arching_height', 0),
         params.get('bridge_height', 0), params.get('body_length', 0), params.get('rib_height', 0),
         params.get('belly_edge_thickness', 0), derived['Fingerboard Surface Point X'],
         derived['Fingerboard Surface Point Y'], derived['String X at Fingerboard End'],
