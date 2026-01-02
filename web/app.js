@@ -371,7 +371,7 @@ async function updateDerivedValues() {
 
         if (result.success && Object.keys(result.values).length > 0) {
             // Update core metrics panel (always visible, prominent display)
-            updateCoreMetricsPanel(result.values, result.metadata);
+            updateCoreMetricsPanel(result.values, result.metadata, params);
 
             // Update output sections if using component-based UI
             if (state.uiSections && state.uiSections.output) {
@@ -410,15 +410,18 @@ async function updateDerivedValues() {
     } catch (e) { console.error("Failed to update derived values:", e); }
 }
 
-function updateCoreMetricsPanel(values, metadata) {
+function updateCoreMetricsPanel(values, metadata, params) {
     const panel = document.getElementById('core-metrics-grid');
     if (!panel) return;
 
+    // Determine if we're in Fret Join mode (Guitar/Mandolin family)
+    const isFretJoinMode = params && params.instrument_family === 'GUITAR_MANDOLIN';
+
     // Define core metrics to display (in order, with primary flag for neck angle)
+    // In Fret Join mode, show "Body Stop" instead of "Neck Stop"
     const coreMetrics = [
         { key: 'Neck Angle', primary: true },
-        { key: 'Neck Stop' },
-        { key: 'Body Stop' },
+        { key: isFretJoinMode ? 'Body Stop' : 'Neck Stop' },
         { key: 'Nut Relative to Ribs' }
     ];
 
