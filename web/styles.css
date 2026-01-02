@@ -71,13 +71,13 @@ body {
     background: linear-gradient(135deg, #f0f4ff 0%, #e0e7ff 100%);
     color: var(--color-gray-800);
     min-height: 100vh;
-    padding: 1rem;
+    padding: 1rem 1rem 1rem 0; /* No left padding - icon bar handles it */
     line-height: 1.5;
 }
 
 .app-container {
     max-width: 1400px;
-    margin: 0 auto;
+    margin: 0 auto 0 56px; /* Account for 56px icon bar on left */
 }
 
 h1 {
@@ -190,41 +190,63 @@ header {
     overflow: hidden;
     height: calc(100vh - 140px);
     border: 1px solid var(--color-gray-200);
+    transition: grid-template-columns 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Mobile hamburger menu button */
-.mobile-menu-btn {
-    display: none;
+/* When parameters panel is collapsed on desktop */
+.main-container.params-collapsed {
+    grid-template-columns: 0px 1fr;
+}
+
+/* ============================================
+   ICON BAR (Universal - Desktop & Mobile)
+   ============================================ */
+
+.mobile-icon-bar {
+    display: flex; /* Always visible on desktop and mobile */
     position: fixed;
-    top: 1rem;
-    left: 1rem;
-    z-index: 1003;
-    background: white;
-    border: none;
-    border-radius: var(--radius-lg);
-    padding: 10px;
-    box-shadow: var(--shadow-lg);
-    cursor: pointer;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 56px;
+    background: linear-gradient(135deg, var(--color-primary-dark) 0%, var(--color-primary) 100%);
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.15);
+    z-index: 1004;
+    flex-direction: column;
+    padding: 1rem 0;
+    gap: 0.5rem;
+}
+
+.mobile-icon-btn {
     width: 48px;
     height: 48px;
-    flex-direction: column;
-    justify-content: center;
+    margin: 0 auto;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    border-radius: var(--radius-md);
+    display: flex;
     align-items: center;
-    gap: 6px;
+    justify-content: center;
+    cursor: pointer;
     transition: all 0.2s ease;
+    color: white;
+    font-size: 1.5rem;
 }
 
-.mobile-menu-btn span {
-    display: block;
-    width: 24px;
-    height: 2px;
-    background: var(--color-gray-800);
-    transition: all 0.3s ease;
-    border-radius: 2px;
+.mobile-icon-btn:hover,
+.mobile-icon-btn:active {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.05);
 }
 
-.mobile-menu-btn:active {
-    transform: scale(0.95);
+.mobile-icon-btn.active {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.icon-menu,
+.icon-edit {
+    line-height: 1;
+    user-select: none;
 }
 
 /* Close button inside sidebar (mobile only) */
@@ -262,20 +284,21 @@ header {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(15, 23, 42, 0.7);
+    background: transparent;  /* No overlay opacity on mobile */
     /* backdrop-filter causes sidebar blur on mobile Firefox */
     z-index: 1001;  /* Between app-container (0) and controls-panel (1002) */
     opacity: 0;
     visibility: hidden;
-    /* Prevent blocking/blurring when inactive */
+    /* Overlay is purely visual - never blocks clicks */
     transition: opacity 0.3s ease, visibility 0.3s ease;
-    pointer-events: none;
+    pointer-events: none !important;
 }
 
 .sidebar-overlay.active {
     opacity: 1;
     visibility: visible;
-    pointer-events: auto;
+    /* Keep pointer-events: none - let clicks pass through to panels */
+    pointer-events: none !important;
 }
 
 @media (max-width: 1024px) {
@@ -283,6 +306,7 @@ header {
         position: relative;
         z-index: 0;
         padding: 0;
+        margin-left: 56px; /* Account for icon bar */
     }
 
     body {
@@ -306,8 +330,7 @@ header {
 
     h1 {
         font-size: 1.25rem;
-        padding-left: 3rem;
-        /* Make room for hamburger */
+        padding-left: 1rem; /* Standard padding */
         text-align: left;
     }
 
@@ -321,42 +344,33 @@ header {
         border: none;
     }
 
-    .mobile-menu-btn {
-        display: flex;
-        top: 0.75rem;
-        left: 0.75rem;
-        width: 40px;
-        height: 40px;
-        background: transparent;
-        box-shadow: none;
+    /* Hide desktop menu button on mobile */
+    .menu-btn {
+        display: none;
     }
 
-    .mobile-close-btn {
-        display: flex;
+    /* Both controls-panel and menu-panel slide from left */
+    .controls-panel,
+    .menu-panel {
+        position: fixed !important;
+        top: 0 !important;
+        left: 56px !important;
+        right: auto !important; /* Override desktop right: 0 */
+        bottom: 0 !important;
+        width: calc(100% - 56px) !important;
+        max-width: 400px !important;
+        height: auto !important; /* Override base height: 100% */
+        transform: translateX(-100%) !important;
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        z-index: 1003 !important;
+        box-shadow: var(--shadow-xl) !important;
+        border-radius: 0 var(--radius-xl) var(--radius-xl) 0 !important;
+        background: var(--color-surface) !important; /* Bright white background on mobile */
     }
 
-    .controls-panel.mobile-open .mobile-close-btn {
-        opacity: 1;
-    }
-
-    .controls-panel {
-        position: fixed;
-        top: 0;
-        left: 0;
-        bottom: 0;
-        width: 100%;
-        max-width: 480px;
-        transform: translateX(-100%);
-        transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.3s ease;
-        z-index: 1002;
-        box-shadow: var(--shadow-xl);
-        visibility: hidden;
-        border-radius: 0 var(--radius-xl) var(--radius-xl) 0;
-    }
-
-    .controls-panel.mobile-open {
-        transform: translateX(0);
-        visibility: visible;
+    .controls-panel.mobile-open,
+    .menu-panel.open {
+        transform: translateX(0) !important;
     }
 
     .status-bar {
@@ -365,11 +379,13 @@ header {
 
     .sidebar-overlay {
         display: block;
+        left: 56px !important; /* Start after icon bar */
+        z-index: 1002 !important; /* Above app-container, below panels */
     }
 
     .sidebar-overlay.active {
-        /* Don't block clicks on the sidebar - only the right side */
-        left: min(480px, 100vw - 1px);
+        /* Cover everything except icon bar */
+        left: 56px !important;
     }
 
     .preview-panel {
@@ -380,8 +396,7 @@ header {
     }
 
     .sticky-generate-section {
-        padding-top: 3.5rem;
-        /* Room for close button */
+        padding-top: 0.75rem; /* Standard padding */
     }
 }
 
@@ -393,6 +408,19 @@ header {
     height: 100%;
     display: flex;
     flex-direction: column;
+}
+
+/* Desktop-specific controls-panel behavior */
+@media (min-width: 1025px) {
+    .controls-panel {
+        position: relative;
+        width: 500px;
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .controls-panel.collapsed {
+        transform: translateX(calc(-500px - 56px)); /* Slide under icon bar */
+    }
 }
 
 .sticky-generate-section {
@@ -1340,7 +1368,7 @@ input[type="checkbox"] {
 
 .core-metrics-grid {
     display: grid;
-    grid-template-columns: 2fr 1fr 1fr;
+    grid-template-columns: 1fr 1fr 1fr;  /* Equal width columns */
     gap: 0.5rem;
 }
 
@@ -1348,9 +1376,13 @@ input[type="checkbox"] {
     background: rgba(255, 255, 255, 0.12);
     backdrop-filter: blur(10px);
     border-radius: var(--radius-sm);
-    padding: 0.375rem 0.5rem;
+    padding: 0.5rem;  /* Consistent padding */
     border: 1px solid rgba(255, 255, 255, 0.15);
     transition: all 0.2s ease;
+    min-height: 60px;  /* Consistent height */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 .core-metric-item:hover {
@@ -1373,14 +1405,10 @@ input[type="checkbox"] {
 
 .core-metric-value {
     font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
-    font-size: 1rem;
+    font-size: 1rem;  /* Consistent font size for all metrics */
     font-weight: 700;
     display: block;
     line-height: 1.2;
-}
-
-.core-metric-item.primary .core-metric-value {
-    font-size: 1.35rem;
 }
 
 .core-metric-unit {
@@ -1395,19 +1423,8 @@ input[type="checkbox"] {
    ============================================ */
 
 .menu-btn {
-    background: var(--color-surface);
-    border: 1px solid var(--color-gray-300);
-    border-radius: var(--radius-md);
-    padding: 0.5rem 0.75rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    font-size: 0.9rem;
-    font-weight: 500;
-    color: var(--color-gray-800);
-    white-space: nowrap;
+    /* Hide header menu button completely - use icon bar instead */
+    display: none !important;
 }
 
 .menu-btn:hover {
@@ -1436,24 +1453,31 @@ input[type="checkbox"] {
     }
 }
 
-/* Menu Panel (Slide-out from right) */
+/* Menu Panel - Desktop and Mobile: slides from left */
 .menu-panel {
     position: fixed;
     top: 0;
-    right: 0;
-    width: 320px;
-    height: 100vh;
     background: var(--color-surface);
-    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
-    z-index: 1001;
-    transform: translateX(100%);
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     flex-direction: column;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.menu-panel.open {
-    transform: translateX(0);
+/* Desktop menu panel (slides from left, matching mobile) */
+@media (min-width: 1025px) {
+    .menu-panel {
+        left: 56px;  /* Start after icon bar */
+        width: 320px;
+        height: 100vh;
+        box-shadow: var(--shadow-xl);  /* Shadow on right side */
+        z-index: 1003;  /* Above overlay, same as controls-panel */
+        transform: translateX(-100%);  /* Hidden to the left */
+        border-radius: 0 var(--radius-xl) var(--radius-xl) 0;  /* Rounded right corners */
+    }
+
+    .menu-panel.open {
+        transform: translateX(0);  /* Slide into view */
+    }
 }
 
 .menu-header {
@@ -1556,15 +1580,15 @@ input[type="checkbox"] {
     font-family: 'SF Mono', 'Monaco', monospace;
 }
 
-/* Menu Overlay */
+/* Menu Overlay (legacy - now using sidebar-overlay for unified behavior) */
 .menu-overlay {
     position: fixed;
     top: 0;
-    left: 0;
-    width: 100%;
+    left: 56px;  /* Start after icon bar */
+    width: calc(100% - 56px);
     height: 100%;
-    background: rgba(0, 0, 0, 0.4);
-    z-index: 1000;
+    background: transparent;  /* No overlay opacity */
+    z-index: 1002;
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.3s ease;
@@ -1572,7 +1596,7 @@ input[type="checkbox"] {
 
 .menu-overlay.active {
     opacity: 1;
-    pointer-events: all;
+    pointer-events: all;  /* Allow clicking to close */
 }
 
 @media (max-width: 768px) {

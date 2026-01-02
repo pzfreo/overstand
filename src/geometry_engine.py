@@ -86,8 +86,8 @@ def calculate_string_angles_violin(params: Dict[str, Any], vsl: float, fb_thickn
     opposite_string_to_fb = string_height_eof - string_height_nut
     string_angle_to_fb = math.atan(opposite_string_to_fb / fingerboard_length) * 180 / math.pi
 
-    result['body_stop'] = body_stop
-    result['neck_stop'] = neck_stop
+    result['Body Stop'] = body_stop
+    result['Neck Stop'] = neck_stop
     result['string_angle_to_ribs_rad'] = string_angle_to_ribs_rad
     result['string_angle_to_fb'] = string_angle_to_fb
     result['String Angle to Ribs'] = string_angle_to_ribs
@@ -119,8 +119,8 @@ def calculate_string_angles_guitar(params: Dict[str, Any], vsl: float, fret_posi
     opposite_string_to_join = string_height_at_join - string_height_nut
     string_angle_to_fb = math.atan(opposite_string_to_join / fret_positions[fret_join]) * 180 / math.pi
 
-    result['body_stop'] = body_stop
-    result['neck_stop'] = neck_stop
+    result['Body Stop'] = body_stop
+    result['Neck Stop'] = neck_stop
     result['string_angle_to_ribs_rad'] = string_angle_to_ribs_rad
     result['string_angle_to_fb'] = string_angle_to_fb
     result['String Angle to Ribs'] = string_angle_to_ribs

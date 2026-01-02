@@ -38,12 +38,15 @@
 </head>
 
 <body>
-    <!-- Mobile hamburger menu button -->
-    <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Open menu">
-        <span></span>
-        <span></span>
-        <span></span>
-    </button>
+    <!-- Mobile left icon bar (visible only on mobile) -->
+    <div class="mobile-icon-bar" id="mobile-icon-bar">
+        <button class="mobile-icon-btn" id="mobile-menu-toggle" aria-label="Open menu" title="Menu">
+            <span class="icon-menu">☰</span>
+        </button>
+        <button class="mobile-icon-btn" id="mobile-params-toggle" aria-label="Open parameters" title="Parameters">
+            <span class="icon-edit">✎</span>
+        </button>
+    </div>
 
     <!-- Mobile sidebar overlay -->
     <div class="sidebar-overlay" id="sidebar-overlay"></div>
@@ -71,7 +74,6 @@
 
         <div class="main-container">
             <div class="controls-panel" id="controls-panel">
-                <button class="mobile-close-btn" id="mobile-close-btn">✕</button>
                 <div class="sticky-generate-section">
                     <button class="generate-btn" id="gen-btn" disabled>
                         <span>Generate Template</span>
@@ -79,7 +81,7 @@
                     </button>
 
                     <div class="preset-selector">
-                        <label for="preset">Presets:</label>
+                        <label for="preset">Standard Instruments:</label>
                         <select id="preset">
                             <option value="">-- Custom --</option>
                         </select>

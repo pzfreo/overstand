@@ -371,7 +371,7 @@ async function updateDerivedValues() {
 
         if (result.success && Object.keys(result.values).length > 0) {
             // Update core metrics panel (always visible, prominent display)
-            updateCoreMetricsPanel(result.values, result.metadata);
+            updateCoreMetricsPanel(result.values, result.metadata, params);
 
             // Update output sections if using component-based UI
             if (state.uiSections && state.uiSections.output) {
@@ -410,15 +410,18 @@ async function updateDerivedValues() {
     } catch (e) { console.error("Failed to update derived values:", e); }
 }
 
-function updateCoreMetricsPanel(values, metadata) {
+function updateCoreMetricsPanel(values, metadata, params) {
     const panel = document.getElementById('core-metrics-grid');
     if (!panel) return;
 
+    // Determine if we're in Fret Join mode (Guitar/Mandolin family)
+    const isFretJoinMode = params && params.instrument_family === 'GUITAR_MANDOLIN';
+
     // Define core metrics to display (in order, with primary flag for neck angle)
+    // In Fret Join mode, show "Body Stop" instead of "Neck Stop"
     const coreMetrics = [
         { key: 'Neck Angle', primary: true },
-        { key: 'Neck Stop' },
-        { key: 'Body Stop' },
+        { key: isFretJoinMode ? 'Body Stop' : 'Neck Stop' },
         { key: 'Nut Relative to Ribs' }
     ];
 
@@ -623,19 +626,125 @@ document.addEventListener('DOMContentLoaded', () => {
         tab.addEventListener('click', () => switchView(tab.dataset.view));
     });
 
-    // Mobile menu
-    const mobileMenuBtn = document.getElementById('mobile-menu-btn');
-    const mobileCloseBtn = document.getElementById('mobile-close-btn');
+    // Universal icon bar - works on desktop and mobile
+    const mobileIconBar = document.getElementById('mobile-icon-bar');
+    const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+    const mobileParamsToggle = document.getElementById('mobile-params-toggle');
+    const menuPanel = document.getElementById('menu-panel');
     const controlsPanel = document.getElementById('controls-panel');
+    const mainContainer = document.querySelector('.main-container');
     const sidebarOverlay = document.getElementById('sidebar-overlay');
 
-    if (mobileMenuBtn && mobileCloseBtn && controlsPanel && sidebarOverlay) {
-        const open = () => { controlsPanel.classList.add('mobile-open'); sidebarOverlay.classList.add('active'); document.body.style.overflow = 'hidden'; };
-        const close = () => { controlsPanel.classList.remove('mobile-open'); sidebarOverlay.classList.remove('active'); document.body.style.overflow = ''; };
-        mobileMenuBtn.addEventListener('click', () => controlsPanel.classList.contains('mobile-open') ? close() : open());
-        mobileCloseBtn.addEventListener('click', close);
-        sidebarOverlay.addEventListener('click', close);
-        document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && controlsPanel.classList.contains('mobile-open')) close(); });
+    if (mobileIconBar && mobileMenuToggle && mobileParamsToggle) {
+        const isMobile = () => window.innerWidth <= 1024;
+
+        // Toggle menu panel (same on desktop and mobile)
+        mobileMenuToggle.addEventListener('click', () => {
+            const isOpen = menuPanel.classList.contains('open');
+
+            // Close parameters panel if open
+            controlsPanel.classList.remove('mobile-open', 'collapsed');
+            if (mainContainer) mainContainer.classList.remove('params-collapsed');
+            mobileParamsToggle.classList.remove('active');
+
+            if (!isOpen) {
+                menuPanel.classList.add('open');
+                sidebarOverlay.classList.add('active');
+                mobileMenuToggle.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            } else {
+                menuPanel.classList.remove('open');
+                sidebarOverlay.classList.remove('active');
+                mobileMenuToggle.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        });
+
+        // Toggle parameters panel (different behavior for desktop vs mobile)
+        mobileParamsToggle.addEventListener('click', () => {
+            // Close menu panel if open
+            menuPanel.classList.remove('open');
+            mobileMenuToggle.classList.remove('active');
+
+            if (isMobile()) {
+                // Mobile: slide-out panel
+                const isOpen = controlsPanel.classList.contains('mobile-open');
+
+                if (!isOpen) {
+                    controlsPanel.classList.add('mobile-open');
+                    sidebarOverlay.classList.add('active');
+                    mobileParamsToggle.classList.add('active');
+                    document.body.style.overflow = 'hidden';
+                } else {
+                    controlsPanel.classList.remove('mobile-open');
+                    sidebarOverlay.classList.remove('active');
+                    mobileParamsToggle.classList.remove('active');
+                    document.body.style.overflow = '';
+                }
+            } else {
+                // Desktop: collapse/expand panel
+                const isCollapsed = controlsPanel.classList.contains('collapsed');
+
+                if (!isCollapsed) {
+                    controlsPanel.classList.add('collapsed');
+                    if (mainContainer) mainContainer.classList.add('params-collapsed');
+                    mobileParamsToggle.classList.remove('active');
+                } else {
+                    controlsPanel.classList.remove('collapsed');
+                    if (mainContainer) mainContainer.classList.remove('params-collapsed');
+                    mobileParamsToggle.classList.add('active');
+                }
+            }
+        });
+
+        // Close panels on overlay click
+        if (sidebarOverlay) {
+            sidebarOverlay.addEventListener('click', () => {
+                menuPanel.classList.remove('open');
+                controlsPanel.classList.remove('mobile-open');
+                sidebarOverlay.classList.remove('active');
+                mobileMenuToggle.classList.remove('active');
+                mobileParamsToggle.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+        }
+
+        // Keyboard shortcuts for panel closing and zoom
+        document.addEventListener('keydown', (e) => {
+            // Escape key closes panels
+            if (e.key === 'Escape') {
+                if (menuPanel.classList.contains('open') || controlsPanel.classList.contains('mobile-open')) {
+                    e.preventDefault();
+                    menuPanel.classList.remove('open');
+                    controlsPanel.classList.remove('mobile-open');
+                    sidebarOverlay.classList.remove('active');
+                    mobileMenuToggle.classList.remove('active');
+                    mobileParamsToggle.classList.remove('active');
+                    document.body.style.overflow = '';
+                }
+            }
+
+            // Zoom keyboard shortcuts (+, -, 0)
+            // Don't trigger if user is typing in an input field
+            if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'SELECT') {
+                if (e.key === '+' || e.key === '=') {
+                    e.preventDefault();
+                    zoomIn();
+                } else if (e.key === '-' || e.key === '_') {
+                    e.preventDefault();
+                    zoomOut();
+                } else if (e.key === '0') {
+                    e.preventDefault();
+                    zoomReset();
+                }
+            }
+        });
+
+        // Set initial state on page load
+        if (!isMobile()) {
+            // Desktop: parameters panel visible by default
+            mobileParamsToggle.classList.add('active');
+        }
     }
 
     // Menu system
