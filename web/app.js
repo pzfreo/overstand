@@ -32,13 +32,19 @@ function debouncedGenerate() {
     }, 500);
 }
 
+function markParametersModified() {
+    state.parametersModified = true;
+}
+
 const UI_CALLBACKS = {
     collectParameters,
     onInputChange: debounce(() => {
+        markParametersModified();
         updateDerivedValues();
         debouncedGenerate();
     }, 300),
     onEnumChange: (e) => {
+        markParametersModified();
         updateDerivedValues();
         debouncedGenerate();
     },
@@ -112,7 +118,7 @@ async function initializePython() {
         ui.setStatus('loading', 'Loading instrument neck modules...');
         const modules = [
             'constants.py', 'buildprimitives.py', 'dimension_helpers.py', 'derived_value_metadata.py',
-            'instrument_parameters.py', 'radius_template.py', 'instrument_geometry.py', 'instrument_generator.py',
+            'instrument_parameters.py', 'ui_metadata.py', 'radius_template.py', 'instrument_geometry.py', 'instrument_generator.py',
             'geometry_engine.py', 'svg_renderer.py', 'view_generator.py'
         ];
 
@@ -156,12 +162,36 @@ async function initializePython() {
         const derivedMetaResult = JSON.parse(derivedMetaJson);
         if (derivedMetaResult.success) state.derivedMetadata = derivedMetaResult.metadata;
 
+        // Load UI metadata bundle (sections, presets, parameters, derived values)
+        const uiMetaJson = await state.pyodide.runPythonAsync(`instrument_generator.get_ui_metadata()`);
+        const uiMetaResult = JSON.parse(uiMetaJson);
+        if (uiMetaResult.success) {
+            state.uiMetadata = uiMetaResult.metadata;
+        } else {
+            console.error('Failed to load UI metadata:', uiMetaResult.error);
+        }
+
         state.presets = await loadPresetsFromDirectory();
 
         ui.generateUI(UI_CALLBACKS);
         ui.populatePresets();
-        updateDerivedValues();
-        generateNeck();
+
+        // Load the first preset's parameters (the one selected by default in dropdown)
+        if (elements.presetSelect && elements.presetSelect.value) {
+            await loadPreset();
+        } else {
+            // No presets available, just use defaults
+            updateDerivedValues();
+            generateNeck();
+        }
+
+        // Initialize previousValue for preset selector
+        if (elements.presetSelect && elements.presetSelect.value) {
+            elements.presetSelect.dataset.previousValue = elements.presetSelect.value;
+        }
+
+        // Parameters start unmodified (we just loaded a preset)
+        state.parametersModified = false;
 
         elements.genBtn.disabled = false;
     } catch (error) {
@@ -171,19 +201,81 @@ async function initializePython() {
     }
 }
 
-function loadPreset() {
+async function loadPreset() {
     const presetId = elements.presetSelect.value;
     if (!presetId) return;
-    const preset = state.presets[presetId];
-    if (!preset || !preset.parameters) return;
 
-    for (const [name, value] of Object.entries(preset.parameters)) {
+    // Warn user if they have unsaved changes
+    if (state.parametersModified) {
+        const presetName = state.uiMetadata?.presets?.[presetId]?.display_name || presetId;
+        const message = `You have unsaved changes. Loading "${presetName}" will overwrite your current parameter values.\n\nDo you want to continue?`;
+
+        if (!confirm(message)) {
+            // User cancelled - revert the dropdown selection
+            // Find the current instrument_family to restore dropdown
+            const currentFamily = document.getElementById('instrument_family')?.value;
+            if (currentFamily && elements.presetSelect) {
+                // Don't trigger another change event
+                const previousValue = elements.presetSelect.dataset.previousValue || '';
+                elements.presetSelect.value = previousValue;
+            }
+            return;
+        }
+    }
+
+    let parameters = null;
+
+    // Try to load from JSON file in presets/ directory
+    const presetPaths = ['./presets/', '../presets/'];
+    const filename = `${presetId}.json`;
+
+    for (const basePath of presetPaths) {
+        try {
+            const response = await fetch(`${basePath}${filename}`);
+            if (response.ok) {
+                const presetData = await response.json();
+                if (presetData.parameters) {
+                    parameters = presetData.parameters;
+                    break;
+                }
+            }
+        } catch (e) {
+            console.warn(`Could not load preset from ${basePath}${filename}:`, e);
+        }
+    }
+
+    // Fallback to legacy file-based presets if JSON not found
+    if (!parameters && state.presets && state.presets[presetId]) {
+        parameters = state.presets[presetId].parameters;
+    }
+
+    // Fallback to ui_metadata basic_params (for backward compatibility)
+    if (!parameters && state.uiMetadata && state.uiMetadata.presets && state.uiMetadata.presets[presetId]) {
+        parameters = state.uiMetadata.presets[presetId].basic_params;
+    }
+
+    if (!parameters) {
+        console.error(`Could not load preset: ${presetId}`);
+        return;
+    }
+
+    // Apply preset parameters
+    for (const [name, value] of Object.entries(parameters)) {
         const element = document.getElementById(name);
         if (element) {
             if (element.type === 'checkbox') element.checked = value;
             else element.value = value;
         }
     }
+
+    // Reset modified flag - we just loaded a preset
+    state.parametersModified = false;
+
+    // Store current preset selection for cancellation
+    if (elements.presetSelect) {
+        elements.presetSelect.dataset.previousValue = presetId;
+    }
+
     ui.hideErrors();
     ui.updateParameterVisibility(collectParameters());
     updateDerivedValues();
@@ -278,32 +370,93 @@ async function updateDerivedValues() {
         const container = elements.calculatedFields;
 
         if (result.success && Object.keys(result.values).length > 0) {
-            container.style.display = 'grid';
-            container.innerHTML = '';
+            // Update core metrics panel (always visible, prominent display)
+            updateCoreMetricsPanel(result.values, result.metadata);
 
-            for (const [name, param] of Object.entries(state.parameterDefinitions.parameters)) {
-                if (ui.isParameterOutput(param, currentMode)) {
-                    const input = document.getElementById(name);
-                    if (input && result.values[param.label] != null) {
-                        input.value = !isNaN(result.values[param.label]) ? result.values[param.label] : '';
+            // Update output sections if using component-based UI
+            if (state.uiSections && state.uiSections.output) {
+                for (const section of state.uiSections.output) {
+                    section.updateValues(result.values);
+                }
+                container.style.display = 'none'; // Hide old metrics display
+            } else {
+                // Legacy output display
+                container.style.display = 'grid';
+                container.innerHTML = '';
+
+                for (const [name, param] of Object.entries(state.parameterDefinitions.parameters)) {
+                    if (ui.isParameterOutput(param, currentMode)) {
+                        const input = document.getElementById(name);
+                        if (input && result.values[param.label] != null) {
+                            input.value = !isNaN(result.values[param.label]) ? result.values[param.label] : '';
+                        }
                     }
                 }
-            }
 
-            for (const [label, value] of Object.entries(result.values)) {
-                if (label.includes('_')) continue;
-                const meta = (result.metadata || {})[label];
-                if (!meta || !meta.visible) continue;
+                for (const [label, value] of Object.entries(result.values)) {
+                    if (label.includes('_')) continue;
+                    const meta = (result.metadata || {})[label];
+                    if (!meta || !meta.visible) continue;
 
-                const div = document.createElement('div');
-                div.className = 'metric-card';
-                let formattedValue = (value == null || isNaN(value)) ? '—' : (result.formatted && result.formatted[label]) || (meta ? `${value.toFixed(meta.decimals)} ${meta.unit}`.trim() : value);
+                    const div = document.createElement('div');
+                    div.className = 'metric-card';
+                    let formattedValue = (value == null || isNaN(value)) ? '—' : (result.formatted && result.formatted[label]) || (meta ? `${value.toFixed(meta.decimals)} ${meta.unit}`.trim() : value);
 
-                div.innerHTML = `<span class="metric-label" title="${meta ? meta.description : ''}">${meta ? meta.display_name : label}</span><span class="metric-value">${formattedValue}</span>`;
-                container.appendChild(div);
+                    div.innerHTML = `<span class="metric-label" title="${meta ? meta.description : ''}">${meta ? meta.display_name : label}</span><span class="metric-value">${formattedValue}</span>`;
+                    container.appendChild(div);
+                }
             }
         } else container.style.display = 'none';
     } catch (e) { console.error("Failed to update derived values:", e); }
+}
+
+function updateCoreMetricsPanel(values, metadata) {
+    const panel = document.getElementById('core-metrics-grid');
+    if (!panel) return;
+
+    // Define core metrics to display (in order, with primary flag for neck angle)
+    const coreMetrics = [
+        { key: 'Neck Angle', primary: true },
+        { key: 'Neck Stop' },
+        { key: 'Body Stop' },
+        { key: 'Nut Relative to Ribs' }
+    ];
+
+    panel.innerHTML = '';
+
+    for (const metric of coreMetrics) {
+        const value = values[metric.key];
+        const meta = metadata ? metadata[metric.key] : null;
+
+        if (value === undefined || value === null) continue;
+
+        const item = document.createElement('div');
+        item.className = metric.primary ? 'core-metric-item primary' : 'core-metric-item';
+
+        const label = document.createElement('span');
+        label.className = 'core-metric-label';
+        label.textContent = meta ? meta.display_name : metric.key;
+        if (meta && meta.description) {
+            item.title = meta.description;
+        }
+
+        const valueSpan = document.createElement('span');
+        valueSpan.className = 'core-metric-value';
+
+        const formattedValue = meta ? value.toFixed(meta.decimals) : value.toFixed(1);
+        valueSpan.textContent = formattedValue;
+
+        if (meta && meta.unit) {
+            const unit = document.createElement('span');
+            unit.className = 'core-metric-unit';
+            unit.textContent = meta.unit;
+            valueSpan.appendChild(unit);
+        }
+
+        item.appendChild(label);
+        item.appendChild(valueSpan);
+        panel.appendChild(item);
+    }
 }
 
 function switchView(viewName) {
@@ -349,6 +502,9 @@ function saveParameters() {
     };
     const filename = `${getInstrumentFilename()}_params_${new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5)}.json`;
     downloadFile(JSON.stringify(saveData, null, 2), filename, 'application/json');
+
+    // Reset modified flag - we just saved
+    state.parametersModified = false;
 }
 
 function handleLoadParameters(event) {
@@ -367,6 +523,10 @@ function handleLoadParameters(event) {
                 }
             }
             elements.presetSelect.value = '';
+
+            // Reset modified flag - we just loaded a file
+            state.parametersModified = false;
+
             ui.hideErrors();
             ui.updateParameterVisibility(collectParameters());
             updateDerivedValues();

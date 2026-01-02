@@ -1,0 +1,12 @@
+preset_id,display_name,family,description,arching_height,belly_edge_thickness,body_length,body_stop,bridge_height,fb_visible_height_at_join,fb_visible_height_at_nut,fingerboard_length,fingerboard_radius,fingerboard_width_at_end,fingerboard_width_at_nut,fret_join,instrument_family,instrument_name,no_frets,overstand,rib_height,show_measurements,string_height_12th_fret,string_height_eof,string_height_nut,vsl
+archtop_guitar,Archtop Guitar,GUITAR_MANDOLIN,Archtop jazz guitar dimensions (fret-join driven),18,3.5,505,195,25,6,6,445,300,56,43,14,GUITAR_MANDOLIN,Default Archtop Guitar,21,8,60,TRUE,4,4,0.6,635
+bass_viol,Bass Viol,VIOL,Bass viol dimensions (Viola da Gamba),25,3.5,700,350,75,7,5,480,78,64,45,,VIOL,Default Bass Viol,7,18,120,TRUE,,7,0.6,680
+cello,Cello,VIOLIN,Standard cello dimensions,28,4,755,400,80,8,6,580,62,62,32,,VIOLIN,Default Cello,,24,100,TRUE,,6,0.6,690
+custom,Other / Custom,VIOLIN,Start with default values for a custom instrument,,,,,,,,,,,,,VIOLIN,Default Other / Custom,,,,,,,,
+mandola,Mandola,GUITAR_MANDOLIN,Alto mandola dimensions (fret-join driven),14,3.5,350,195,18,6,6,300,300,46,32,12,GUITAR_MANDOLIN,Default Mandola,21,6,40,TRUE,4,,0.6,420
+mandolin,Mandolin,GUITAR_MANDOLIN,Standard mandolin dimensions (fret-join driven),12,3.5,280,195,15,5,5,270,300,40,28,12,GUITAR_MANDOLIN,Default Mandolin,21,5,35,TRUE,4,,0.6,330
+octave_mandolin,Octave Mandolin,GUITAR_MANDOLIN,Octave mandolin / bouzouki dimensions (fret-join driven),16,3.5,450,195,22,6,6,540,254,50,34,12,GUITAR_MANDOLIN,Default Octave Mandolin,21,7,45,TRUE,4,,0.6,550
+tenor_viol,Tenor Viol,VIOL,Tenor viol dimensions,16,3.5,480,240,35,7,5,360,62,55,44,,VIOL,Default Tenor Viol,7,12,100,TRUE,,5,0.6,400
+treble_viol,Treble Viol,VIOL,Treble viol / Pardessus de viole,14,3.5,400,200,30,6,4,256,62,55,42,,VIOL,Default Treble Viol,7,10,85,TRUE,,4,0.6,330
+viola,Viola,VIOLIN,Standard viola dimensions,16,3.5,410,225,35,5,3,310,38,45,25,,VIOLIN,Default Viola,,14,33,TRUE,,5,0.6,370
+violin,Violin,VIOLIN,Standard violin dimensions based on Stradivari models,15,3.5,355,195,33,4,2,270,41,42,24,,VIOLIN,Default Violin,,12,40,TRUE,,4,0.6,325

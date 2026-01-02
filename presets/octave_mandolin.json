@@ -1,0 +1,34 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "timestamp": "2026-01-02T13:20:24.908595Z",
+    "description": "Octave mandolin / bouzouki dimensions (fret-join driven)",
+    "preset_id": "octave_mandolin",
+    "display_name": "Octave Mandolin",
+    "family": "GUITAR_MANDOLIN",
+    "icon": ""
+  },
+  "parameters": {
+    "arching_height": 16.0,
+    "belly_edge_thickness": 3.5,
+    "body_length": 450.0,
+    "body_stop": 195.0,
+    "bridge_height": 22.0,
+    "fb_visible_height_at_join": 6.0,
+    "fb_visible_height_at_nut": 6.0,
+    "fingerboard_length": 540.0,
+    "fingerboard_radius": 254.0,
+    "fingerboard_width_at_end": 50.0,
+    "fingerboard_width_at_nut": 34.0,
+    "fret_join": 12,
+    "instrument_family": "GUITAR_MANDOLIN",
+    "instrument_name": "Default Octave Mandolin",
+    "no_frets": 21,
+    "overstand": 7.0,
+    "rib_height": 45.0,
+    "show_measurements": true,
+    "string_height_12th_fret": 4.0,
+    "string_height_nut": 0.6,
+    "vsl": 550.0
+  }
+}

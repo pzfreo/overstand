@@ -1,0 +1,12 @@
+preset_id,display_name,family,icon,description,arching_height,body_length,body_stop,bridge_height,fret_join,instrument_family,no_frets,overstand,vsl
+archtop_guitar,Archtop Guitar,GUITAR_MANDOLIN,🎸,Archtop jazz guitar dimensions (fret-join driven),18.0,505.0,,25.0,14,GUITAR_MANDOLIN,20,8.0,635.0
+bass_viol,Bass Viol,VIOL,🎻,Bass viol dimensions (Viola da Gamba),25.0,750.0,400.0,75.0,,VIOL,7,20.0,680.0
+cello,Cello,VIOLIN,🎻,Standard cello dimensions,28.0,755.0,400.0,80.0,,VIOLIN,,24.0,690.0
+custom,Other / Custom,VIOLIN,🔧,Start with default values for a custom instrument,15.0,355.0,195.0,33.0,,VIOLIN,,12.0,325.0
+mandola,Mandola,GUITAR_MANDOLIN,🎸,Alto mandola dimensions (fret-join driven),14.0,350.0,,18.0,12,GUITAR_MANDOLIN,20,6.0,420.0
+mandolin,Mandolin,GUITAR_MANDOLIN,🎸,Standard mandolin dimensions (fret-join driven),12.0,280.0,,15.0,12,GUITAR_MANDOLIN,20,5.0,330.0
+octave_mandolin,Octave Mandolin,GUITAR_MANDOLIN,🎸,Octave mandolin / bouzouki dimensions (fret-join driven),16.0,450.0,,22.0,12,GUITAR_MANDOLIN,20,7.0,550.0
+tenor_viol,Tenor Viol,VIOL,🎻,Tenor viol dimensions,16.0,480.0,240.0,35.0,,VIOL,7,12.0,400.0
+treble_viol,Treble Viol,VIOL,🎻,Treble viol / Pardessus de viole,14.0,400.0,200.0,30.0,,VIOL,7,10.0,330.0
+viola,Viola,VIOLIN,🎻,Standard viola dimensions,16.0,410.0,225.0,35.0,,VIOLIN,,14.0,370.0
+violin,Violin,VIOLIN,🎻,Standard violin dimensions based on Stradivari models,15.0,355.0,195.0,33.0,,VIOLIN,,12.0,325.0

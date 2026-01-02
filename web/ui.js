@@ -1,4 +1,6 @@
 import { state, elements } from './state.js';
+import { ParameterSection } from './components/parameter-section.js';
+import { OutputSection } from './components/output-section.js';
 
 export function setStatus(type, message) {
     elements.status.className = `status-bar ${type}`;
@@ -39,9 +41,77 @@ export function isParameterOutput(param, currentMode) {
 export function generateUI(callbacks) {
     const container = elements.parametersContainer;
     const currentParams = callbacks.collectParameters();
-    const currentMode = currentParams.instrument_family || 'VIOLIN';
 
     container.innerHTML = '';
+
+    // Use new component-based UI if metadata is available
+    if (state.uiMetadata && state.uiMetadata.sections) {
+        generateComponentBasedUI(callbacks, currentParams);
+    } else {
+        // Fallback to old category-based UI
+        generateLegacyUI(callbacks, currentParams);
+    }
+}
+
+/**
+ * Generate UI using new component-based architecture
+ */
+function generateComponentBasedUI(callbacks, currentParams) {
+    const container = elements.parametersContainer;
+    const sections = state.uiMetadata.sections;
+    const parameters = state.uiMetadata.parameters;
+    const derivedValues = state.uiMetadata.derived_values;
+
+    // Store section components for later updates
+    state.uiSections = {
+        input: [],
+        output: []
+    };
+
+    // Get all sections and sort by order
+    const sortedSections = Object.values(sections).sort((a, b) => a.order - b.order);
+
+    // Separate input and output sections
+    const inputSections = sortedSections.filter(s =>
+        s.type === 'input_basic' || s.type === 'input_advanced'
+    );
+    const outputSections = sortedSections.filter(s =>
+        s.type === 'output_core' || s.type === 'output_detailed'
+    );
+
+    // Create input sections
+    for (const sectionDef of inputSections) {
+        const section = new ParameterSection({
+            sectionDef: sectionDef,
+            parameters: parameters,
+            callbacks: callbacks,
+            currentParams: currentParams
+        });
+
+        container.appendChild(section.getElement());
+        state.uiSections.input.push(section);
+    }
+
+    // Create output sections
+    // Note: Output values will be populated by updateDerivedValues()
+    for (const sectionDef of outputSections) {
+        const section = new OutputSection({
+            sectionDef: sectionDef,
+            derivedValues: derivedValues,
+            calculatedValues: state.derivedValues || {}
+        });
+
+        container.appendChild(section.getElement());
+        state.uiSections.output.push(section);
+    }
+}
+
+/**
+ * Generate UI using legacy category-based architecture (fallback)
+ */
+function generateLegacyUI(callbacks, currentParams) {
+    const container = elements.parametersContainer;
+    const currentMode = currentParams.instrument_family || 'VIOLIN';
     const categories = state.parameterDefinitions.categories;
     const parameters = state.parameterDefinitions.parameters;
 
@@ -230,6 +300,24 @@ export function createParameterControl(name, param, isOutput, callbacks) {
 }
 
 export function updateParameterVisibility(currentParams) {
+    // Use component-based update if available
+    if (state.uiSections && state.uiSections.input) {
+        for (const section of state.uiSections.input) {
+            section.updateVisibility(currentParams);
+        }
+    } else {
+        // Fallback to legacy update
+        updateParameterVisibilityLegacy(currentParams);
+    }
+
+    // Update tab states based on instrument family
+    updateTabStates(currentParams);
+}
+
+/**
+ * Legacy parameter visibility update (fallback)
+ */
+function updateParameterVisibilityLegacy(currentParams) {
     const currentMode = currentParams.instrument_family;
 
     for (const [name, param] of Object.entries(state.parameterDefinitions.parameters)) {
@@ -255,19 +343,48 @@ export function updateParameterVisibility(currentParams) {
             }
         }
     }
-
-    // Update tab states based on instrument family
-    updateTabStates(currentParams);
 }
 
 export function populatePresets() {
     const select = elements.presetSelect;
-    select.innerHTML = '<option value="">-- Custom --</option>';
-    for (const [id, preset] of Object.entries(state.presets)) {
-        const option = document.createElement('option');
-        option.value = id;
-        option.textContent = preset.name || id.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-        select.appendChild(option);
+    select.innerHTML = ''; // Clear existing options
+
+    // Use instrument presets from ui_metadata if available
+    if (state.uiMetadata && state.uiMetadata.presets) {
+        const presets = state.uiMetadata.presets;
+
+        // Sort presets by family, then by display name
+        const sortedPresets = Object.entries(presets).sort((a, b) => {
+            const [, presetA] = a;
+            const [, presetB] = b;
+
+            // Custom/Other always goes last
+            if (presetA.id === 'custom') return 1;
+            if (presetB.id === 'custom') return -1;
+
+            // Sort by family, then by display name
+            if (presetA.family !== presetB.family) {
+                return presetA.family.localeCompare(presetB.family);
+            }
+            return presetA.display_name.localeCompare(presetB.display_name);
+        });
+
+        for (const [id, preset] of sortedPresets) {
+            const option = document.createElement('option');
+            option.value = id;
+            option.textContent = preset.display_name;
+            option.title = preset.description;
+            select.appendChild(option);
+        }
+    } else {
+        // Fallback to legacy file-based presets
+        select.innerHTML = '<option value="">-- Custom --</option>';
+        for (const [id, preset] of Object.entries(state.presets)) {
+            const option = document.createElement('option');
+            option.value = id;
+            option.textContent = preset.name || id.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+            select.appendChild(option);
+        }
     }
 }
 

@@ -1,0 +1,34 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "timestamp": "2026-01-02T13:20:24.907848Z",
+    "description": "Alto mandola dimensions (fret-join driven)",
+    "preset_id": "mandola",
+    "display_name": "Mandola",
+    "family": "GUITAR_MANDOLIN",
+    "icon": ""
+  },
+  "parameters": {
+    "arching_height": 14.0,
+    "belly_edge_thickness": 3.5,
+    "body_length": 350.0,
+    "body_stop": 195.0,
+    "bridge_height": 18.0,
+    "fb_visible_height_at_join": 6.0,
+    "fb_visible_height_at_nut": 6.0,
+    "fingerboard_length": 300.0,
+    "fingerboard_radius": 300.0,
+    "fingerboard_width_at_end": 46.0,
+    "fingerboard_width_at_nut": 32.0,
+    "fret_join": 12,
+    "instrument_family": "GUITAR_MANDOLIN",
+    "instrument_name": "Default Mandola",
+    "no_frets": 21,
+    "overstand": 6.0,
+    "rib_height": 40.0,
+    "show_measurements": true,
+    "string_height_12th_fret": 4.0,
+    "string_height_nut": 0.6,
+    "vsl": 420.0
+  }
+}

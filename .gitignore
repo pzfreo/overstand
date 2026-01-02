@@ -35,3 +35,5 @@ web/.dist/
 *.bak
 *.bak2
 *.backup
+.vercel
+.env*.local

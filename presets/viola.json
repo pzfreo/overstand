@@ -1,0 +1,32 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "timestamp": "2026-01-02T13:20:24.909267Z",
+    "description": "Standard viola dimensions",
+    "preset_id": "viola",
+    "display_name": "Viola",
+    "family": "VIOLIN",
+    "icon": ""
+  },
+  "parameters": {
+    "arching_height": 16.0,
+    "belly_edge_thickness": 3.5,
+    "body_length": 410.0,
+    "body_stop": 225.0,
+    "bridge_height": 35.0,
+    "fb_visible_height_at_join": 5.0,
+    "fb_visible_height_at_nut": 3.0,
+    "fingerboard_length": 310.0,
+    "fingerboard_radius": 38.0,
+    "fingerboard_width_at_end": 45.0,
+    "fingerboard_width_at_nut": 25.0,
+    "instrument_family": "VIOLIN",
+    "instrument_name": "Default Viola",
+    "overstand": 14.0,
+    "rib_height": 33.0,
+    "show_measurements": true,
+    "string_height_eof": 5.0,
+    "string_height_nut": 0.6,
+    "vsl": 370.0
+  }
+}

@@ -160,7 +160,7 @@ def get_derived_value_metadata() -> str:
 def get_parameter_definitions() -> str:
     """
     Get parameter definitions for UI generation.
-    
+
     Returns:
         JSON string of parameter definitions
     """
@@ -170,6 +170,37 @@ def get_parameter_definitions() -> str:
     except Exception as e:
         return json.dumps({
             "error": f"Failed to load parameters: {str(e)}"
+        })
+
+
+def get_ui_metadata() -> str:
+    """
+    Get complete UI metadata bundle including sections, presets, parameters, and derived values.
+
+    This is the single source of truth for UI organization.
+
+    Returns:
+        JSON string containing:
+        {
+            "success": bool,
+            "metadata": {
+                "sections": {...},
+                "presets": {...},
+                "parameters": {...},
+                "derived_values": {...}
+            }
+        }
+    """
+    try:
+        from ui_metadata import get_ui_metadata_bundle
+        return json.dumps({
+            "success": True,
+            "metadata": get_ui_metadata_bundle()
+        })
+    except Exception as e:
+        return json.dumps({
+            "success": False,
+            "error": str(e)
         })
 
 

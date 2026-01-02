@@ -1,68 +1,154 @@
 # Instrument Presets
 
-This directory contains preset configurations for different instruments. Each preset is a JSON file that defines all the parameters for a specific instrument setup.
+This directory contains standard instrument preset definitions as JSON files.
 
-## Adding a New Preset
+## File Format
 
-1. Create a new JSON file in this directory (e.g., `my_viola.json`)
-2. Add the filename to the `presets.json` manifest file
-3. Use the same format as the existing presets:
+Each preset file uses the same format as the save/load functionality:
 
 ```json
 {
   "metadata": {
     "version": "1.0",
-    "timestamp": "2025-01-01T00:00:00.000Z",
-    "description": "Description of this preset",
-    "generator": "Instrument Neck Geometry Generator"
+    "timestamp": "2026-01-02T00:00:00Z",
+    "description": "Standard violin dimensions based on Stradivari models",
+    "preset_id": "violin",
+    "display_name": "Violin",
+    "family": "VIOLIN",
+    "icon": "🎻"
   },
   "parameters": {
-    "instrument_name": "Display Name in Dropdown",
-    "vsl": 328.5,
-    "body_stop": 195.0,
-    "neck_stop": 130.0,
+    "instrument_family": "VIOLIN",
+    "vsl": 325.0,
     "body_length": 355.0,
-    "rib_height": 30.0,
-    "fingerboard_length": 270.0,
-    "arching_height": 15.0,
-    "belly_edge_thickness": 3.5,
-    "bridge_height": 33.0,
+    "body_stop": 195.0,
     "overstand": 12.0,
-    "fb_thickness_at_nut": 5.0,
-    "fb_thickness_at_join": 7.0,
-    "string_height_nut": 0.6,
-    "string_height_eof": 4.0,
+    "bridge_height": 33.0,
+    "arching_height": 15.0,
+    "fingerboard_radius": 42.0,
     "fingerboard_width_at_nut": 24.0,
     "fingerboard_width_at_end": 30.0,
-    "show_measurements": true
+    ...
   }
 }
 ```
 
-3. The preset will automatically appear in the dropdown menu with the name specified in `parameters.instrument_name`
+## Managing Presets
 
-## Preset Manifest
+### Method 1: Edit CSV and Export (Recommended)
 
-The `presets.json` file lists all available presets. When you add a new preset file, update this manifest:
+The easiest way to manage all presets at once:
 
-```json
-{
-  "presets": [
-    "basic_violin.json",
-    "modern_viola.json",
-    "your_new_preset.json"
-  ]
-}
-```
+1. **Edit the master CSV** at the repo root:
+   ```bash
+   # Open in your spreadsheet editor
+   open instrument_presets_full.csv
+   ```
 
-## File Format
+2. **Make your changes** (add rows, edit values, etc.)
 
-- The filename (without `.json`) is used as the preset ID
-- The `instrument_name` parameter is used as the display name in the dropdown
-- All parameters in the `parameters` object should match the available instrument parameters
+3. **Export to JSON files**:
+   ```bash
+   python3 scripts/export_presets_to_json.py
+   ```
 
-## Tips
+   This will:
+   - Create/update JSON files in `presets/`
+   - Update `presets.json` manifest
 
-- You can save your current parameters from the web UI using the "Save" button to create a properly formatted JSON file
-- Copy and modify existing presets to create new ones
-- Keep filenames simple and descriptive (e.g., `basic_violin.json`, `modern_cello.json`)
+4. **Test your changes** - reload the app and select the preset
+
+### Method 2: Edit JSON Directly
+
+For quick edits to a single preset:
+
+1. **Edit the JSON file** directly (e.g., `violin.json`)
+
+2. **Test** - reload the app and select the preset
+
+3. **Optional**: Update the CSV to keep it in sync
+
+### Method 3: Save from UI
+
+The easiest way to create a new preset:
+
+1. **Configure parameters** in the UI exactly how you want them
+
+2. **Save parameters** using the save button - this creates a JSON file
+
+3. **Move/rename** the file:
+   ```bash
+   mv ~/Downloads/my_instrument_params_*.json presets/my_new_preset.json
+   ```
+
+4. **Edit metadata** in the JSON file:
+   - Update `preset_id`, `display_name`, `family`, `icon`, `description`
+
+5. **Add to manifest** (optional - files auto-discovered):
+   ```bash
+   # Edit presets/presets.json and add filename to "presets" array
+   ```
+
+6. **Update CSV** for future management (optional):
+   - Add a row to `instrument_presets_full.csv`
+
+## Parameter Reference
+
+### Basic Parameters
+- `instrument_family`: "VIOLIN", "VIOL", or "GUITAR_MANDOLIN"
+- `vsl`: Vibrating string length (mm)
+- `body_length`: Total body length (mm)
+- `body_stop`: Distance from neck/body join to bridge (mm) [VIOLIN/VIOL only]
+- `overstand`: Bridge top above body edge (mm)
+- `bridge_height`: Bridge height (mm)
+- `arching_height`: Body arching height (mm)
+
+### Advanced Geometry
+- `neck_stop`: Nut to neck/body join (mm) [calculated for VIOLIN/VIOL]
+- `fingerboard_length`: Total fingerboard length (mm)
+- `rib_height`: Body rib height (mm)
+- `belly_edge_thickness`: Top plate edge thickness (mm)
+- `fingerboard_radius`: Fingerboard radius (mm)
+
+### Fingerboard Details
+- `fingerboard_width_at_nut`: Fingerboard width at nut (mm)
+- `fingerboard_width_at_end`: Fingerboard width at end (mm)
+- `fb_visible_height_at_nut`: Visible fingerboard height at nut (mm)
+- `fb_visible_height_at_join`: Visible fingerboard height at neck join (mm)
+- `string_height_nut`: String height above fingerboard at nut (mm)
+- `string_height_eof`: String height at end of fingerboard (mm)
+- `string_height_12th_fret`: String height at 12th fret (mm)
+
+### Fret Configuration
+- `no_frets`: Number of frets (for fretted instruments)
+- `fret_join`: Fret number at neck/body join [GUITAR_MANDOLIN only]
+
+### Display
+- `instrument_name`: Custom instrument name
+- `show_measurements`: Show measurements on diagram (true/false)
+
+## Adding New Instrument Types
+
+To add a new standard instrument:
+
+1. **Add to CSV**: Add a new row in `instrument_presets_full.csv`
+2. **Set all parameters**: Fill in appropriate values for the instrument type
+3. **Set metadata**:
+   - `preset_id`: lowercase_with_underscores
+   - `display_name`: Display Name
+   - `family`: VIOLIN, VIOL, or GUITAR_MANDOLIN
+   - `icon`: Appropriate emoji (🎻, 🎸, etc.)
+   - `description`: Brief description of the instrument
+
+4. **Export**: Run `python3 scripts/export_presets_to_json.py`
+5. **Test**: Reload app and verify the new preset appears and works
+
+## Removing Presets
+
+To remove a standard instrument:
+
+1. **Delete the JSON file** from `presets/`
+2. **Remove from manifest** (if using presets.json)
+3. **Remove from CSV** (if keeping CSV in sync)
+
+The preset will no longer appear in the dropdown.
