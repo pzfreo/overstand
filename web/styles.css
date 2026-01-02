@@ -284,7 +284,7 @@ header {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(15, 23, 42, 0.15);  /* Very light overlay for subtle visual feedback */
+    background: transparent;  /* No overlay opacity on mobile */
     /* backdrop-filter causes sidebar blur on mobile Firefox */
     z-index: 1001;  /* Between app-container (0) and controls-panel (1002) */
     opacity: 0;
@@ -1368,7 +1368,7 @@ input[type="checkbox"] {
 
 .core-metrics-grid {
     display: grid;
-    grid-template-columns: 2fr 1fr 1fr;
+    grid-template-columns: 1fr 1fr 1fr;  /* Equal width columns */
     gap: 0.5rem;
 }
 
@@ -1376,9 +1376,13 @@ input[type="checkbox"] {
     background: rgba(255, 255, 255, 0.12);
     backdrop-filter: blur(10px);
     border-radius: var(--radius-sm);
-    padding: 0.375rem 0.5rem;
+    padding: 0.5rem;  /* Consistent padding */
     border: 1px solid rgba(255, 255, 255, 0.15);
     transition: all 0.2s ease;
+    min-height: 60px;  /* Consistent height */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 .core-metric-item:hover {
@@ -1401,14 +1405,10 @@ input[type="checkbox"] {
 
 .core-metric-value {
     font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
-    font-size: 1rem;
+    font-size: 1rem;  /* Consistent font size for all metrics */
     font-weight: 700;
     display: block;
     line-height: 1.2;
-}
-
-.core-metric-item.primary .core-metric-value {
-    font-size: 1.35rem;
 }
 
 .core-metric-unit {
@@ -1453,7 +1453,7 @@ input[type="checkbox"] {
     }
 }
 
-/* Menu Panel - Desktop: slides from right, Mobile: slides from left */
+/* Menu Panel - Desktop and Mobile: slides from left */
 .menu-panel {
     position: fixed;
     top: 0;
@@ -1463,19 +1463,20 @@ input[type="checkbox"] {
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Desktop menu panel (slides from right) */
+/* Desktop menu panel (slides from left, matching mobile) */
 @media (min-width: 1025px) {
     .menu-panel {
-        right: 0;
+        left: 56px;  /* Start after icon bar */
         width: 320px;
         height: 100vh;
-        box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
-        z-index: 1001;
-        transform: translateX(100%);
+        box-shadow: var(--shadow-xl);  /* Shadow on right side */
+        z-index: 1003;  /* Above overlay, same as controls-panel */
+        transform: translateX(-100%);  /* Hidden to the left */
+        border-radius: 0 var(--radius-xl) var(--radius-xl) 0;  /* Rounded right corners */
     }
 
     .menu-panel.open {
-        transform: translateX(0);
+        transform: translateX(0);  /* Slide into view */
     }
 }
 
@@ -1579,15 +1580,15 @@ input[type="checkbox"] {
     font-family: 'SF Mono', 'Monaco', monospace;
 }
 
-/* Menu Overlay */
+/* Menu Overlay (legacy - now using sidebar-overlay for unified behavior) */
 .menu-overlay {
     position: fixed;
     top: 0;
-    left: 0;
-    width: 100%;
+    left: 56px;  /* Start after icon bar */
+    width: calc(100% - 56px);
     height: 100%;
-    background: rgba(0, 0, 0, 0.4);
-    z-index: 1000;
+    background: transparent;  /* No overlay opacity */
+    z-index: 1002;
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.3s ease;
@@ -1595,7 +1596,7 @@ input[type="checkbox"] {
 
 .menu-overlay.active {
     opacity: 1;
-    pointer-events: all;
+    pointer-events: all;  /* Allow clicking to close */
 }
 
 @media (max-width: 768px) {
