@@ -623,62 +623,78 @@ document.addEventListener('DOMContentLoaded', () => {
         tab.addEventListener('click', () => switchView(tab.dataset.view));
     });
 
-    // Mobile icon bar - manages menu and parameters panels
+    // Universal icon bar - works on desktop and mobile
     const mobileIconBar = document.getElementById('mobile-icon-bar');
     const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
     const mobileParamsToggle = document.getElementById('mobile-params-toggle');
     const menuPanel = document.getElementById('menu-panel');
     const controlsPanel = document.getElementById('controls-panel');
+    const mainContainer = document.querySelector('.main-container');
     const sidebarOverlay = document.getElementById('sidebar-overlay');
 
     if (mobileIconBar && mobileMenuToggle && mobileParamsToggle) {
-        // Toggle menu panel
+        const isMobile = () => window.innerWidth <= 1024;
+
+        // Toggle menu panel (same on desktop and mobile)
         mobileMenuToggle.addEventListener('click', () => {
             const isOpen = menuPanel.classList.contains('open');
 
-            // Close both panels first
-            menuPanel.classList.remove('open');
-            controlsPanel.classList.remove('mobile-open');
-            mobileMenuToggle.classList.remove('active');
+            // Close parameters panel if open
+            controlsPanel.classList.remove('mobile-open', 'collapsed');
+            if (mainContainer) mainContainer.classList.remove('params-collapsed');
             mobileParamsToggle.classList.remove('active');
 
             if (!isOpen) {
-                // Open menu panel
                 menuPanel.classList.add('open');
                 sidebarOverlay.classList.add('active');
                 mobileMenuToggle.classList.add('active');
                 document.body.style.overflow = 'hidden';
             } else {
-                // Close overlay
+                menuPanel.classList.remove('open');
                 sidebarOverlay.classList.remove('active');
+                mobileMenuToggle.classList.remove('active');
                 document.body.style.overflow = '';
             }
         });
 
-        // Toggle parameters panel
+        // Toggle parameters panel (different behavior for desktop vs mobile)
         mobileParamsToggle.addEventListener('click', () => {
-            const isOpen = controlsPanel.classList.contains('mobile-open');
-
-            // Close both panels first
+            // Close menu panel if open
             menuPanel.classList.remove('open');
-            controlsPanel.classList.remove('mobile-open');
             mobileMenuToggle.classList.remove('active');
-            mobileParamsToggle.classList.remove('active');
 
-            if (!isOpen) {
-                // Open parameters panel
-                controlsPanel.classList.add('mobile-open');
-                sidebarOverlay.classList.add('active');
-                mobileParamsToggle.classList.add('active');
-                document.body.style.overflow = 'hidden';
+            if (isMobile()) {
+                // Mobile: slide-out panel
+                const isOpen = controlsPanel.classList.contains('mobile-open');
+
+                if (!isOpen) {
+                    controlsPanel.classList.add('mobile-open');
+                    sidebarOverlay.classList.add('active');
+                    mobileParamsToggle.classList.add('active');
+                    document.body.style.overflow = 'hidden';
+                } else {
+                    controlsPanel.classList.remove('mobile-open');
+                    sidebarOverlay.classList.remove('active');
+                    mobileParamsToggle.classList.remove('active');
+                    document.body.style.overflow = '';
+                }
             } else {
-                // Close overlay
-                sidebarOverlay.classList.remove('active');
-                document.body.style.overflow = '';
+                // Desktop: collapse/expand panel
+                const isCollapsed = controlsPanel.classList.contains('collapsed');
+
+                if (!isCollapsed) {
+                    controlsPanel.classList.add('collapsed');
+                    if (mainContainer) mainContainer.classList.add('params-collapsed');
+                    mobileParamsToggle.classList.remove('active');
+                } else {
+                    controlsPanel.classList.remove('collapsed');
+                    if (mainContainer) mainContainer.classList.remove('params-collapsed');
+                    mobileParamsToggle.classList.add('active');
+                }
             }
         });
 
-        // Close panels when overlay clicked
+        // Close panels on overlay click
         if (sidebarOverlay) {
             sidebarOverlay.addEventListener('click', () => {
                 menuPanel.classList.remove('open');
@@ -690,7 +706,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        // Close panels on Escape key
+        // Escape key closes panels
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 if (menuPanel.classList.contains('open') || controlsPanel.classList.contains('mobile-open')) {
@@ -704,6 +720,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         });
+
+        // Set initial state on page load
+        if (!isMobile()) {
+            // Desktop: parameters panel visible by default
+            mobileParamsToggle.classList.add('active');
+        }
     }
 
     // Menu system

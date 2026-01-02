@@ -71,13 +71,13 @@ body {
     background: linear-gradient(135deg, #f0f4ff 0%, #e0e7ff 100%);
     color: var(--color-gray-800);
     min-height: 100vh;
-    padding: 1rem;
+    padding: 1rem 1rem 1rem 0; /* No left padding - icon bar handles it */
     line-height: 1.5;
 }
 
 .app-container {
     max-width: 1400px;
-    margin: 0 auto;
+    margin: 0 auto 0 56px; /* Account for 56px icon bar on left */
 }
 
 h1 {
@@ -190,14 +190,20 @@ header {
     overflow: hidden;
     height: calc(100vh - 140px);
     border: 1px solid var(--color-gray-200);
+    transition: grid-template-columns 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* When parameters panel is collapsed on desktop */
+.main-container.params-collapsed {
+    grid-template-columns: 0px 1fr;
 }
 
 /* ============================================
-   MOBILE ICON BAR
+   ICON BAR (Universal - Desktop & Mobile)
    ============================================ */
 
 .mobile-icon-bar {
-    display: none; /* Hidden on desktop */
+    display: flex; /* Always visible on desktop and mobile */
     position: fixed;
     top: 0;
     left: 0;
@@ -209,12 +215,6 @@ header {
     flex-direction: column;
     padding: 1rem 0;
     gap: 0.5rem;
-}
-
-@media (max-width: 1024px) {
-    .mobile-icon-bar {
-        display: flex;
-    }
 }
 
 .mobile-icon-btn {
@@ -289,15 +289,16 @@ header {
     z-index: 1001;  /* Between app-container (0) and controls-panel (1002) */
     opacity: 0;
     visibility: hidden;
-    /* Prevent blocking/blurring when inactive */
+    /* Overlay is purely visual - never blocks clicks */
     transition: opacity 0.3s ease, visibility 0.3s ease;
-    pointer-events: none;
+    pointer-events: none !important;
 }
 
 .sidebar-overlay.active {
     opacity: 1;
     visibility: visible;
-    pointer-events: auto;
+    /* Keep pointer-events: none - let clicks pass through to panels */
+    pointer-events: none !important;
 }
 
 @media (max-width: 1024px) {
@@ -406,6 +407,19 @@ header {
     height: 100%;
     display: flex;
     flex-direction: column;
+}
+
+/* Desktop-specific controls-panel behavior */
+@media (min-width: 1025px) {
+    .controls-panel {
+        position: relative;
+        width: 500px;
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .controls-panel.collapsed {
+        transform: translateX(calc(-500px - 56px)); /* Slide under icon bar */
+    }
 }
 
 .sticky-generate-section {
@@ -1408,19 +1422,8 @@ input[type="checkbox"] {
    ============================================ */
 
 .menu-btn {
-    background: var(--color-surface);
-    border: 1px solid var(--color-gray-300);
-    border-radius: var(--radius-md);
-    padding: 0.5rem 0.75rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    font-size: 0.9rem;
-    font-weight: 500;
-    color: var(--color-gray-800);
-    white-space: nowrap;
+    /* Hide header menu button completely - use icon bar instead */
+    display: none !important;
 }
 
 .menu-btn:hover {
