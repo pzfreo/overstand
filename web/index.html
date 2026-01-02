@@ -77,14 +77,11 @@
                         </select>
                     </div>
 
-                    <div class="param-management">
-                        <span class="param-management-label">Parameters</span>
-                        <div class="param-buttons">
-                            <button class="param-btn param-btn-save" id="save-params-btn">💾 Save</button>
-                            <button class="param-btn param-btn-load" id="load-params-btn">📂 Load</button>
-                            <input type="file" id="load-params-input" accept=".json" />
-                        </div>
-                    </div>
+                    <button class="menu-btn" id="menu-btn" title="Menu">
+                        <span class="menu-icon">☰</span>
+                        <span class="menu-label">Menu</span>
+                    </button>
+                    <input type="file" id="load-params-input" accept=".json" style="display: none;" />
 
                 </div>
 
@@ -152,6 +149,59 @@
                 </div>
             </div>
         </div>
+
+        <!-- Menu Panel -->
+        <div class="menu-panel" id="menu-panel">
+            <div class="menu-header">
+                <h2>Menu</h2>
+                <button class="menu-close-btn" id="menu-close-btn">✕</button>
+            </div>
+
+            <div class="menu-content">
+                <div class="menu-section">
+                    <h3 class="menu-section-title">File</h3>
+                    <button class="menu-item" id="menu-save-params">
+                        <span class="menu-item-icon">💾</span>
+                        <span class="menu-item-text">Save Parameters</span>
+                        <span class="menu-item-shortcut">⌘S</span>
+                    </button>
+                    <button class="menu-item" id="menu-load-params">
+                        <span class="menu-item-icon">📂</span>
+                        <span class="menu-item-text">Load Parameters</span>
+                        <span class="menu-item-shortcut">⌘O</span>
+                    </button>
+                </div>
+
+                <div class="menu-section">
+                    <h3 class="menu-section-title">Help</h3>
+                    <button class="menu-item" id="menu-keyboard-shortcuts">
+                        <span class="menu-item-icon">⌨️</span>
+                        <span class="menu-item-text">Keyboard Shortcuts</span>
+                    </button>
+                    <button class="menu-item" id="menu-about">
+                        <span class="menu-item-icon">ℹ️</span>
+                        <span class="menu-item-text">About</span>
+                    </button>
+                </div>
+
+                <div class="menu-section">
+                    <h3 class="menu-section-title">Links</h3>
+                    <a href="https://github.com/pzfreo/diagram-creator" target="_blank" class="menu-item">
+                        <span class="menu-item-icon">🔗</span>
+                        <span class="menu-item-text">GitHub Repository</span>
+                        <span class="menu-item-icon">↗</span>
+                    </a>
+                    <a href="https://github.com/pzfreo/diagram-creator/issues" target="_blank" class="menu-item">
+                        <span class="menu-item-icon">🐛</span>
+                        <span class="menu-item-text">Report Issue</span>
+                        <span class="menu-item-icon">↗</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Menu Overlay -->
+        <div class="menu-overlay" id="menu-overlay"></div>
     </div>
 
     <!-- PDF libs -->

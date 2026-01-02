@@ -537,6 +537,64 @@ function handleLoadParameters(event) {
     event.target.value = '';
 }
 
+// Menu system functions
+function openMenu() {
+    const menuPanel = document.getElementById('menu-panel');
+    const menuOverlay = document.getElementById('menu-overlay');
+    menuPanel.classList.add('open');
+    menuOverlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeMenu() {
+    const menuPanel = document.getElementById('menu-panel');
+    const menuOverlay = document.getElementById('menu-overlay');
+    menuPanel.classList.remove('open');
+    menuOverlay.classList.remove('active');
+    document.body.style.overflow = '';
+}
+
+function showKeyboardShortcuts() {
+    const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+    const mod = isMac ? '⌘' : 'Ctrl';
+
+    alert(`Keyboard Shortcuts:
+
+${mod} + Enter: Generate Template
+${mod} + S: Save Parameters
+${mod} + O: Load Parameters
+Escape: Close Menu/Dialogs
+
+Zoom Controls (when viewing diagrams):
++: Zoom In
+-: Zoom Out
+0: Reset Zoom`);
+
+    closeMenu();
+}
+
+function showAbout() {
+    alert(`Instrument Neck Geometry Generator
+
+A tool for designing and calculating precise neck geometry for stringed instruments including violins, viols, guitars, and mandolins.
+
+Version: ${document.getElementById('version-info')?.textContent || 'Unknown'}
+
+Features:
+• 11 preset instruments with accurate dimensions
+• Real-time geometry calculations
+• Collapsible parameter sections
+• SVG and PDF export
+• Customizable for any instrument type
+
+Built with Python (Pyodide), JavaScript, and SVG
+
+https://overstand.tools
+https://github.com/pzfreo/diagram-creator`);
+
+    closeMenu();
+}
+
 // Initialize on load
 document.addEventListener('DOMContentLoaded', () => {
     // Initialize DOM element references first
@@ -580,6 +638,23 @@ document.addEventListener('DOMContentLoaded', () => {
         document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && controlsPanel.classList.contains('mobile-open')) close(); });
     }
 
+    // Menu system
+    const menuBtn = document.getElementById('menu-btn');
+    const menuCloseBtn = document.getElementById('menu-close-btn');
+    const menuOverlay = document.getElementById('menu-overlay');
+    const menuSaveParams = document.getElementById('menu-save-params');
+    const menuLoadParams = document.getElementById('menu-load-params');
+    const menuKeyboardShortcuts = document.getElementById('menu-keyboard-shortcuts');
+    const menuAbout = document.getElementById('menu-about');
+
+    if (menuBtn) menuBtn.addEventListener('click', openMenu);
+    if (menuCloseBtn) menuCloseBtn.addEventListener('click', closeMenu);
+    if (menuOverlay) menuOverlay.addEventListener('click', closeMenu);
+    if (menuSaveParams) menuSaveParams.addEventListener('click', () => { closeMenu(); saveParameters(); });
+    if (menuLoadParams) menuLoadParams.addEventListener('click', () => { closeMenu(); elements.loadParamsInput.click(); });
+    if (menuKeyboardShortcuts) menuKeyboardShortcuts.addEventListener('click', showKeyboardShortcuts);
+    if (menuAbout) menuAbout.addEventListener('click', showAbout);
+
     registerServiceWorker();
     initInstallPrompt();
     loadVersionInfo();
@@ -587,8 +662,30 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 document.addEventListener('keydown', (e) => {
+    // Generate template: ⌘/Ctrl + Enter
     if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
         e.preventDefault();
         if (!elements.genBtn.disabled && !state.isGenerating) generateNeck();
+    }
+
+    // Save parameters: ⌘/Ctrl + S
+    if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+        e.preventDefault();
+        saveParameters();
+    }
+
+    // Load parameters: ⌘/Ctrl + O
+    if ((e.metaKey || e.ctrlKey) && e.key === 'o') {
+        e.preventDefault();
+        elements.loadParamsInput.click();
+    }
+
+    // Close menu: Escape
+    if (e.key === 'Escape') {
+        const menuPanel = document.getElementById('menu-panel');
+        if (menuPanel && menuPanel.classList.contains('open')) {
+            e.preventDefault();
+            closeMenu();
+        }
     }
 });
