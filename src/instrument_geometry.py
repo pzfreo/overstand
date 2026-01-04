@@ -11,7 +11,7 @@ from buildprimitives import *
 import geometry_engine
 import svg_renderer
 import view_generator
-from instrument_parameters import InstrumentFamily
+from parameter_registry import InstrumentFamily
 from radius_template import generate_radius_template_svg
 from constants import (
     DEFAULT_FB_WIDTH_AT_NUT,

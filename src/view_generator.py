@@ -6,7 +6,7 @@ This module handles the generation of HTML-based views like fret position tables
 
 from typing import Dict, Any
 from geometry_engine import calculate_fret_positions
-from instrument_parameters import InstrumentFamily
+from parameter_registry import InstrumentFamily
 
 def generate_fret_positions_view(params: Dict[str, Any]) -> Dict[str, Any]:
     """Generate fret positions data for display."""

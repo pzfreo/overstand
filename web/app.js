@@ -110,8 +110,7 @@ async function initializePython() {
         ui.setStatus('loading', 'Loading instrument neck modules...');
         const modules = [
             'constants.py', 'buildprimitives.py', 'dimension_helpers.py',
-            'parameter_registry.py',  // NEW: Must load before instrument_parameters and derived_value_metadata
-            'derived_value_metadata.py', 'instrument_parameters.py', 'ui_metadata.py',
+            'parameter_registry.py', 'ui_metadata.py', 'preset_loader.py',
             'radius_template.py', 'instrument_geometry.py', 'instrument_generator.py',
             'geometry_engine.py', 'svg_renderer.py', 'view_generator.py'
         ];
@@ -132,7 +131,7 @@ async function initializePython() {
                 sys.path.insert(0, '')
             
             # Import dependencies first
-            import constants, buildprimitives, dimension_helpers, instrument_parameters, radius_template
+            import constants, buildprimitives, dimension_helpers, parameter_registry, radius_template
             import geometry_engine, svg_renderer, view_generator
             # Then orchestrators
             import instrument_geometry, instrument_generator

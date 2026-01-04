@@ -18,7 +18,7 @@ from constants import (
     DEFAULT_FRETS_VIOLIN,
     EPSILON
 )
-from instrument_parameters import InstrumentFamily
+from parameter_registry import InstrumentFamily
 
 def calculate_sagitta(radius: float, width: float) -> float:
     """

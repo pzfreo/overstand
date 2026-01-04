@@ -6,7 +6,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
 
 from instrument_geometry import calculate_derived_values
-from instrument_parameters import get_default_values, InstrumentFamily
+from parameter_registry import get_default_values, InstrumentFamily
 
 
 def test_calculate_derived_values_violin():

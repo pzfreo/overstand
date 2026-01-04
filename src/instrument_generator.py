@@ -7,7 +7,7 @@ You rarely need to modify this - it's the "glue" code.
 
 from typing import Dict, Any, List, Tuple
 import json
-from derived_value_metadata import DERIVED_VALUE_METADATA, get_all_metadata_as_dict
+from parameter_registry import get_all_output_parameters, get_derived_metadata_as_dict
 
 
 def generate_violin_neck(params_json: str) -> str:
@@ -41,7 +41,7 @@ def generate_violin_neck(params_json: str) -> str:
         params = json.loads(params_json)
 
         # Import here to ensure modules are loaded
-        from instrument_parameters import validate_parameters
+        from parameter_registry import validate_parameters
         from instrument_geometry import generate_multi_view_svg, generate_fret_positions_view, calculate_derived_values
 
         # Validate parameters
@@ -61,13 +61,19 @@ def generate_violin_neck(params_json: str) -> str:
             derived_values = calculate_derived_values(params)
 
             # Format derived values for display
+            output_params = get_all_output_parameters()
             formatted_values = {}
             metadata_dict = {}
             for key, value in derived_values.items():
-                metadata = DERIVED_VALUE_METADATA.get(key)
-                if metadata:
-                    formatted_values[key] = metadata.format_with_unit(value)
-                    metadata_dict[key] = metadata.to_dict()
+                if key in output_params:
+                    param = output_params[key]
+                    decimals = param.output_config.decimals if param.output_config else 1
+                    # Format value with unit
+                    if param.unit:
+                        formatted_values[key] = f"{value:.{decimals}f} {param.unit}"
+                    else:
+                        formatted_values[key] = f"{value:.{decimals}f}"
+                    metadata_dict[key] = param.to_dict()
 
             return json.dumps({
                 "success": True,
@@ -123,14 +129,20 @@ def get_derived_values(params_json: str) -> str:
         derived_raw = calculate_derived_values(params)
 
         # Build enhanced response with metadata
+        output_params = get_all_output_parameters()
         formatted_values = {}
         metadata_dict = {}
 
         for key, value in derived_raw.items():
-            metadata = DERIVED_VALUE_METADATA.get(key)
-            if metadata:
-                formatted_values[key] = metadata.format_with_unit(value)
-                metadata_dict[key] = metadata.to_dict()
+            if key in output_params:
+                param = output_params[key]
+                decimals = param.output_config.decimals if param.output_config else 1
+                # Format value with unit
+                if param.unit:
+                    formatted_values[key] = f"{value:.{decimals}f} {param.unit}"
+                else:
+                    formatted_values[key] = f"{value:.{decimals}f}"
+                metadata_dict[key] = param.to_dict()
 
         return json.dumps({
             "success": True,
@@ -159,7 +171,7 @@ def get_derived_value_metadata() -> str:
     try:
         return json.dumps({
             "success": True,
-            "metadata": get_all_metadata_as_dict()
+            "metadata": get_derived_metadata_as_dict()
         })
     except Exception as e:
         return json.dumps({
@@ -176,7 +188,7 @@ def get_parameter_definitions() -> str:
         JSON string of parameter definitions
     """
     try:
-        from instrument_parameters import get_parameters_as_json
+        from parameter_registry import get_parameters_as_json
         return get_parameters_as_json()
     except Exception as e:
         return json.dumps({
@@ -268,7 +280,7 @@ def get_presets() -> str:
 
 if __name__ == '__main__':
     # Test the generator
-    from instrument_parameters import get_default_values
+    from parameter_registry import get_default_values
     import json
     
     print("Testing violin neck generator...")

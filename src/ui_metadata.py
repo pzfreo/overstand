@@ -258,203 +258,7 @@ validate_sections()
 # 2. Run: python3 scripts/export_presets_to_json.py
 # 3. This will create/update JSON files in presets/
 
-# Legacy hardcoded presets - kept as fallback only
-_LEGACY_INSTRUMENT_PRESETS = {
-    'violin': InstrumentPreset(
-        id='violin',
-        display_name='Violin',
-        family='VIOLIN',
-        icon='🎻',
-        basic_params={
-            'instrument_family': 'VIOLIN',
-            'vsl': 325.0,
-            'body_length': 355.0,
-            'body_stop': 195.0,
-            'overstand': 12.0,
-            'bridge_height': 33.0,
-            'arching_height': 15.0
-        },
-        description='Standard violin dimensions based on Stradivari models'
-    ),
-
-    'viola': InstrumentPreset(
-        id='viola',
-        display_name='Viola',
-        family='VIOLIN',
-        icon='🎻',
-        basic_params={
-            'instrument_family': 'VIOLIN',
-            'vsl': 370.0,
-            'body_length': 410.0,
-            'body_stop': 225.0,
-            'overstand': 14.0,
-            'bridge_height': 35.0,
-            'arching_height': 16.0
-        },
-        description='Standard viola dimensions'
-    ),
-
-    'cello': InstrumentPreset(
-        id='cello',
-        display_name='Cello',
-        family='VIOLIN',
-        icon='🎻',
-        basic_params={
-            'instrument_family': 'VIOLIN',
-            'vsl': 690.0,
-            'body_length': 755.0,
-            'body_stop': 400.0,
-            'overstand': 24.0,
-            'bridge_height': 80.0,
-            'arching_height': 28.0
-        },
-        description='Standard cello dimensions'
-    ),
-
-    'treble_viol': InstrumentPreset(
-        id='treble_viol',
-        display_name='Treble Viol',
-        family='VIOL',
-        icon='🎻',
-        basic_params={
-            'instrument_family': 'VIOL',
-            'vsl': 330.0,
-            'body_length': 400.0,
-            'body_stop': 200.0,
-            'overstand': 10.0,
-            'bridge_height': 30.0,
-            'arching_height': 14.0,
-            'no_frets': 7  # Viols have frets
-        },
-        description='Treble viol / Pardessus de viole'
-    ),
-
-    'tenor_viol': InstrumentPreset(
-        id='tenor_viol',
-        display_name='Tenor Viol',
-        family='VIOL',
-        icon='🎻',
-        basic_params={
-            'instrument_family': 'VIOL',
-            'vsl': 400.0,
-            'body_length': 480.0,
-            'body_stop': 240.0,
-            'overstand': 12.0,
-            'bridge_height': 35.0,
-            'arching_height': 16.0,
-            'no_frets': 7
-        },
-        description='Tenor viol dimensions'
-    ),
-
-    'bass_viol': InstrumentPreset(
-        id='bass_viol',
-        display_name='Bass Viol',
-        family='VIOL',
-        icon='🎻',
-        basic_params={
-            'instrument_family': 'VIOL',
-            'vsl': 680.0,
-            'body_length': 750.0,
-            'body_stop': 400.0,
-            'overstand': 20.0,
-            'bridge_height': 75.0,
-            'arching_height': 25.0,
-            'no_frets': 7
-        },
-        description='Bass viol dimensions (Viola da Gamba)'
-    ),
-
-    'archtop_guitar': InstrumentPreset(
-        id='archtop_guitar',
-        display_name='Archtop Guitar',
-        family='GUITAR_MANDOLIN',
-        icon='🎸',
-        basic_params={
-            'instrument_family': 'GUITAR_MANDOLIN',
-            'vsl': 635.0,
-            'body_length': 505.0,
-            'fret_join': 14,
-            'overstand': 8.0,
-            'bridge_height': 25.0,
-            'arching_height': 18.0,
-            'no_frets': 20
-        },
-        description='Archtop jazz guitar dimensions (fret-join driven)'
-    ),
-
-    'mandolin': InstrumentPreset(
-        id='mandolin',
-        display_name='Mandolin',
-        family='GUITAR_MANDOLIN',
-        icon='🎸',
-        basic_params={
-            'instrument_family': 'GUITAR_MANDOLIN',
-            'vsl': 330.0,
-            'body_length': 280.0,
-            'fret_join': 12,
-            'overstand': 5.0,
-            'bridge_height': 15.0,
-            'arching_height': 12.0,
-            'no_frets': 20
-        },
-        description='Standard mandolin dimensions (fret-join driven)'
-    ),
-
-    'mandola': InstrumentPreset(
-        id='mandola',
-        display_name='Mandola',
-        family='GUITAR_MANDOLIN',
-        icon='🎸',
-        basic_params={
-            'instrument_family': 'GUITAR_MANDOLIN',
-            'vsl': 420.0,
-            'body_length': 350.0,
-            'fret_join': 12,
-            'overstand': 6.0,
-            'bridge_height': 18.0,
-            'arching_height': 14.0,
-            'no_frets': 20
-        },
-        description='Alto mandola dimensions (fret-join driven)'
-    ),
-
-    'octave_mandolin': InstrumentPreset(
-        id='octave_mandolin',
-        display_name='Octave Mandolin',
-        family='GUITAR_MANDOLIN',
-        icon='🎸',
-        basic_params={
-            'instrument_family': 'GUITAR_MANDOLIN',
-            'vsl': 550.0,
-            'body_length': 450.0,
-            'fret_join': 12,
-            'overstand': 7.0,
-            'bridge_height': 22.0,
-            'arching_height': 16.0,
-            'no_frets': 20
-        },
-        description='Octave mandolin / bouzouki dimensions (fret-join driven)'
-    ),
-
-    # Special option: Custom/Other instrument
-    'custom': InstrumentPreset(
-        id='custom',
-        display_name='Other / Custom',
-        family='VIOLIN',  # Default to violin family
-        icon='🔧',
-        basic_params={
-            'instrument_family': 'VIOLIN',
-            'vsl': 325.0,           # Default string length
-            'body_length': 355.0,   # Default body length
-            'body_stop': 195.0,     # Default body stop
-            'overstand': 12.0,      # Default overstand
-            'bridge_height': 33.0,  # Default bridge height
-            'arching_height': 15.0  # Default arching height
-        },
-        description='Start with default values for a custom instrument'
-    )
-}
+# Legacy hardcoded presets removed - now loaded from JSON files in presets/ directory
 
 # Load presets from JSON files (preferred method)
 def _load_presets_from_json():
@@ -477,10 +281,9 @@ def _load_presets_from_json():
         return presets
     except Exception as e:
         print(f"Warning: Could not load presets from JSON: {e}")
-        print("Falling back to legacy hardcoded presets")
-        return _LEGACY_INSTRUMENT_PRESETS
+        return {}
 
-# Try to load from JSON, fall back to legacy if that fails
+# Load presets from JSON files
 INSTRUMENT_PRESETS = _load_presets_from_json()
 
 
@@ -499,14 +302,16 @@ def get_ui_metadata_bundle() -> dict:
         dict: Complete metadata including sections, presets, parameters, and derived values
     """
     # Import here to avoid circular dependency
-    from instrument_parameters import INSTRUMENT_PARAMETERS
-    from derived_value_metadata import DERIVED_VALUE_METADATA
+    from parameter_registry import get_all_input_parameters, get_all_output_parameters
+
+    input_params = get_all_input_parameters()
+    output_params = get_all_output_parameters()
 
     return {
         'sections': {k: v.to_dict() for k, v in SECTIONS.items()},
         'presets': {k: v.to_dict() for k, v in INSTRUMENT_PRESETS.items()},
-        'parameters': {k: v.to_dict() for k, v in INSTRUMENT_PARAMETERS.items()},
-        'derived_values': {k: v.to_dict() for k, v in DERIVED_VALUE_METADATA.items()}
+        'parameters': {k: v.to_dict() for k, v in input_params.items()},
+        'derived_values': {k: v.to_dict() for k, v in output_params.items()}
     }
 
 

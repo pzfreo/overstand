@@ -256,6 +256,26 @@ class UnifiedParameter:
             'order': self.output_config.order
         }
 
+    def to_dict(self) -> dict:
+        """
+        Convert to JSON-serializable dict for UI consumption.
+
+        Returns output metadata format if output_config exists,
+        otherwise returns input metadata format.
+        """
+        if self.output_config:
+            return self.to_output_metadata()
+        elif self.input_config:
+            return self.to_input_metadata()
+        else:
+            # Fallback for bare parameters
+            return {
+                'key': self.key,
+                'display_name': self.display_name,
+                'unit': self.unit,
+                'description': self.description
+            }
+
     def format_value(self, value: float) -> str:
         """Format a value according to output configuration"""
         if not self.output_config:
@@ -1308,6 +1328,184 @@ def get_visible_parameters(current_params: Dict[str, Any], instrument_family: st
         if param.is_visible_in_context(current_params):
             visible.append(key)
     return visible
+
+
+# ============================================
+# CONVENIENCE FUNCTIONS (moved from instrument_parameters.py)
+# ============================================
+
+def get_parameter_categories() -> List[str]:
+    """
+    Returns ordered list of categories for UI grouping.
+    Controls the order categories appear in the interface.
+    """
+    return [
+        'General',
+        'Basic Dimensions',
+        'Fingerboard Dimensions',
+        'Viol Construction',
+        'Display Options'
+    ]
+
+
+def get_default_values() -> Dict[str, Any]:
+    """Returns dictionary of all default parameter values for input parameters"""
+    import json
+    defaults = {}
+
+    for key, param in PARAMETER_REGISTRY.items():
+        # Skip output-only parameters
+        if param.role == ParameterRole.OUTPUT_ONLY:
+            continue
+
+        if param.input_config is None:
+            continue
+
+        default_val = param.input_config.default
+
+        # Handle enum defaults - convert to name string
+        if param.param_type == ParameterType.ENUM and hasattr(default_val, 'name'):
+            defaults[key] = default_val.name
+        else:
+            defaults[key] = default_val
+
+    return defaults
+
+
+def validate_parameters(params: Dict[str, Any]) -> tuple:
+    """
+    Validates parameter values using domain-specific rules.
+
+    Add lutherie expertise rules here. These will be checked
+    before geometry generation.
+
+    Args:
+        params: Dictionary of parameter name -> value
+
+    Returns:
+        (is_valid, list_of_error_messages)
+    """
+    errors = []
+
+    # Basic range validation for numeric parameters
+    for key, param in PARAMETER_REGISTRY.items():
+        if key not in params:
+            continue
+
+        value = params[key]
+
+        if param.param_type == ParameterType.NUMERIC and param.input_config:
+            if value < param.input_config.min_val:
+                errors.append(f"{param.display_name} must be at least {param.input_config.min_val}")
+            if value > param.input_config.max_val:
+                errors.append(f"{param.display_name} must be at most {param.input_config.max_val}")
+
+    # Add domain-specific validation rules here
+    # Example: string length must be greater than body stop
+    # vsl = params.get('vsl', 325.0)
+    # body_stop = params.get('body_stop', 195.0)
+    # if vsl <= body_stop:
+    #     errors.append("Vibrating string length must be greater than body stop")
+
+    return len(errors) == 0, errors
+
+
+def get_parameters_as_json() -> str:
+    """
+    Export all input parameters as JSON for web UI.
+    Called by JavaScript to auto-generate forms.
+    """
+    import json
+    params_dict = {}
+
+    for key, param in PARAMETER_REGISTRY.items():
+        # Skip output-only parameters
+        if param.role == ParameterRole.OUTPUT_ONLY:
+            continue
+
+        if param.input_config is None:
+            continue
+
+        # Build parameter dict for JSON
+        if param.param_type == ParameterType.NUMERIC:
+            params_dict[key] = {
+                'type': 'number',
+                'name': key,
+                'label': param.display_name,
+                'unit': param.unit,
+                'default': param.input_config.default,
+                'min': param.input_config.min_val,
+                'max': param.input_config.max_val,
+                'step': param.input_config.step,
+                'description': param.description,
+                'category': param.input_config.category
+            }
+        elif param.param_type == ParameterType.ENUM:
+            params_dict[key] = {
+                'type': 'enum',
+                'name': key,
+                'label': param.display_name,
+                'options': [{'value': e.name, 'label': e.value} for e in param.enum_class],
+                'default': param.input_config.default.name if hasattr(param.input_config.default, 'name') else param.input_config.default,
+                'description': param.description,
+                'category': param.input_config.category
+            }
+        elif param.param_type == ParameterType.BOOLEAN:
+            params_dict[key] = {
+                'type': 'boolean',
+                'name': key,
+                'label': param.display_name,
+                'default': param.input_config.default,
+                'description': param.description,
+                'category': param.input_config.category
+            }
+        elif param.param_type == ParameterType.STRING:
+            params_dict[key] = {
+                'type': 'string',
+                'name': key,
+                'label': param.display_name,
+                'default': param.input_config.default,
+                'description': param.description,
+                'category': param.input_config.category,
+                'max_length': param.max_length or 100
+            }
+
+        # Add conditional metadata if present
+        if param.input_config.visible_when:
+            params_dict[key]['visible_when'] = param.input_config.visible_when
+        if param.is_output_for:
+            params_dict[key]['is_output'] = param.is_output_for
+
+    return json.dumps({
+        'parameters': params_dict,
+        'categories': get_parameter_categories()
+    })
+
+
+def get_derived_metadata_as_dict() -> dict:
+    """
+    Get all output parameter metadata as a JSON-serializable dictionary.
+    Used by instrument_generator to export metadata to web UI.
+    """
+    metadata = {}
+
+    for key, param in PARAMETER_REGISTRY.items():
+        # Only include parameters that have output config
+        if param.output_config is None:
+            continue
+
+        metadata[key] = {
+            'key': key,
+            'display_name': param.display_name,
+            'unit': param.unit,
+            'decimals': param.output_config.decimals,
+            'visible': param.output_config.visible,
+            'category': param.output_config.category,
+            'description': param.description,
+            'order': param.output_config.order
+        }
+
+    return metadata
 
 
 # Run validation when module is imported
