@@ -308,12 +308,10 @@ async function generateNeck() {
 
         // Use base64 encoding to safely pass JSON to Python (avoids all escaping issues)
         const paramsBase64 = btoa(unescape(encodeURIComponent(paramsJson)));
-        const resultJson = await state.pyodide.runPythonAsync(`
-            import base64
-            from instrument_generator import generate_violin_neck
-            _params_json = base64.b64decode('${paramsBase64}').decode('utf-8')
-            generate_violin_neck(_params_json)
-        `);
+        const resultJson = await state.pyodide.runPythonAsync(`import base64
+from instrument_generator import generate_violin_neck
+_params_json = base64.b64decode('${paramsBase64}').decode('utf-8')
+generate_violin_neck(_params_json)`);
         const result = JSON.parse(resultJson);
 
         if (result.success) {
@@ -352,12 +350,10 @@ async function updateDerivedValues() {
 
         // Use base64 encoding to safely pass JSON to Python (avoids all escaping issues)
         const paramsBase64 = btoa(unescape(encodeURIComponent(paramsJson)));
-        const resultJson = await state.pyodide.runPythonAsync(`
-            import base64
-            from instrument_generator import get_derived_values
-            _params_json = base64.b64decode('${paramsBase64}').decode('utf-8')
-            get_derived_values(_params_json)
-        `);
+        const resultJson = await state.pyodide.runPythonAsync(`import base64
+from instrument_generator import get_derived_values
+_params_json = base64.b64decode('${paramsBase64}').decode('utf-8')
+get_derived_values(_params_json)`);
         const result = JSON.parse(resultJson);
         const container = elements.calculatedFields;
 
