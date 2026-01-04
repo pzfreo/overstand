@@ -4,12 +4,7 @@ Command-line interface for generating instrument diagrams from parameter files.
 
 ## Installation
 
-The CLI is located at `src/instrument-gen-cli` and requires Python 3.
-
-Install dependencies:
-```bash
-pip install -r requirements.txt
-```
+The CLI is located at `src/instrument-gen-cli` and requires Python 3 with the build123d dependencies installed.
 
 Make it executable (already done):
 ```bash
@@ -24,8 +19,8 @@ instrument-gen-cli INPUT_FILE [OPTIONS]
 
 ### Options
 
-- `--view {side,top,cross_section,dimensions,pdf}` - Generate a specific view
-- `--output FILE` or `-o FILE` - Output file (default: stdout, required for pdf)
+- `--view {side,top,cross_section,dimensions}` - Generate a specific view
+- `--output FILE` or `-o FILE` - Output file (default: stdout)
 - `--all` - Generate all available views (requires `--output-dir`)
 - `--output-dir DIR` - Output directory for `--all` mode
 
@@ -34,11 +29,6 @@ instrument-gen-cli INPUT_FILE [OPTIONS]
 ### Generate side view SVG
 ```bash
 python src/instrument-gen-cli presets/basic_violin.json --view side --output my-violin-side.svg
-```
-
-### Generate side view as PDF
-```bash
-python src/instrument-gen-cli presets/basic_violin.json --view pdf --output my-violin.pdf
 ```
 
 ### Generate dimensions table HTML
@@ -53,7 +43,6 @@ python src/instrument-gen-cli presets/basic_violin.json --all --output-dir ./out
 
 This creates:
 - `Basic_Violin_side.svg` - Side view diagram
-- `Basic_Violin_side.pdf` - Side view as PDF
 - `Basic_Violin_dimensions.html` - Dimensions table
 
 ### Print to stdout (useful for piping)
@@ -95,9 +84,8 @@ You can also use simplified format with just parameters:
 
 ## Available Views
 
-- **side** - Side view SVG diagram
-- **pdf** - Side view as PDF (scale-accurate for printing)
-- **dimensions** - Dimensions table HTML
+- **side** - Side view SVG diagram (fully implemented)
+- **dimensions** - Dimensions table HTML (fully implemented)
 - **top** - Top view SVG (coming soon)
 - **cross_section** - Cross-section view SVG (coming soon)
 
@@ -108,11 +96,7 @@ The side view generates a scalable vector graphic that can be:
 - Opened in any SVG viewer or web browser
 - Imported into CAD software
 - Printed at any scale
-
-### PDF Output
-The PDF view generates a print-ready document:
-- Uses svglib + reportlab for conversion
-- Maintains scale accuracy for workshop use
+- Converted to PDF using tools like Inkscape
 
 ### HTML Output
 The dimensions table generates a standalone HTML file with:
