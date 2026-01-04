@@ -278,16 +278,28 @@ async function loadPreset() {
 
 function collectParameters() {
     const params = {};
-    if (!state.parameterDefinitions) return params;
+    if (!state.parameterDefinitions) {
+        console.warn('[collectParameters] No parameterDefinitions!');
+        return params;
+    }
+    const allParamNames = Object.keys(state.parameterDefinitions.parameters);
+    console.log('[collectParameters] Total params in definitions:', allParamNames.length, allParamNames);
+    let foundCount = 0, missingCount = 0;
     for (const [name, param] of Object.entries(state.parameterDefinitions.parameters)) {
         const element = document.getElementById(name);
-        if (!element) continue;
+        if (!element) {
+            missingCount++;
+            if (missingCount <= 5) console.warn('[collectParameters] Missing DOM element for:', name);
+            continue;
+        }
+        foundCount++;
         if (param.type === 'number') {
             const val = parseFloat(element.value);
             params[name] = !isNaN(val) ? val : param.default;
         } else if (param.type === 'boolean') params[name] = element.checked;
         else params[name] = element.value;
     }
+    console.log('[collectParameters] Found:', foundCount, 'Missing:', missingCount);
     return params;
 }
 
