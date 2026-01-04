@@ -12,6 +12,7 @@ import argparse
 import json
 import sys
 import os
+import tempfile
 from pathlib import Path
 
 
@@ -33,6 +34,35 @@ def load_parameters(json_file):
         sys.exit(1)
 
 
+def svg_to_pdf(svg_content, output_path):
+    """Convert SVG content to PDF using svglib + reportlab."""
+    try:
+        from svglib.svglib import svg2rlg
+        from reportlab.graphics import renderPDF
+    except ImportError:
+        print("Error: PDF generation requires svglib and reportlab.", file=sys.stderr)
+        print("Install with: pip install svglib reportlab", file=sys.stderr)
+        sys.exit(1)
+
+    # Write SVG to temp file (svglib needs a file path)
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.svg', delete=False) as f:
+        f.write(svg_content)
+        temp_path = f.name
+
+    try:
+        # Convert SVG to reportlab drawing
+        drawing = svg2rlg(temp_path)
+        if drawing is None:
+            print("Error: Failed to parse SVG content", file=sys.stderr)
+            sys.exit(1)
+
+        # Render to PDF
+        renderPDF.drawToFile(drawing, output_path)
+    finally:
+        # Clean up temp file
+        os.unlink(temp_path)
+
+
 def generate_view(params, view_type):
     """Generate a specific view."""
     from instrument_generator import generate_violin_neck
@@ -48,11 +78,15 @@ def generate_view(params, view_type):
         return '<svg><text x="10" y="20">Cross-section view not yet implemented</text></svg>'
     elif view_type == 'dimensions':
         # Generate dimensions table as HTML
-        from instrument_parameters import get_parameter_categories, INSTRUMENT_PARAMETERS
+        from parameter_registry import (
+            get_parameter_categories,
+            get_all_input_parameters,
+            ParameterType
+        )
         from instrument_geometry import calculate_derived_values
 
         categories = get_parameter_categories()
-        param_defs = INSTRUMENT_PARAMETERS
+        input_params = get_all_input_parameters()
         derived = calculate_derived_values(params)
 
         html = '<!DOCTYPE html>\n<html>\n<head>\n'
@@ -77,28 +111,29 @@ def generate_view(params, view_type):
 
             html += f'<tr><td colspan="2" class="category-header">{category}</td></tr>\n'
 
-            for name, param in param_defs.items():
-                if param.category != category:
+            for name, param in input_params.items():
+                # Get category from input_config
+                param_category = param.input_config.category if param.input_config else None
+                if param_category != category:
                     continue
 
                 value = params.get(name)
                 if value is None:
                     continue
 
-                # Check parameter type using class name
-                param_type = param.__class__.__name__
-                if param_type == 'NumericParameter':
+                # Check parameter type using ParameterType enum
+                if param.param_type == ParameterType.NUMERIC:
                     display_value = f'{value} <span class="param-unit">{param.unit}</span>'
-                elif param_type == 'BooleanParameter':
+                elif param.param_type == ParameterType.BOOLEAN:
                     display_value = 'Yes' if value else 'No'
-                elif param_type == 'EnumParameter':
+                elif param.param_type == ParameterType.ENUM:
                     display_value = value
-                elif param_type == 'StringParameter':
+                elif param.param_type == ParameterType.STRING:
                     display_value = str(value)
                 else:
                     display_value = str(value)
 
-                html += f'<tr><td>{param.label}</td><td>{display_value}</td></tr>\n'
+                html += f'<tr><td>{param.display_name}</td><td>{display_value}</td></tr>\n'
 
         # Add derived values
         if derived:
@@ -122,6 +157,9 @@ Examples:
   # Generate side view SVG
   instrument-gen-cli params.json --view side --output side-view.svg
 
+  # Generate side view as PDF
+  instrument-gen-cli params.json --view pdf --output diagram.pdf
+
   # Generate dimensions table HTML
   instrument-gen-cli params.json --view dimensions --output dimensions.html
 
@@ -134,9 +172,9 @@ Examples:
     )
 
     parser.add_argument('input', help='Input JSON parameter file')
-    parser.add_argument('--view', choices=['side', 'top', 'cross_section', 'dimensions'],
+    parser.add_argument('--view', choices=['side', 'top', 'cross_section', 'dimensions', 'pdf'],
                         help='View type to generate')
-    parser.add_argument('--output', '-o', help='Output file (default: stdout)')
+    parser.add_argument('--output', '-o', help='Output file (default: stdout, required for pdf)')
     parser.add_argument('--all', action='store_true',
                         help='Generate all views (requires --output-dir)')
     parser.add_argument('--output-dir', help='Output directory for --all mode')
@@ -150,6 +188,8 @@ Examples:
         parser.error('Either --view or --all must be specified')
     if args.all and args.view:
         parser.error('Cannot use both --all and --view')
+    if args.view == 'pdf' and not args.output:
+        parser.error('--view pdf requires --output (cannot print binary to stdout)')
 
     # Load parameters
     params = load_parameters(args.input)
@@ -170,17 +210,29 @@ Examples:
             with open(output_file, 'w') as f:
                 f.write(content)
             print(f'Generated: {output_file}')
-    else:
-        # Generate single view
-        content = generate_view(params, args.view)
 
-        if args.output:
-            with open(args.output, 'w') as f:
-                f.write(content)
+        # Also generate PDF
+        pdf_file = output_dir / f'{instrument_name}_side.pdf'
+        svg_content = generate_view(params, 'side')
+        svg_to_pdf(svg_content, str(pdf_file))
+        print(f'Generated: {pdf_file}')
+    else:
+        # Handle PDF separately (binary output)
+        if args.view == 'pdf':
+            svg_content = generate_view(params, 'side')
+            svg_to_pdf(svg_content, args.output)
             print(f'Generated: {args.output}')
         else:
-            # Print to stdout
-            print(content)
+            # Generate text-based view
+            content = generate_view(params, args.view)
+
+            if args.output:
+                with open(args.output, 'w') as f:
+                    f.write(content)
+                print(f'Generated: {args.output}')
+            else:
+                # Print to stdout
+                print(content)
 
 
 if __name__ == '__main__':
