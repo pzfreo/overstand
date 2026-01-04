@@ -306,10 +306,12 @@ async function generateNeck() {
         params._generator_url = window.location.href;
         const paramsJson = JSON.stringify(params);
 
-        // Use Pyodide globals to pass data safely (avoids string injection issues)
-        state.pyodide.globals.set('_params_json', paramsJson);
+        // Use base64 encoding to safely pass JSON to Python (avoids all escaping issues)
+        const paramsBase64 = btoa(unescape(encodeURIComponent(paramsJson)));
         const resultJson = await state.pyodide.runPythonAsync(`
+            import base64
             from instrument_generator import generate_violin_neck
+            _params_json = base64.b64decode('${paramsBase64}').decode('utf-8')
             generate_violin_neck(_params_json)
         `);
         const result = JSON.parse(resultJson);
@@ -348,10 +350,12 @@ async function updateDerivedValues() {
         const paramsJson = JSON.stringify(params);
         const currentMode = params.instrument_family || 'VIOLIN';
 
-        // Use Pyodide globals to pass data safely (avoids string injection issues)
-        state.pyodide.globals.set('_params_json', paramsJson);
+        // Use base64 encoding to safely pass JSON to Python (avoids all escaping issues)
+        const paramsBase64 = btoa(unescape(encodeURIComponent(paramsJson)));
         const resultJson = await state.pyodide.runPythonAsync(`
+            import base64
             from instrument_generator import get_derived_values
+            _params_json = base64.b64decode('${paramsBase64}').decode('utf-8')
             get_derived_values(_params_json)
         `);
         const result = JSON.parse(resultJson);
