@@ -28,6 +28,8 @@
     "show_measurements": true,
     "string_height_eof": 4.0,
     "string_height_nut": 0.6,
-    "vsl": 330.0
+    "vsl": 330.0,
+    "break_angle": 15.0,
+    "top_block_height": 25.0
   }
 }
