@@ -96,15 +96,18 @@ This codebase is a well-architected parametric CAD tool for designing musical in
 
 ## 5. Testing Gaps
 
-### 5.1 Limited Test Coverage
+### 5.1 Test Coverage Status
 **Location:** `tests/` directory
-**Issue:** Only 2 test files exist: `test_instrument_geometry.py` and `test_parameter_registry.py`.
-**Missing Coverage:**
+**Current State:** 51 tests across 3 files:
+- `test_geometry_engine.py` - 24 tests for geometry calculations
+- `test_parameter_registry.py` - 22 tests for parameter validation
+- `test_instrument_geometry.py` - 5 tests for integration
+
+**Remaining Gaps:**
 - No JavaScript tests
-- No tests for `geometry_engine.py`
 - No tests for `instrument_generator.py` orchestration
 - No tests for `svg_renderer.py`
-**Recommendation:** Add tests for critical calculation functions and consider adding JavaScript tests with Jest or similar.
+**Recommendation:** Consider adding JavaScript tests with Jest or similar.
 
 ### 5.2 No Integration Tests
 **Issue:** No end-to-end tests validating the full generation pipeline.

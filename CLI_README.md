@@ -115,4 +115,4 @@ The dimensions table generates a standalone HTML file with:
 
 **Font warnings**: The CLI may show warnings about missing Roboto font. It will fall back to Arial, which works fine for most purposes.
 
-**Missing parameters**: If a parameter is missing from your JSON file, the tool will use default values defined in `src/instrument_parameters.py`.
+**Missing parameters**: If a parameter is missing from your JSON file, the tool will use default values defined in `src/parameter_registry.py`.
