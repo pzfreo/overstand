@@ -216,9 +216,13 @@ class UnifiedParameter:
         elif self.param_type == ParameterType.ENUM:
             if not self.enum_class:
                 raise ValueError(f"ENUM parameter {self.key} must have enum_class")
+            # Convert default to name if it's an Enum member
+            default_val = self.input_config.default
+            if hasattr(default_val, 'name'):
+                default_val = default_val.name
             result.update({
-                'enum_class': self.enum_class,
-                'default': self.input_config.default,
+                'options': [{'value': e.name, 'label': e.value} for e in self.enum_class],
+                'default': default_val,
             })
         elif self.param_type == ParameterType.BOOLEAN:
             result['default'] = self.input_config.default

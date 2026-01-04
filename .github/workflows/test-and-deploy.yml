@@ -22,8 +22,8 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  test:
-    name: Run Tests
+  test-python:
+    name: Run Python Tests
     runs-on: ubuntu-latest
 
     steps:
@@ -41,7 +41,7 @@ jobs:
           pip install -r requirements.txt
           pip install pytest pytest-cov
 
-      - name: Run tests
+      - name: Run Python tests
         run: |
           pytest tests/ -v --cov=src --cov-report=term-missing
 
@@ -50,6 +50,33 @@ jobs:
         if: success()
         with:
           fail_ci_if_error: false
+
+  test-javascript:
+    name: Run JavaScript Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run JavaScript tests
+        run: npm test
+
+  test:
+    name: All Tests Pass
+    needs: [test-python, test-javascript]
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "All tests passed!"
 
   deploy-redirect:
     name: Deploy Redirect to GitHub Pages
