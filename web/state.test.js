@@ -75,12 +75,6 @@ describe('state', () => {
     });
   });
 
-  describe('window.state', () => {
-    test('state is available on window object', () => {
-      expect(window.state).toBeDefined();
-      expect(window.state).toBe(state);
-    });
-  });
 });
 
 describe('elements', () => {

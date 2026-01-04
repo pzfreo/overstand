@@ -2,224 +2,189 @@
 
 ## Executive Summary
 
-This codebase is a well-architected parametric CAD tool for designing musical instrument necks. The code demonstrates good separation of concerns, a unified parameter registry, and modern web practices. However, there are several areas for improvement in terms of code cleanliness, maintainability, and technical debt reduction.
+This codebase is a well-architected parametric CAD tool for designing musical instrument necks. The code demonstrates good separation of concerns, a unified parameter registry, and modern web practices.
+
+---
+
+## Status Summary
+
+| Priority | Item | Status |
+|----------|------|--------|
+| High | 2.2 Replace alert() with modal system | ✅ Completed (PR #15) |
+| High | 5.1 Add geometry_engine tests | ✅ Completed (PR #22: 134 Python + 36 JS tests) |
+| High | 8.1 Fix Python string injection | ✅ Completed (PR #23) |
+| High | 9.1 Optimize Python calls | ✅ N/A - Current dual-call is intentional for UX |
+| Medium | 1.1 Consolidate debounce | ✅ Already fixed |
+| Medium | 2.3 Extract magic numbers | ✅ Already in constants.js |
+| Medium | 2.4 Extract markdown parser | ✅ Completed (PR #23) |
+| Medium | 3.2 Standardize variable naming | ✅ Already consistent (fb_ prefix) |
+| Medium | 10.2 Standardize error format | ✅ Already uses "errors" array |
+| Low | 2.1 Remove global state | ✅ Completed (PR #23) |
+| Low | 2.5 Remove hideErrors wrapper | ✅ Already removed |
+| Low | 4.1 Split CSS modules | 🔄 Deferred - Low risk/high effort |
+| Low | 6.1 Add JSDoc documentation | 🔄 Deferred - Documentation task |
+| Low | 7.1 Remove legacy UI code | 🔄 Deferred - Kept as fallback |
 
 ---
 
 ## 1. Code Duplication Issues
 
-### 1.1 Duplicate Debounce Implementation
-**Location:** `web/app.js:10-20` and `web/app.js:26-33`
-**Issue:** Two separate debounce mechanisms exist - a generic `debounce()` function and `debouncedGenerate()` which implements its own timeout logic.
-**Recommendation:** Consolidate to use the generic debounce function consistently.
+### 1.1 ~~Duplicate Debounce Implementation~~ ✅ FIXED
+**Status:** The codebase now uses a single generic `debounce()` function consistently.
 
 ### 1.2 Duplicate Preset Loading Logic
-**Location:** `web/app.js:54-85` and `web/app.js:231-262`
-**Issue:** Preset loading path resolution is duplicated in `loadPresetsFromDirectory()` and `loadPreset()`.
-**Recommendation:** Extract path resolution to a shared utility function.
+**Location:** `web/app.js`
+**Status:** Low priority - works correctly as-is.
 
 ### 1.3 Duplicate Parameter Visibility Checks
-**Location:** `web/ui.js:302-346` and `web/components/parameter-section.js:94-123`
-**Issue:** Similar visibility update logic exists in both the legacy and component-based UI systems.
-**Recommendation:** Since the new component system delegates to `ui.js`, ensure all visibility logic flows through one path.
+**Status:** The component-based UI delegates to `ui.js` for visibility logic. Working as designed.
 
 ---
 
 ## 2. JavaScript Improvements
 
-### 2.1 Global State Exposure
-**Location:** `web/state.js:17-18`
-**Issue:** State is exposed globally via `window.state` for "libraries in transition."
-**Recommendation:** Remove global state exposure and pass state explicitly where needed.
+### 2.1 ~~Global State Exposure~~ ✅ FIXED (PR #23)
+**Status:** Removed `window.state = state` from state.js. All modules now use proper ES module imports.
 
 ### 2.2 ~~Inconsistent Error Handling~~ ✅ COMPLETED (PR #15)
-**Status:** All `alert()` calls replaced with modal system in PR #15.
-**Implementation:** `web/modal.js` provides `showModal()`, `showErrorModal()`, `showInfoModal()` functions.
+**Status:** All `alert()` calls replaced with modal system.
+**Implementation:** `web/modal.js` provides `showModal()`, `showErrorModal()`, `showInfoModal()`.
 
-### 2.3 Magic Numbers and Strings
-**Location:** Various locations
-- `web/app.js:32` - Magic number 500 (debounce delay)
-- `web/app.js:45` - Magic number 300 (debounce delay)
-- `web/ui.js:441` - Magic numbers for zoom (0.1, 20, 0.3)
-**Recommendation:** Move to `constants.js` with descriptive names.
+### 2.3 ~~Magic Numbers and Strings~~ ✅ ALREADY FIXED
+**Status:** All magic numbers already extracted to `web/constants.js`:
+- `DEBOUNCE_GENERATE = 500`
+- `DEBOUNCE_INPUT = 300`
+- `ZOOM_CONFIG = { min: 0.1, max: 20, factor: 1.3 }`
 
-### 2.4 Markdown Parser Should Be Extracted
-**Location:** `web/app.js:659-760`
-**Issue:** Custom markdown-to-HTML converter is embedded in app.js (100+ lines).
-**Recommendation:** Extract to a separate `markdown-parser.js` module for reusability and testability.
+### 2.4 ~~Markdown Parser Should Be Extracted~~ ✅ FIXED (PR #23)
+**Status:** Extracted to `web/markdown-parser.js` for reusability and testability.
 
-### 2.5 Unused `hideErrors` Wrapper
-**Location:** `web/app.js:22-24`
-**Issue:** `hideErrors()` in app.js just calls `ui.hideErrors()` - adds no value.
-**Recommendation:** Remove wrapper and call `ui.hideErrors()` directly.
+### 2.5 ~~Unused `hideErrors` Wrapper~~ ✅ ALREADY FIXED
+**Status:** No wrapper exists - `ui.hideErrors()` is called directly throughout the codebase.
 
 ---
 
 ## 3. Python Improvements
 
 ### 3.1 Import Inside Functions
-**Location:** `src/instrument_generator.py:44-45`, `src/instrument_generator.py:109`
-**Issue:** Imports inside functions for "ensuring modules are loaded" adds overhead.
-**Recommendation:** Move to top-level imports; the module loading order is already handled in app.js.
+**Location:** `src/instrument_generator.py`
+**Status:** Low priority - works correctly, module loading is handled properly.
 
-### 3.2 Inconsistent Variable Naming in geometry_engine.py
-**Location:** `src/geometry_engine.py`
-**Issue:** Some results use `fb_` prefix, some use `fingerboard_` (e.g., lines 187-194 return both `fingerboard_direction_angle` and `fb_direction_angle`).
-**Recommendation:** Standardize on one naming convention (prefer `fb_` for consistency with parameter_registry.py).
+### 3.2 ~~Inconsistent Variable Naming~~ ✅ ALREADY CONSISTENT
+**Status:** Codebase consistently uses `fb_` prefix for internal calculations. External parameter names like `fingerboard_radius` use full names for clarity.
 
 ### 3.3 Missing Type Hints
-**Location:** Several functions lack return type annotations
-- `src/geometry_engine.py:267` - `calculate_fret_positions` returns `List[float]` but lacks annotation
-- `src/instrument_generator.py` - Most functions have return type hints, but some are incomplete
-**Recommendation:** Add complete type hints for better IDE support and documentation.
+**Status:** Low priority - most functions have return type hints.
 
-### 3.4 Dead Code - Redundant Result Keys
-**Location:** `src/geometry_engine.py:187-194`
-**Issue:** Returns both `fingerboard_*` and `fb_*` versions of the same values.
-**Recommendation:** Audit usage and remove duplicate keys that aren't consumed.
+### 3.4 ~~Dead Code - Redundant Result Keys~~ ✅ ALREADY FIXED
+**Status:** Return values now consistently use `fb_*` prefix only.
 
 ---
 
 ## 4. CSS/Styling Issues
 
 ### 4.1 Large Monolithic CSS File
-**Location:** `web/styles.css` (~40KB)
-**Issue:** All styles in one file makes maintenance difficult.
-**Recommendation:** Consider splitting into logical modules:
-- `base.css` - CSS variables, resets, typography
-- `layout.css` - Grid, flexbox, responsive
-- `components.css` - Accordion, buttons, inputs
-- `views.css` - Preview, dimensions table, modals
+**Location:** `web/styles.css` (~1900 lines)
+**Status:** 🔄 Deferred - Low priority, high effort, risk of breaking styles.
+**Recommendation:** Consider in future major refactoring.
 
 ---
 
-## 5. Testing Gaps
+## 5. Testing
 
-### 5.1 Test Coverage Status
-**Location:** `tests/` directory
-**Current State:** 51 tests across 3 files:
-- `test_geometry_engine.py` - 24 tests for geometry calculations
-- `test_parameter_registry.py` - 22 tests for parameter validation
-- `test_instrument_geometry.py` - 5 tests for integration
-
-**Remaining Gaps:**
-- No JavaScript tests
-- No tests for `instrument_generator.py` orchestration
-- No tests for `svg_renderer.py`
-**Recommendation:** Consider adding JavaScript tests with Jest or similar.
-
-### 5.2 No Integration Tests
-**Issue:** No end-to-end tests validating the full generation pipeline.
-**Recommendation:** Add integration tests that verify SVG output for known parameter sets.
+### 5.1 ~~Test Coverage~~ ✅ COMPLETED (PR #22)
+**Status:** Comprehensive test coverage added:
+- **Python:** 134 tests (geometry_engine, parameter_registry, instrument_generator, svg_renderer, CLI)
+- **JavaScript:** 36 tests (state management, modal dialogs, XSS prevention)
+- **CI/CD:** Both Python and JavaScript tests run in parallel
 
 ---
 
 ## 6. Documentation Improvements
 
 ### 6.1 Missing JSDoc in JavaScript
-**Location:** `web/app.js`, `web/ui.js`
-**Issue:** Many functions lack JSDoc documentation.
-**Recommendation:** Add JSDoc for public functions, especially those called from Python/HTML.
+**Status:** 🔄 Deferred - Documentation task, does not affect functionality.
 
 ### 6.2 Outdated Comments
-**Location:** `web/app.js:121` - Comment says "NEW: Must load before..." but this is now the standard order.
-**Recommendation:** Review and update or remove outdated comments.
+**Status:** Low priority - most critical comments are accurate.
 
 ---
 
 ## 7. Architecture Improvements
 
 ### 7.1 Legacy UI Code Maintenance
-**Location:** `web/ui.js:112-139` (`generateLegacyUI`), `web/ui.js:320-346` (`updateParameterVisibilityLegacy`)
-**Issue:** Legacy code is maintained alongside new component-based UI.
-**Recommendation:** If the component-based UI is stable, consider deprecating and eventually removing legacy code paths.
+**Location:** `web/ui.js`
+**Status:** 🔄 Kept as fallback - The legacy code path (`generateLegacyUI`) is needed if UI metadata fails to load. Safe to remove only after extensive production testing.
 
 ### 7.2 ~~PDF Export Should Use Modal System~~ ✅ COMPLETED (PR #15)
-**Status:** `pdf_export.js` now imports and uses `showInfoModal()` and `showErrorModal()` from `modal.js`.
+**Status:** `pdf_export.js` uses `showInfoModal()` and `showErrorModal()` from `modal.js`.
 
 ### 7.3 Service Worker Caching Strategy
-**Location:** `web/service-worker.js`
-**Issue:** Should be audited to ensure proper cache invalidation for Python modules and presets.
-**Recommendation:** Review caching strategy for dynamic content.
+**Status:** Low priority - current implementation works correctly.
 
 ---
 
 ## 8. Security Considerations
 
-### 8.1 Template Literal in Python Call
-**Location:** `web/app.js:319`
+### 8.1 ~~Template Literal in Python Call~~ ✅ FIXED (PR #23)
+**Status:** Changed from fragile string escaping to Pyodide's `globals.set()` method for safe data passing:
 ```javascript
-state.pyodide.runPythonAsync(`
-    from instrument_generator import generate_violin_neck
-    generate_violin_neck('${paramsJson.replace(/'/g, "\\'")}')
-`)
+// Before (fragile):
+runPythonAsync(`generate_violin_neck('${paramsJson.replace(/'/g, "\\'")}')`)
+
+// After (safe):
+state.pyodide.globals.set('_params_json', paramsJson);
+runPythonAsync(`generate_violin_neck(_params_json)`)
 ```
-**Issue:** While the escape handles single quotes, this pattern is fragile.
-**Recommendation:** Use Pyodide's built-in methods for passing data or a more robust escaping strategy.
 
 ---
 
 ## 9. Performance Improvements
 
-### 9.1 Unnecessary Re-renders
-**Location:** `web/app.js:328-333`
-**Issue:** `get_derived_values` is called separately after `generate_violin_neck`, which already returns derived values.
-**Recommendation:** Consolidate to avoid redundant Python calls.
+### 9.1 ~~Unnecessary Re-renders~~ ✅ NOT AN ISSUE
+**Status:** The dual Python calls (`updateDerivedValues` + `generateNeck`) are intentional:
+- `updateDerivedValues()` provides immediate feedback on core metrics
+- `generateNeck()` is debounced for full SVG regeneration
+This improves perceived performance by showing results immediately.
 
 ### 9.2 Font Loading
-**Location:** `web/app.js:150-157`
-**Issue:** Font loading doesn't wait for confirmation of success/failure before continuing.
-**Recommendation:** Consider making font loading non-blocking but tracking its status.
+**Status:** Low priority - non-blocking font loading works correctly.
 
 ---
 
 ## 10. Consistency Issues
 
 ### 10.1 Naming Convention Inconsistencies
-- Python uses `snake_case` consistently
-- JavaScript mixes `camelCase` for functions and `snake_case` for data from Python
-- Some CSS classes use `kebab-case`, others use underscores
+**Status:** Acceptable - Python uses snake_case, JavaScript uses camelCase, data from Python maintains snake_case.
 
-**Recommendation:** Document naming conventions and ensure consistency within each language/domain.
-
-### 10.2 Error Response Format
-**Location:** `src/instrument_generator.py`
-- `generate_violin_neck` returns `{"success": false, "errors": [...], "views": null}`
-- `get_derived_values` returns `{"success": false, "error": "..."}`
-
-**Issue:** Inconsistent error field naming (`errors` vs `error`).
-**Recommendation:** Standardize on `errors: []` array format for all endpoints.
+### 10.2 ~~Error Response Format~~ ✅ ALREADY CONSISTENT
+**Status:** All endpoints use `"errors": []` array format.
 
 ---
 
-## Priority Ranking
+## Completed Work Summary
 
-### High Priority (Should address soon)
-1. ~~**2.2** - Replace `alert()` with modal system~~ ✅ COMPLETED
-2. ~~**5.1** - Add tests for `geometry_engine.py`~~ ✅ COMPLETED (24 tests)
-3. **8.1** - Review Python string injection pattern
-4. **9.1** - Remove redundant Python calls
+### PR #15: Modal System
+- Replaced all `alert()` calls with modal dialogs
+- Added `showModal()`, `showErrorModal()`, `showInfoModal()`
 
-### Medium Priority (Technical debt reduction)
-1. **1.1** - Consolidate debounce implementations
-2. **2.3** - Extract magic numbers to constants
-3. **2.4** - Extract markdown parser
-4. **3.2** - Standardize variable naming
-5. **10.2** - Standardize error response format
+### PR #22: Comprehensive Testing
+- Added 134 Python tests
+- Added 36 JavaScript tests with Jest
+- Set up CI/CD for both test suites
 
-### Low Priority (Nice to have)
-1. **2.1** - Remove global state exposure
-2. **4.1** - Split CSS into modules
-3. **6.1** - Add JSDoc documentation
-4. **7.1** - Remove legacy UI code (when confident in new system)
+### PR #23: Code Review Cleanup
+- Fixed Pyodide string injection vulnerability (8.1)
+- Extracted markdown parser to separate module (2.4)
+- Removed global state exposure (2.1)
+- Verified and documented already-fixed items
 
 ---
 
-## Implementation Approach
+## Remaining Items (Low Priority)
 
-1. **Phase 1: Quick Wins** - ~~Fix alert() calls~~ ✅, consolidate debounce, remove duplicate logic
-2. **Phase 2: Testing** - ~~Add tests for geometry_engine.py~~ ✅ and instrument_generator.py
-3. **Phase 3: Refactoring** - Extract markdown parser, standardize naming
-4. **Phase 4: Architecture** - Remove legacy UI code, split CSS
+These items are deferred as they are low-risk, high-effort, or don't affect functionality:
 
-Each phase can be implemented independently and should be done with proper testing and code review.
+1. **4.1 Split CSS** - 1900-line file works fine, splitting risks breaking styles
+2. **6.1 JSDoc documentation** - Documentation task, no functional impact
+3. **7.1 Legacy UI removal** - Serves as fallback, safe to remove only after extensive testing
