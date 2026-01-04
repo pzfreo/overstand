@@ -350,8 +350,8 @@ export function populatePresets() {
     const select = elements.presetSelect;
     select.innerHTML = ''; // Clear existing options
 
-    // Use instrument presets from ui_metadata if available
-    if (state.uiMetadata && state.uiMetadata.presets) {
+    // Use instrument presets from ui_metadata if available (and not empty)
+    if (state.uiMetadata && state.uiMetadata.presets && Object.keys(state.uiMetadata.presets).length > 0) {
         const presets = state.uiMetadata.presets;
 
         // Sort presets by family, then by display name

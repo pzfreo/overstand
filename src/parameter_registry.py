@@ -197,8 +197,15 @@ class UnifiedParameter:
         if not self.input_config:
             raise ValueError(f"Parameter {self.key} has no input configuration")
 
+        # Map Python type enum to JavaScript-expected type strings
+        type_map = {
+            ParameterType.NUMERIC: 'number',
+            ParameterType.ENUM: 'enum',
+            ParameterType.BOOLEAN: 'boolean',
+            ParameterType.STRING: 'string',
+        }
         result = {
-            'type': self.param_type.value,
+            'type': type_map.get(self.param_type, self.param_type.value),
             'name': self.key,
             'label': self.display_name,
             'description': self.description,
@@ -209,8 +216,8 @@ class UnifiedParameter:
             result.update({
                 'unit': self.unit,
                 'default': self.input_config.default,
-                'min_val': self.input_config.min_val,
-                'max_val': self.input_config.max_val,
+                'min': self.input_config.min_val,
+                'max': self.input_config.max_val,
                 'step': self.input_config.step,
             })
         elif self.param_type == ParameterType.ENUM:

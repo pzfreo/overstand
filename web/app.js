@@ -278,16 +278,28 @@ async function loadPreset() {
 
 function collectParameters() {
     const params = {};
-    if (!state.parameterDefinitions) return params;
+    if (!state.parameterDefinitions) {
+        console.warn('[collectParameters] No parameterDefinitions!');
+        return params;
+    }
+    const allParamNames = Object.keys(state.parameterDefinitions.parameters);
+    console.log('[collectParameters] Total params in definitions:', allParamNames.length, allParamNames);
+    let foundCount = 0, missingCount = 0;
     for (const [name, param] of Object.entries(state.parameterDefinitions.parameters)) {
         const element = document.getElementById(name);
-        if (!element) continue;
+        if (!element) {
+            missingCount++;
+            if (missingCount <= 5) console.warn('[collectParameters] Missing DOM element for:', name);
+            continue;
+        }
+        foundCount++;
         if (param.type === 'number') {
             const val = parseFloat(element.value);
             params[name] = !isNaN(val) ? val : param.default;
         } else if (param.type === 'boolean') params[name] = element.checked;
         else params[name] = element.value;
     }
+    console.log('[collectParameters] Found:', foundCount, 'Missing:', missingCount);
     return params;
 }
 
@@ -306,12 +318,15 @@ async function generateNeck() {
         params._generator_url = window.location.href;
         const paramsJson = JSON.stringify(params);
 
-        // Escape JSON for safe embedding in Python single-quoted string
-        // Must escape: backslashes first (\ → \\), then single quotes (' → \')
-        const escapedJson = paramsJson.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-        const resultJson = await state.pyodide.runPythonAsync(`from instrument_generator import generate_violin_neck
-generate_violin_neck('${escapedJson}')`);
+        console.log('[Generate] Full params:', params);
+        console.log('[Generate] Calling Python with params:', paramsJson.substring(0, 500) + '...');
+        const resultJson = await state.pyodide.runPythonAsync(`
+            from instrument_generator import generate_violin_neck
+            generate_violin_neck('${paramsJson.replace(/'/g, "\\'")}')
+        `);
+        console.log('[Generate] Python returned:', typeof resultJson, resultJson ? resultJson.substring(0, 200) + '...' : resultJson);
         const result = JSON.parse(resultJson);
+        console.log('[Generate] Parsed result:', { success: result.success, errorCount: result.errors?.length, errors: result.errors });
 
         if (result.success) {
             state.views = result.views;
@@ -331,7 +346,8 @@ generate_violin_neck('${escapedJson}')`);
             ui.setStatus('error', '❌ Generation failed - see errors below');
         }
     } catch (error) {
-        console.error('Generation error:', error);
+        console.error('[Generate] Exception:', error);
+        console.error('[Generate] Error stack:', error.stack);
         ui.showErrors([`Unexpected error: ${error.message}`]);
         ui.setStatus('error', '❌ Generation failed');
     } finally {
@@ -347,11 +363,14 @@ async function updateDerivedValues() {
         const paramsJson = JSON.stringify(params);
         const currentMode = params.instrument_family || 'VIOLIN';
 
-        // Escape JSON for safe embedding in Python single-quoted string
-        const escapedJson = paramsJson.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-        const resultJson = await state.pyodide.runPythonAsync(`from instrument_generator import get_derived_values
-get_derived_values('${escapedJson}')`);
+        console.log('[DerivedValues] Calling Python...');
+        const resultJson = await state.pyodide.runPythonAsync(`
+            from instrument_generator import get_derived_values
+            get_derived_values('${paramsJson.replace(/'/g, "\\'")}')
+        `);
+        console.log('[DerivedValues] Python returned:', typeof resultJson, resultJson ? resultJson.substring(0, 200) + '...' : resultJson);
         const result = JSON.parse(resultJson);
+        console.log('[DerivedValues] Parsed result:', { success: result.success });
         const container = elements.calculatedFields;
 
         if (result.success && Object.keys(result.values).length > 0) {
