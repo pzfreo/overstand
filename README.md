@@ -1,217 +1,186 @@
-# 🔧 Build123d Diagram Generator
+# Arched Instrument Neck Angle Tool
 
-A web-based parametric 2D CAD diagram generator powered by Build123d and Pyodide. Create technical drawings directly in your browser without any installation required.
+A web-based tool for designing and calculating precise neck geometry for arched stringed instruments including violins, violas, cellos, viols, guitars, and mandolins.
 
-## ✨ Features
+## What It Does
 
-- **Browser-Based**: No installation needed - runs entirely in your web browser
-- **Parametric Design**: Adjust dimensions in real-time with instant preview
-- **Multiple Export Formats**: Download your diagrams as SVG or PDF
-- **Python-Powered**: Uses Build123d CAD library via Pyodide (Python in WebAssembly)
-- **Offline-Capable**: Once loaded, works without internet connection
+The string length, neck angle, bridge position, bridge height, nut position, fingerboard shape, and overstand are all linked in a flexible geometry. This app helps you explore these relationships as you design new instruments or tweak existing designs.
 
-## 🚀 Quick Start
+- **For violins and viols**: The string length and body stop (along with other parameters) are used to calculate the neck angle and neck stop.
+- **For guitars and mandolins**: The body stop is calculated based on which fret the body join is at (usually 12 or 14).
 
-### Option 1: Vercel Deployment (Recommended)
+The app calculates neck angle and draws a diagram based on your measurements. You can download the diagram as a scale-accurate PDF for printing.
 
-1. Fork this repository
-2. Connect to Vercel at https://vercel.com
-3. Vercel will auto-deploy with preview URLs for all PRs
-4. Visit your production URL at `https://overstand.tools`
+## Features
 
-See `VERCEL_SETUP.md` for detailed setup instructions.
+- **Browser-Based**: No installation needed - runs entirely in your browser using Pyodide (Python in WebAssembly)
+- **Multiple Instruments**: Supports violins, violas, cellos, viols, archtop guitars, mandolins, and more
+- **Real-Time Calculation**: Adjust parameters and see results instantly
+- **Export Options**: Download diagrams as SVG or PDF for workshop use
+- **Offline-Capable**: Works without internet connection after first load (PWA)
+- **Preset Library**: Quick-start templates for common instruments
 
-### Option 2: GitHub Pages
+## Quick Start
 
-1. Fork this repository
-2. Enable GitHub Pages in repository Settings → Pages
-3. Set source to `main` branch and `/web` folder
-4. Visit `https://yourusername.github.io/diagram-creator`
+### Option 1: Use Online (Recommended)
 
-### Option 3: Local Development
+Visit **[https://overstand.tools](https://overstand.tools)** to use the tool immediately.
+
+### Option 2: Local Development
 
 ```bash
 # Clone the repository
 git clone https://github.com/pzfreo/diagram-creator.git
 cd diagram-creator
 
-# Run local server (Python 3)
+# Run local server
 python3 -m http.server 8000
 
-# Or use the provided script
-./setup.sh
+# Open in browser
+open http://localhost:8000/web
 ```
 
-Then open http://localhost:8000/web in your browser.
+**Note**: First load takes 30-60 seconds to download Python runtime and libraries.
 
-## 📁 Project Structure
+### Option 3: Vercel Deployment
+
+See [VERCEL_SETUP.md](VERCEL_SETUP.md) for deployment instructions with automatic PR previews.
+
+## Project Structure
 
 ```
 diagram-creator/
-├── src/
-│   └── logic.py          # Build123d geometry generation logic
-├── web/
-│   └── index.html        # Web interface
-├── tests/
-│   └── test_logic.py     # Unit tests
-├── requirements.txt      # Python dependencies (for local testing)
-├── run_web.py           # Local development server
-└── setup.sh             # Quick setup script
+├── src/                         # Python source code
+│   ├── parameter_registry.py    # Single source of truth for all parameters
+│   ├── instrument_generator.py  # Main entry point (called from JavaScript)
+│   ├── instrument_geometry.py   # Geometry orchestration
+│   ├── geometry_engine.py       # Pure math calculations
+│   ├── svg_renderer.py          # SVG drawing
+│   ├── ui_metadata.py           # UI section definitions
+│   ├── preset_loader.py         # Load JSON presets
+│   ├── constants.py             # Default values
+│   ├── buildprimitives.py       # Drawing primitives
+│   ├── dimension_helpers.py     # Dimension annotations
+│   ├── radius_template.py       # Fingerboard radius templates
+│   └── view_generator.py        # HTML view generation
+│
+├── web/                         # Web interface
+│   ├── index.html               # Main interface
+│   ├── app.js                   # Application logic
+│   ├── ui.js                    # UI helpers
+│   ├── state.js                 # State management
+│   ├── pdf_export.js            # PDF generation
+│   └── styles.css               # Styling
+│
+├── presets/                     # Instrument preset JSON files
+├── tests/                       # pytest test suite
+├── scripts/                     # Build and utility scripts
+└── public/                      # Built output for deployment
 ```
 
-## 🛠️ How It Works
+## Architecture
 
-1. **Pyodide** loads Python and Build123d into the browser using WebAssembly
-2. **logic.py** contains the parametric geometry generation code
-3. **index.html** provides the UI and orchestrates the generation process
-4. Generated diagrams can be downloaded as SVG or converted to PDF
+The system uses a **unified parameter registry** as the single source of truth:
 
-## 📊 Current Example
-
-The included example generates a rectangular plate with a centered circular hole. Parameters:
-
-- **Length**: Plate length in millimeters
-- **Width**: Plate width in millimeters  
-- **Hole Radius**: Radius of the center hole
-
-## 🔧 Extending the Generator
-
-### Adding New Shapes
-
-1. Add a new function to `src/logic.py`:
-
-```python
-def generate_bracket_svg(height: float, width: float, thickness: float) -> str:
-    """Generate an L-bracket shape"""
-    with BuildSketch() as builder:
-        # Your geometry here
-        pass
-    # Export logic...
-    return svg_text
+```
+JavaScript (Browser)
+    │
+    ▼ JSON parameters
+Python (Pyodide)
+    │
+    ├── instrument_generator.py   ← Entry point
+    │       │
+    │       ▼
+    ├── instrument_geometry.py    ← Orchestration
+    │       │
+    │       ├── geometry_engine.py   ← Pure math (no rendering)
+    │       │
+    │       └── svg_renderer.py      ← SVG drawing
+    │
+    ▼ SVG + derived values
+JavaScript (Display)
 ```
 
-2. Update `index.html` to call your new function:
+See [src/complete_system_summary.md](src/complete_system_summary.md) for detailed architecture documentation.
 
-```javascript
-const code = `logic.generate_bracket_svg(${h}, ${w}, ${t})`;
-```
-
-### Input Validation
-
-The improved version includes comprehensive input validation:
-
-```python
-def validate_dimensions(length, width, hole_radius):
-    """Pre-validates dimensions without generating"""
-    errors = []
-    # Validation logic...
-    return {'valid': bool, 'errors': list}
-```
-
-## 🧪 Testing
+## Testing
 
 ```bash
-# Install dependencies
-pip install -r requirements.txt
+# Install test dependencies
+pip install pytest
 
-# Run tests
-python -m pytest tests/
+# Run all tests (51 tests)
+pytest tests/ -v
 
 # Run with coverage
-python -m pytest tests/ --cov=src --cov-report=html
+pytest tests/ --cov=src --cov-report=html
 ```
 
-## ⚡ Performance Notes
+## CLI Usage
 
-- **First Load**: ~30-60 seconds (downloads Python runtime + libraries)
-- **Subsequent Loads**: ~5-10 seconds (cached in browser)
-- **Generation**: ~1-2 seconds per diagram
-- **Large Diagrams**: May take longer depending on complexity
+A command-line interface is available for batch processing:
 
-## 🐛 Troubleshooting
+```bash
+# Generate side view SVG
+python src/instrument-gen-cli presets/violin.json --view side --output violin.svg
 
-### "Failed to load logic.py"
-- Ensure you're running from the project root
-- Check that `src/logic.py` or `web/logic.py` exists
-- Try using a local web server instead of opening HTML directly
+# Generate all views
+python src/instrument-gen-cli presets/violin.json --all --output-dir ./output
+```
 
-### "Generation failed"
-- Check browser console for detailed error messages
-- Verify all dimensions are positive numbers
-- Ensure hole fits within plate dimensions
+See [CLI_README.md](CLI_README.md) for full documentation.
 
-### Slow Loading
-- First load requires downloading ~50MB of dependencies
-- Subsequent loads use browser cache
-- Check network tab in browser dev tools
+## Adding New Parameters
 
-## 📝 Code Improvements
+1. Add to `PARAMETER_REGISTRY` in `src/parameter_registry.py`
+2. Use in geometry calculations if needed
+3. UI auto-generates - no JavaScript changes needed!
 
-### What's Been Improved
+```python
+'my_param': UnifiedParameter(
+    key='my_param',
+    display_name='My Parameter',
+    param_type=ParameterType.NUMERIC,
+    unit='mm',
+    description='What this controls',
+    role=ParameterRole.INPUT_ONLY,
+    input_config=InputConfig(min_val=0, max_val=100, default=50)
+)
+```
 
-1. **Error Handling**
-   - Comprehensive try-catch blocks
-   - User-friendly error messages
-   - Detailed validation feedback
+## Dependencies
 
-2. **Code Organization**
-   - Modular functions with clear responsibilities
-   - Separated concerns (generation, validation, export)
-   - Consistent naming conventions
+**Python (via Pyodide)**:
+- numpy
+- svgpathtools
+- matplotlib
 
-3. **UI/UX**
-   - Loading states with spinners
-   - Input validation with visual feedback
-   - Better status messages
-   - Responsive design
+**JavaScript (CDN)**:
+- Pyodide - Python runtime in WebAssembly
+- jsPDF + svg2pdf.js - PDF generation
+- SVG.js - Interactive SVG manipulation
 
-4. **Performance**
-   - Reduced file I/O operations
-   - Better memory management
-   - Cached state management
-
-5. **Documentation**
-   - Comprehensive docstrings
-   - Type hints
-   - Inline comments for complex logic
-
-## 🗺️ Future Enhancements
-
-- [ ] Multiple shape library (gears, brackets, flanges)
-- [ ] Dimension annotations on diagrams
-- [ ] Multi-shape compositions
-- [ ] DXF export support
-- [ ] 3D view option
-- [ ] Template system
-- [ ] Share/save designs
-- [ ] Dark mode
-- [ ] Undo/redo functionality
-
-## 📚 Dependencies
-
-- **Build123d**: CAD library for parametric modeling
-- **Pyodide**: Python runtime in WebAssembly
-- **jsPDF**: PDF generation
-- **svg2pdf.js**: SVG to PDF conversion
-
-## 📄 License
-
-This project is open source. Please add your chosen license.
-
-## 🤝 Contributing
+## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-## 🔗 Resources
+- Report issues at [GitHub Issues](https://github.com/pzfreo/diagram-creator/issues)
+- See [CODE_REVIEW_PLAN.md](CODE_REVIEW_PLAN.md) for known improvements
 
-- [Build123d Documentation](https://build123d.readthedocs.io/)
-- [Pyodide Documentation](https://pyodide.org/)
-- [CadQuery OCP.wasm](https://github.com/yeicor/OCP.wasm)
+## Disclaimer
 
-## 👤 Author
+This tool is in development and not to be relied on with your precious luthiery project. Please double-check anything it tells you!
+
+## Feedback
+
+I'd love feedback - [paul@fremantle.org](mailto:paul@fremantle.org)
+
+If you want to submit instrument measurements, I'm planning a database: please save the data and send me the .json file.
+
+## Author
 
 Created by [@pzfreo](https://github.com/pzfreo)
 
-## ⭐ Star History
+## License
 
-If you find this useful, please consider giving it a star!
+This project is open source.
