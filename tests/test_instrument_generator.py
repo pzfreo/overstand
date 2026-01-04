@@ -254,6 +254,47 @@ class TestGetUIMetadata:
         metadata = result['metadata']
         assert 'presets' in metadata
 
+    def test_metadata_parameters_use_input_format(self):
+        """
+        Test that all parameters in metadata use input format, not output format.
+
+        This is a regression test for the bug where CONDITIONAL parameters
+        (body_stop, neck_stop) were exported in output format because to_dict()
+        checked output_config first. UI needs input format with type/min/max.
+        """
+        result = json.loads(get_ui_metadata())
+        parameters = result['metadata']['parameters']
+
+        for name, param in parameters.items():
+            # Input format has 'type', output format has 'key'
+            assert 'type' in param, \
+                f"Parameter '{name}' missing 'type' - likely using output format instead of input format"
+            assert param['type'] in ('number', 'enum', 'boolean', 'string'), \
+                f"Parameter '{name}' has invalid type '{param['type']}'"
+
+            # Numeric params must have min/max for HTML input validation
+            if param['type'] == 'number':
+                assert 'min' in param, f"Numeric parameter '{name}' missing 'min'"
+                assert 'max' in param, f"Numeric parameter '{name}' missing 'max'"
+
+    def test_all_section_parameters_exist_in_metadata(self):
+        """
+        Test that all parameters referenced in sections exist in parameters dict.
+
+        This catches cases where parameters are added to sections but not exported.
+        """
+        result = json.loads(get_ui_metadata())
+        metadata = result['metadata']
+        sections = metadata['sections']
+        parameters = metadata['parameters']
+
+        for section_id, section in sections.items():
+            # Only check input sections (not output sections)
+            if section['type'] in ('input_basic', 'input_advanced'):
+                for param_name in section['parameter_names']:
+                    assert param_name in parameters, \
+                        f"Section '{section_id}' references parameter '{param_name}' but it's not in parameters dict"
+
 
 class TestGetPresets:
     """Tests for get_presets function."""

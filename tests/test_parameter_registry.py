@@ -193,6 +193,42 @@ def test_input_metadata_generation():
             assert 'category' in metadata
 
 
+def test_input_metadata_js_compatible_types():
+    """
+    Test that input metadata uses JavaScript-compatible type names.
+
+    This is a regression test for the bug where Python used 'numeric'
+    but JavaScript expected 'number', causing UI controls to not render.
+    """
+    valid_js_types = {'number', 'enum', 'boolean', 'string'}
+
+    for key, param in PARAMETER_REGISTRY.items():
+        if param.input_config:
+            metadata = param.to_input_metadata()
+
+            # Type must be JS-compatible (not Python enum values like 'numeric')
+            assert metadata['type'] in valid_js_types, \
+                f"Parameter '{key}' has type '{metadata['type']}' but JS expects one of {valid_js_types}"
+
+
+def test_numeric_params_use_min_max_not_min_val_max_val():
+    """
+    Test that numeric parameters use 'min'/'max' keys, not 'min_val'/'max_val'.
+
+    This is a regression test for the bug where Python used 'min_val'/'max_val'
+    but JavaScript expected 'min'/'max' for HTML input element attributes.
+    """
+    for key, param in PARAMETER_REGISTRY.items():
+        if param.input_config and param.param_type == ParameterType.NUMERIC:
+            metadata = param.to_input_metadata()
+
+            # Must use 'min' and 'max', not 'min_val' and 'max_val'
+            assert 'min' in metadata, f"Parameter '{key}' missing 'min' key"
+            assert 'max' in metadata, f"Parameter '{key}' missing 'max' key"
+            assert 'min_val' not in metadata, f"Parameter '{key}' uses 'min_val' instead of 'min'"
+            assert 'max_val' not in metadata, f"Parameter '{key}' uses 'max_val' instead of 'max'"
+
+
 def test_format_value_methods():
     """Test that formatting methods work correctly"""
     # Test numeric parameter
