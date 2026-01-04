@@ -108,7 +108,9 @@ SECTIONS = {
             'fingerboard_length',
             'rib_height',
             'belly_edge_thickness',
-            'fingerboard_radius'
+            'fingerboard_radius',
+            'break_angle',       # Viol-specific (visible_when filters it)
+            'top_block_height'   # Viol-specific (visible_when filters it)
         ],
         description='Detailed geometric parameters for fine-tuning'
     ),
@@ -310,7 +312,9 @@ def get_ui_metadata_bundle() -> dict:
     return {
         'sections': {k: v.to_dict() for k, v in SECTIONS.items()},
         'presets': {k: v.to_dict() for k, v in INSTRUMENT_PRESETS.items()},
-        'parameters': {k: v.to_dict() for k, v in input_params.items()},
+        # Use to_input_metadata() explicitly for input params to ensure correct format
+        # (CONDITIONAL params have both configs, to_dict() would return output format)
+        'parameters': {k: v.to_input_metadata() for k, v in input_params.items()},
         'derived_values': {k: v.to_dict() for k, v in output_params.items()}
     }
 
