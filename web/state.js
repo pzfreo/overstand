@@ -14,9 +14,6 @@ export const state = {
     parametersModified: false // Tracks if parameters have been changed since load/save
 };
 
-// Make state available globally for libraries like pdf-export that might still need it in transition
-window.state = state;
-
 // Elements will be populated after DOM is ready
 export const elements = {};
 
