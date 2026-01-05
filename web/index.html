@@ -6,6 +6,36 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Instrument Neck Geometry Generator</title>
 
+    <!-- Emergency cache reset - runs before anything else loads -->
+    <!-- Usage: Add ?reset to URL to clear all caches and reload -->
+    <script>
+    (function() {
+        if (window.location.search.includes('reset')) {
+            // Show a message while clearing
+            document.write('<div style="font-family:system-ui;padding:40px;text-align:center;">' +
+                '<h2>Clearing cache...</h2><p>Please wait...</p></div>');
+
+            Promise.all([
+                // Clear all caches
+                ('caches' in window) ? caches.keys().then(function(names) {
+                    return Promise.all(names.map(function(name) { return caches.delete(name); }));
+                }) : Promise.resolve(),
+                // Unregister service workers
+                ('serviceWorker' in navigator) ? navigator.serviceWorker.getRegistrations().then(function(regs) {
+                    return Promise.all(regs.map(function(reg) { return reg.unregister(); }));
+                }) : Promise.resolve()
+            ]).then(function() {
+                // Reload without the reset parameter
+                var cleanUrl = window.location.href.split('?')[0].split('#')[0];
+                window.location.replace(cleanUrl);
+            }).catch(function(e) {
+                alert('Cache clear failed: ' + e.message + '\n\nTry clearing browser cache manually.');
+                window.location.replace(window.location.href.split('?')[0]);
+            });
+        }
+    })();
+    </script>
+
     <!-- PWA Meta Tags -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
