@@ -50,6 +50,11 @@ BUILD_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 # Get commit count for version number (monotonically increasing)
 COMMIT_COUNT=$(git rev-list --count HEAD 2>/dev/null || echo "0")
 
+# Debug: Log Vercel environment variables
+echo "  [Debug] VERCEL_ENV=$VERCEL_ENV"
+echo "  [Debug] VERCEL_GIT_PULL_REQUEST_ID=$VERCEL_GIT_PULL_REQUEST_ID"
+echo "  [Debug] VERCEL_GIT_COMMIT_REF=$VERCEL_GIT_COMMIT_REF"
+
 # Version format: v1.{env}.{number}
 # - v1.prod.XX  = production (main branch), XX = commit count
 # - v1.preview.PR{N} = preview deploys, N = PR number
