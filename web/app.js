@@ -695,7 +695,43 @@ async function clearCacheAndReload() {
 
 // Initialize on load
 document.addEventListener('DOMContentLoaded', () => {
-    // Initialize DOM element references first
+    // CRITICAL: Set up menu FIRST so Clear Cache always works, even if everything else fails
+    try {
+        const menuBtn = document.getElementById('menu-btn');
+        const menuCloseBtn = document.getElementById('menu-close-btn');
+        const menuOverlay = document.getElementById('menu-overlay');
+        const menuPanel = document.getElementById('menu-panel');
+        const menuClearCache = document.getElementById('menu-clear-cache');
+        const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+        const sidebarOverlay = document.getElementById('sidebar-overlay');
+
+        // Menu open/close
+        if (menuBtn) menuBtn.addEventListener('click', openMenu);
+        if (menuCloseBtn) menuCloseBtn.addEventListener('click', closeMenu);
+        if (menuOverlay) menuOverlay.addEventListener('click', closeMenu);
+        if (mobileMenuToggle) {
+            mobileMenuToggle.addEventListener('click', () => {
+                if (menuPanel && !menuPanel.classList.contains('open')) {
+                    menuPanel.classList.add('open');
+                    if (sidebarOverlay) sidebarOverlay.classList.add('active');
+                    mobileMenuToggle.classList.add('active');
+                } else if (menuPanel) {
+                    menuPanel.classList.remove('open');
+                    if (sidebarOverlay) sidebarOverlay.classList.remove('active');
+                    mobileMenuToggle.classList.remove('active');
+                }
+            });
+        }
+
+        // Clear cache - MUST work even if app is broken
+        if (menuClearCache) menuClearCache.addEventListener('click', clearCacheAndReload);
+
+        console.log('[Init] Menu setup complete');
+    } catch (e) {
+        console.error('[Init] Menu setup failed:', e);
+    }
+
+    // Initialize DOM element references
     initElements();
 
     const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
@@ -842,24 +878,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Menu system
-    const menuBtn = document.getElementById('menu-btn');
-    const menuCloseBtn = document.getElementById('menu-close-btn');
-    const menuOverlay = document.getElementById('menu-overlay');
+    // Menu items (menu open/close and clear cache already set up above)
     const menuSaveParams = document.getElementById('menu-save-params');
     const menuLoadParams = document.getElementById('menu-load-params');
     const menuKeyboardShortcuts = document.getElementById('menu-keyboard-shortcuts');
     const menuAbout = document.getElementById('menu-about');
-    const menuClearCache = document.getElementById('menu-clear-cache');
 
-    if (menuBtn) menuBtn.addEventListener('click', openMenu);
-    if (menuCloseBtn) menuCloseBtn.addEventListener('click', closeMenu);
-    if (menuOverlay) menuOverlay.addEventListener('click', closeMenu);
     if (menuSaveParams) menuSaveParams.addEventListener('click', () => { closeMenu(); saveParameters(); });
     if (menuLoadParams) menuLoadParams.addEventListener('click', () => { closeMenu(); elements.loadParamsInput.click(); });
     if (menuKeyboardShortcuts) menuKeyboardShortcuts.addEventListener('click', showKeyboardShortcuts);
     if (menuAbout) menuAbout.addEventListener('click', showAbout);
-    if (menuClearCache) menuClearCache.addEventListener('click', clearCacheAndReload);
 
     // Modal dialog
     const modalCloseBtn = document.getElementById('modal-close-btn');
