@@ -695,33 +695,17 @@ async function clearCacheAndReload() {
 
 // Initialize on load
 document.addEventListener('DOMContentLoaded', () => {
-    // CRITICAL: Set up menu FIRST so Clear Cache always works, even if everything else fails
+    // CRITICAL: Set up Clear Cache FIRST so it always works, even if everything else fails
     try {
         const menuBtn = document.getElementById('menu-btn');
         const menuCloseBtn = document.getElementById('menu-close-btn');
         const menuOverlay = document.getElementById('menu-overlay');
-        const menuPanel = document.getElementById('menu-panel');
         const menuClearCache = document.getElementById('menu-clear-cache');
-        const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
-        const sidebarOverlay = document.getElementById('sidebar-overlay');
 
-        // Menu open/close
+        // Basic menu open/close (mobile menu toggle handled later with full logic)
         if (menuBtn) menuBtn.addEventListener('click', openMenu);
         if (menuCloseBtn) menuCloseBtn.addEventListener('click', closeMenu);
         if (menuOverlay) menuOverlay.addEventListener('click', closeMenu);
-        if (mobileMenuToggle) {
-            mobileMenuToggle.addEventListener('click', () => {
-                if (menuPanel && !menuPanel.classList.contains('open')) {
-                    menuPanel.classList.add('open');
-                    if (sidebarOverlay) sidebarOverlay.classList.add('active');
-                    mobileMenuToggle.classList.add('active');
-                } else if (menuPanel) {
-                    menuPanel.classList.remove('open');
-                    if (sidebarOverlay) sidebarOverlay.classList.remove('active');
-                    mobileMenuToggle.classList.remove('active');
-                }
-            });
-        }
 
         // Clear cache - MUST work even if app is broken
         if (menuClearCache) menuClearCache.addEventListener('click', clearCacheAndReload);
