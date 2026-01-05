@@ -43,19 +43,23 @@ fi
 # BUILD ID GENERATION
 # ============================================================================
 
-# Generate build ID (timestamp-based for consistency)
+# Generate build ID (timestamp-based for cache busting)
 BUILD_ID=$(date +%s)
 BUILD_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
-# For production, use a version number if available
+# Get commit count for version number (monotonically increasing)
+COMMIT_COUNT=$(git rev-list --count HEAD 2>/dev/null || echo "0")
+
+# Version format: v1.{env}.{number}
+# - v1.prod.XX  = production (main branch)
+# - v1.preview.YY = preview deploys (PRs)
+# - v1.dev.local = local development
 if [ "$ENVIRONMENT" == "production" ]; then
-    if [ -n "$GITHUB_RUN_NUMBER" ]; then
-        VERSION="1.0.$GITHUB_RUN_NUMBER"
-    else
-        VERSION="1.0.$BUILD_ID"
-    fi
+    VERSION="v1.prod.${COMMIT_COUNT}"
+elif [ "$ENVIRONMENT" == "preview" ]; then
+    VERSION="v1.preview.${COMMIT_COUNT}"
 else
-    VERSION="dev-$BUILD_ID"
+    VERSION="v1.dev.local"
 fi
 
 echo "  Environment: $ENVIRONMENT"
