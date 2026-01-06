@@ -2,6 +2,7 @@ import { state, elements } from './state.js';
 import { ParameterSection } from './components/parameter-section.js';
 import { OutputSection } from './components/output-section.js';
 import { ZOOM_CONFIG } from './constants.js';
+import { trackInstrumentFamilyChanged } from './analytics.js';
 
 export function setStatus(type, message) {
     elements.status.className = `status-bar ${type}`;
@@ -216,6 +217,7 @@ function createEnumControl(name, param, callbacks) {
     select.addEventListener('change', callbacks.onEnumChange);
     if (name === 'instrument_family') {
         select.addEventListener('change', () => updateParameterVisibility(callbacks.collectParameters()));
+        select.addEventListener('change', (e) => trackInstrumentFamilyChanged(e.target.value));
     }
     group.appendChild(select);
 

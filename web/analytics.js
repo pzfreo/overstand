@@ -5,9 +5,13 @@
  * Events tracked:
  * - Preset Selected: When user selects an instrument preset
  * - Template Generated: When a template is successfully generated
+ * - View Changed: When user switches between views (side, dimensions, etc.)
  * - PDF Exported: When user downloads a PDF
+ * - SVG Downloaded: When user downloads an SVG
  * - Parameters Saved: When user saves their parameters
  * - Parameters Loaded: When user loads a parameters file
+ * - Instrument Family Changed: When user switches instrument type
+ * - About Viewed: When user opens the About dialog
  * - Error: When an error occurs
  */
 
@@ -38,9 +42,21 @@ export function trackTemplateGenerated(instrumentFamily) {
     });
 }
 
+export function trackViewChanged(viewName) {
+    trackEvent('View Changed', {
+        view: viewName
+    });
+}
+
 export function trackPDFExported(instrumentFamily) {
     trackEvent('PDF Exported', {
         family: instrumentFamily
+    });
+}
+
+export function trackSVGDownloaded(viewName) {
+    trackEvent('SVG Downloaded', {
+        view: viewName
     });
 }
 
@@ -50,6 +66,16 @@ export function trackParametersSaved() {
 
 export function trackParametersLoaded() {
     trackEvent('Parameters Loaded');
+}
+
+export function trackInstrumentFamilyChanged(family) {
+    trackEvent('Instrument Family Changed', {
+        family: family
+    });
+}
+
+export function trackAboutViewed() {
+    trackEvent('About Viewed');
 }
 
 export function trackError(errorType, errorMessage) {

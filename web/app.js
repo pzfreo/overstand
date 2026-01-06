@@ -463,6 +463,7 @@ function switchView(viewName) {
     if (!state.views) return;
     state.currentView = viewName;
     ui.displayCurrentView();
+    analytics.trackViewChanged(viewName);
 }
 
 function zoomIn() { if (state.svgCanvas) state.svgCanvas.zoom(state.svgCanvas.zoom() * ZOOM_CONFIG.factor); }
@@ -493,6 +494,7 @@ function downloadSVG() {
     const viewNames = { 'side': 'side-view', 'top': 'top-view', 'cross_section': 'cross-section', 'radius_template': 'radius-template' };
     const filename = `${getInstrumentFilename()}_${viewNames[state.currentView]}.svg`;
     downloadFile(state.views[state.currentView], filename, 'image/svg+xml');
+    analytics.trackSVGDownloaded(state.currentView);
 }
 
 function saveParameters() {
@@ -640,6 +642,7 @@ function showKeyboardShortcuts() {
 }
 
 async function showAbout() {
+    analytics.trackAboutViewed();
     try {
         // Fetch about.md
         const response = await fetch('about.md');
