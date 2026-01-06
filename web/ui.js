@@ -2,7 +2,7 @@ import { state, elements } from './state.js';
 import { ParameterSection } from './components/parameter-section.js';
 import { OutputSection } from './components/output-section.js';
 import { ZOOM_CONFIG } from './constants.js';
-import { trackInstrumentFamilyChanged } from './analytics.js';
+import { trackInstrumentFamilyChanged, trackParameterEdit } from './analytics.js';
 
 export function setStatus(type, message) {
     elements.status.className = `status-bar ${type}`;
@@ -187,6 +187,7 @@ function createNumberControl(name, param, isOutput, callbacks) {
     } else {
         input.addEventListener('change', hideErrors);
         input.addEventListener('input', callbacks.onInputChange);
+        input.addEventListener('input', () => trackParameterEdit(name));
     }
     group.appendChild(input);
 
@@ -215,6 +216,7 @@ function createEnumControl(name, param, callbacks) {
 
     select.addEventListener('change', hideErrors);
     select.addEventListener('change', callbacks.onEnumChange);
+    select.addEventListener('change', () => trackParameterEdit(name));
     if (name === 'instrument_family') {
         select.addEventListener('change', () => updateParameterVisibility(callbacks.collectParameters()));
         select.addEventListener('change', (e) => trackInstrumentFamilyChanged(e.target.value));
@@ -239,6 +241,7 @@ function createBooleanControl(name, param, callbacks) {
     input.checked = param.default;
     input.addEventListener('change', hideErrors);
     input.addEventListener('change', callbacks.onEnumChange);
+    input.addEventListener('change', () => trackParameterEdit(name));
 
     const label = document.createElement('label');
     label.textContent = param.label;
@@ -267,6 +270,7 @@ function createStringControl(name, param, callbacks) {
     input.maxLength = param.max_length || 100;
     input.addEventListener('change', hideErrors);
     input.addEventListener('input', callbacks.onInputChange);
+    input.addEventListener('input', () => trackParameterEdit(name));
     group.appendChild(input);
 
     return group;

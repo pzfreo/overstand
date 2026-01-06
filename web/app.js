@@ -714,6 +714,9 @@ async function clearCacheAndReload() {
 
 // Initialize on load
 document.addEventListener('DOMContentLoaded', () => {
+    // Start engagement time tracking
+    analytics.startEngagementTracking();
+
     // CRITICAL: Set up Clear Cache FIRST so it always works, even if everything else fails
     try {
         const menuBtn = document.getElementById('menu-btn');
