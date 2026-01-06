@@ -5,6 +5,7 @@ import { registerServiceWorker, initInstallPrompt } from './pwa_manager.js';
 import { showModal, closeModal, showErrorModal } from './modal.js';
 import { DEBOUNCE_GENERATE, ZOOM_CONFIG } from './constants.js';
 import { markdownToHtml } from './markdown-parser.js';
+import * as analytics from './analytics.js';
 
 // Helper: Debounce
 function debounce(func, wait) {
@@ -274,6 +275,9 @@ async function loadPreset() {
     ui.updateParameterVisibility(collectParameters());
     updateDerivedValues();
     debouncedGenerate();
+
+    // Track preset selection
+    analytics.trackPresetSelected(presetId, parameters.instrument_family || 'unknown');
 }
 
 function collectParameters() {
@@ -325,15 +329,20 @@ async function generateNeck() {
             ui.updateTabStates(params);
             elements.preview.classList.add('has-content');
             ui.setStatus('ready', '✅ Preview updated');
+
+            // Track successful generation
+            analytics.trackTemplateGenerated(params.instrument_family || 'unknown');
         } else {
             ui.showErrors(result.errors);
             ui.setStatus('error', '❌ Generation failed - see errors below');
+            analytics.trackError('generation', result.errors?.[0] || 'Unknown error');
         }
     } catch (error) {
         console.error('[Generate] Exception:', error);
         console.error('[Generate] Error stack:', error.stack);
         ui.showErrors([`Unexpected error: ${error.message}`]);
         ui.setStatus('error', '❌ Generation failed');
+        analytics.trackError('generation_exception', error.message);
     } finally {
         state.isGenerating = false;
         elements.genBtn.disabled = false;
@@ -496,6 +505,8 @@ function saveParameters() {
 
     // Reset modified flag - we just saved
     state.parametersModified = false;
+
+    analytics.trackParametersSaved();
 }
 
 function handleLoadParameters(event) {
@@ -522,7 +533,12 @@ function handleLoadParameters(event) {
             ui.updateParameterVisibility(collectParameters());
             updateDerivedValues();
             ui.setStatus('ready', '✅ Parameters loaded');
-        } catch (err) { showErrorModal('Load Failed', err.message); }
+
+            analytics.trackParametersLoaded();
+        } catch (err) {
+            showErrorModal('Load Failed', err.message);
+            analytics.trackError('load_parameters', err.message);
+        }
     };
     reader.readAsText(file);
     event.target.value = '';

@@ -1,5 +1,6 @@
 import { state } from './state.js';
 import { showInfoModal, showErrorModal } from './modal.js';
+import { trackPDFExported, trackError } from './analytics.js';
 
 export async function downloadPDF(collectParameters, sanitizeFilename) {
     if (!state || !state.views || !state.views[state.currentView]) {
@@ -44,6 +45,7 @@ export async function downloadPDF(collectParameters, sanitizeFilename) {
                 styles: { fontSize: 9 }
             });
             doc.save(`${filename}_dimensions.pdf`);
+            trackPDFExported(params.instrument_family || 'unknown');
             return;
         }
 
@@ -68,6 +70,7 @@ export async function downloadPDF(collectParameters, sanitizeFilename) {
                 styles: { fontSize: 9 }
             });
             doc.save(`${filename}_fret-positions.pdf`);
+            trackPDFExported(params.instrument_family || 'unknown');
             return;
         }
 
@@ -136,9 +139,11 @@ export async function downloadPDF(collectParameters, sanitizeFilename) {
         }
 
         doc.save(`${filename}_${viewNames[currentView]}_${selectedFormat.name}.pdf`);
+        trackPDFExported(params.instrument_family || 'unknown');
 
     } catch (error) {
         console.error('PDF error:', error);
         showErrorModal('PDF Generation Failed', error.message);
+        trackError('pdf_export', error.message);
     }
 }
