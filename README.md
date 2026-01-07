@@ -30,8 +30,8 @@ Visit **[https://overstand.tools](https://overstand.tools)** to use the tool imm
 
 ```bash
 # Clone the repository
-git clone https://github.com/pzfreo/diagram-creator.git
-cd diagram-creator
+git clone https://github.com/pzfreo/overstand.git
+cd overstand
 
 # Run local server
 python3 -m http.server 8000
@@ -49,7 +49,7 @@ See [VERCEL_SETUP.md](VERCEL_SETUP.md) for deployment instructions with automati
 ## Project Structure
 
 ```
-diagram-creator/
+overstand/
 ├── src/                         # Python source code
 │   ├── parameter_registry.py    # Single source of truth for all parameters
 │   ├── instrument_generator.py  # Main entry point (called from JavaScript)
@@ -164,7 +164,7 @@ See [CLI_README.md](CLI_README.md) for full documentation.
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-- Report issues at [GitHub Issues](https://github.com/pzfreo/diagram-creator/issues)
+- Report issues at [GitHub Issues](https://github.com/pzfreo/overstand/issues)
 - See [CODE_REVIEW_PLAN.md](CODE_REVIEW_PLAN.md) for known improvements
 
 ## Disclaimer
