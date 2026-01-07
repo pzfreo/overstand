@@ -17,15 +17,57 @@
  * - Error: When an error occurs
  */
 
+// ============================================
+// Event Queue (for events fired before Umami loads)
+// ============================================
+
+const eventQueue = [];
+let umamiReady = false;
+
 /**
- * Track an analytics event safely (no-op if Umami not loaded)
+ * Check if Umami is loaded and ready
+ */
+function isUmamiReady() {
+    return typeof window.umami === 'object' && typeof window.umami.track === 'function';
+}
+
+/**
+ * Flush any queued events once Umami is ready
+ */
+function flushQueue() {
+    if (!isUmamiReady()) return;
+
+    while (eventQueue.length > 0) {
+        const { eventName, props } = eventQueue.shift();
+        window.umami.track(eventName, props);
+    }
+    umamiReady = true;
+}
+
+// Poll for Umami to be ready (checks every 100ms for up to 10 seconds)
+let pollAttempts = 0;
+const pollInterval = setInterval(() => {
+    pollAttempts++;
+    if (isUmamiReady()) {
+        flushQueue();
+        clearInterval(pollInterval);
+    } else if (pollAttempts >= 100) {
+        // Give up after 10 seconds
+        clearInterval(pollInterval);
+    }
+}, 100);
+
+/**
+ * Track an analytics event (queues if Umami not yet loaded)
  * @param {string} eventName - The event name
  * @param {Object} [props] - Optional properties to include
  */
 export function trackEvent(eventName, props = {}) {
-    // Umami exposes window.umami when loaded
-    if (typeof window.umami === 'object' && typeof window.umami.track === 'function') {
+    if (umamiReady && isUmamiReady()) {
         window.umami.track(eventName, props);
+    } else {
+        // Queue for later
+        eventQueue.push({ eventName, props });
     }
 }
 
