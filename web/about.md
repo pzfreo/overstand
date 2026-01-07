@@ -19,4 +19,4 @@ Also if you want to submit an instrument measurements I'm planning a database: p
 Built with Python (Pyodide), JavaScript, and SVG
 
 [🌐 Visit Website](https://overstand.tools)
-[💻 View on GitHub](https://github.com/pzfreo/diagram-creator)
+[💻 View on GitHub](https://github.com/pzfreo/overstand)

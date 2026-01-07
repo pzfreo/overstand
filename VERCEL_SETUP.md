@@ -23,7 +23,7 @@ After setup, you'll have:
 1. Go to https://vercel.com and sign in with GitHub
 2. Click **"Add New Project"**
 3. Select **"Import Git Repository"**
-4. Find and select `diagram-creator` repository
+4. Find and select `overstand` repository
 5. Click **"Import"**
 
 ### 2. Configure Build Settings
@@ -194,7 +194,7 @@ After setup is complete:
 
 - Vercel Docs: https://vercel.com/docs
 - Vercel Support: https://vercel.com/support
-- This Project Issues: https://github.com/pzfreo/diagram-creator/issues
+- This Project Issues: https://github.com/pzfreo/overstand/issues
 
 ## Rollback Plan
 
