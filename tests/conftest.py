@@ -92,7 +92,7 @@ def invalid_json_path(tmp_path):
 @pytest.fixture
 def cli_path():
     """Return the path to the CLI script."""
-    return Path(__file__).parent.parent / 'src' / 'instrument-gen-cli'
+    return Path(__file__).parent.parent / 'src' / 'overstand-cli'
 
 
 @pytest.fixture

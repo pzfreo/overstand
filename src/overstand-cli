@@ -3,17 +3,53 @@
 Command-line interface for generating instrument diagrams.
 
 Usage:
-    instrument-gen-cli input.json --view side --output diagram.svg
-    instrument-gen-cli input.json --view dimensions --output dimensions.html
-    instrument-gen-cli input.json --all --output-dir ./output
+    overstand-cli input.json --view side --output diagram.svg
+    overstand-cli input.json --view side --pdf
+    overstand-cli input.json --view dimensions --pdf -o dims.pdf
+    overstand-cli input.json --all --output-dir ./output
+    overstand-cli input.json --all --pdf --output-dir ./output
 """
 
 import argparse
 import json
+import re
 import sys
 import os
 import tempfile
 from pathlib import Path
+
+
+# View name mappings (matching web app style)
+VIEW_NAMES = {
+    'side': 'side-view',
+    'top': 'top-view',
+    'cross_section': 'cross-section',
+    'dimensions': 'dimensions'
+}
+
+
+def sanitize_filename(name):
+    """Sanitize a string for use as a filename (matching web app behavior)."""
+    # Replace special chars and spaces with underscores
+    return re.sub(r'[<>:"/\\|?*\s]+', '_', name).strip('_')
+
+
+def get_unique_filename(base_path):
+    """Get a unique filename by adding increment if file exists."""
+    path = Path(base_path)
+    if not path.exists():
+        return path
+
+    stem = path.stem
+    suffix = path.suffix
+    parent = path.parent
+
+    counter = 1
+    while True:
+        new_path = parent / f"{stem}_{counter}{suffix}"
+        if not new_path.exists():
+            return new_path
+        counter += 1
 
 
 def load_parameters(json_file):
@@ -61,6 +97,18 @@ def svg_to_pdf(svg_content, output_path):
     finally:
         # Clean up temp file
         os.unlink(temp_path)
+
+
+def html_to_pdf(html_content, output_path):
+    """Convert HTML content to PDF using weasyprint."""
+    try:
+        from weasyprint import HTML
+    except ImportError:
+        print("Error: PDF generation for HTML requires weasyprint.", file=sys.stderr)
+        print("Install with: pip install weasyprint", file=sys.stderr)
+        sys.exit(1)
+
+    HTML(string=html_content).write_pdf(output_path)
 
 
 def generate_view(params, view_type):
@@ -154,27 +202,35 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Generate side view SVG
-  instrument-gen-cli params.json --view side --output side-view.svg
+  # Generate side view SVG to stdout
+  overstand-cli params.json --view side
 
-  # Generate side view as PDF
-  instrument-gen-cli params.json --view pdf --output diagram.pdf
+  # Generate side view SVG to file
+  overstand-cli params.json --view side --output side-view.svg
 
-  # Generate dimensions table HTML
-  instrument-gen-cli params.json --view dimensions --output dimensions.html
+  # Generate side view as PDF (auto-generates filename)
+  overstand-cli params.json --view side --pdf
+  # → Creates: My_Violin_side-view.pdf
 
-  # Generate all available views
-  instrument-gen-cli params.json --all --output-dir ./diagrams
+  # Generate dimensions table as PDF
+  overstand-cli params.json --view dimensions --pdf
+  # → Creates: My_Violin_dimensions.pdf
 
-  # Print to stdout (useful for piping)
-  instrument-gen-cli params.json --view side
+  # Generate all views in native formats (SVG, HTML)
+  overstand-cli params.json --all --output-dir ./diagrams
+
+  # Generate all views as PDFs
+  overstand-cli params.json --all --pdf --output-dir ./diagrams
         """
     )
 
     parser.add_argument('input', help='Input JSON parameter file')
-    parser.add_argument('--view', choices=['side', 'top', 'cross_section', 'dimensions', 'pdf'],
+    parser.add_argument('--view', choices=['side', 'top', 'cross_section', 'dimensions'],
                         help='View type to generate')
-    parser.add_argument('--output', '-o', help='Output file (default: stdout, required for pdf)')
+    parser.add_argument('--pdf', action='store_true',
+                        help='Output as PDF instead of native format (SVG/HTML)')
+    parser.add_argument('--output', '-o',
+                        help='Output file (default: auto-generate for PDF, stdout for SVG/HTML)')
     parser.add_argument('--all', action='store_true',
                         help='Generate all views (requires --output-dir)')
     parser.add_argument('--output-dir', help='Output directory for --all mode')
@@ -188,51 +244,69 @@ Examples:
         parser.error('Either --view or --all must be specified')
     if args.all and args.view:
         parser.error('Cannot use both --all and --view')
-    if args.view == 'pdf' and not args.output:
-        parser.error('--view pdf requires --output (cannot print binary to stdout)')
 
     # Load parameters
     params = load_parameters(args.input)
-    instrument_name = params.get('instrument_name', 'instrument').replace(' ', '_')
+    instrument_name = sanitize_filename(params.get('instrument_name', 'instrument'))
 
     if args.all:
         # Generate all views
         output_dir = Path(args.output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
 
+        # Define views with their native formats
         views = {
             'side': ('svg', generate_view(params, 'side')),
             'dimensions': ('html', generate_view(params, 'dimensions'))
         }
 
-        for view_name, (ext, content) in views.items():
-            output_file = output_dir / f'{instrument_name}_{view_name}.{ext}'
-            with open(output_file, 'w') as f:
-                f.write(content)
-            print(f'Generated: {output_file}')
-
-        # Also generate PDF
-        pdf_file = output_dir / f'{instrument_name}_side.pdf'
-        svg_content = generate_view(params, 'side')
-        svg_to_pdf(svg_content, str(pdf_file))
-        print(f'Generated: {pdf_file}')
+        if args.pdf:
+            # Generate PDF versions of all views
+            for view_key, (native_ext, content) in views.items():
+                view_name = VIEW_NAMES.get(view_key, view_key)
+                pdf_file = output_dir / f'{instrument_name}_{view_name}.pdf'
+                if native_ext == 'svg':
+                    svg_to_pdf(content, str(pdf_file))
+                else:  # html
+                    html_to_pdf(content, str(pdf_file))
+                print(f'Generated: {pdf_file}')
+        else:
+            # Generate native formats
+            for view_key, (ext, content) in views.items():
+                view_name = VIEW_NAMES.get(view_key, view_key)
+                output_file = output_dir / f'{instrument_name}_{view_name}.{ext}'
+                with open(output_file, 'w') as f:
+                    f.write(content)
+                print(f'Generated: {output_file}')
     else:
-        # Handle PDF separately (binary output)
-        if args.view == 'pdf':
-            svg_content = generate_view(params, 'side')
-            svg_to_pdf(svg_content, args.output)
+        # Generate single view
+        content = generate_view(params, args.view)
+        is_html = args.view == 'dimensions'
+        view_name = VIEW_NAMES.get(args.view, args.view)
+
+        if args.pdf:
+            # Determine output filename
+            if args.output:
+                output_path = Path(args.output)
+            else:
+                # Auto-generate filename matching web app style
+                base_filename = f"{instrument_name}_{view_name}.pdf"
+                output_path = get_unique_filename(base_filename)
+
+            # Convert to PDF
+            if is_html:
+                html_to_pdf(content, str(output_path))
+            else:
+                svg_to_pdf(content, str(output_path))
+            print(f'Generated: {output_path}')
+        elif args.output:
+            # Write to file
+            with open(args.output, 'w') as f:
+                f.write(content)
             print(f'Generated: {args.output}')
         else:
-            # Generate text-based view
-            content = generate_view(params, args.view)
-
-            if args.output:
-                with open(args.output, 'w') as f:
-                    f.write(content)
-                print(f'Generated: {args.output}')
-            else:
-                # Print to stdout
-                print(content)
+            # Print to stdout
+            print(content)
 
 
 if __name__ == '__main__':

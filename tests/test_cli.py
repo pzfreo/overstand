@@ -1,5 +1,5 @@
 """
-Tests for the CLI (instrument-gen-cli).
+Tests for the CLI (overstand-cli).
 """
 import pytest
 import subprocess
@@ -15,7 +15,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
 
 def load_cli_module():
     """Load the CLI module from the script file without .py extension."""
-    cli_script = Path(__file__).parent.parent / 'src' / 'instrument-gen-cli'
+    cli_script = Path(__file__).parent.parent / 'src' / 'overstand-cli'
 
     # Read the script content and execute it as a module
     spec = importlib.util.spec_from_loader(
@@ -199,9 +199,7 @@ class TestCLIIntegration:
         assert '<!DOCTYPE html>' in content
 
     def test_cli_all_creates_multiple_files(self, sample_preset_path, cli_path, tmp_path):
-        """Test CLI --all creates SVG, PDF, and HTML files."""
-        from conftest import has_cairo_deps
-
+        """Test CLI --all creates SVG and HTML files (native formats)."""
         output_dir = tmp_path / 'output'
         result = subprocess.run(
             [sys.executable, str(cli_path), str(sample_preset_path),
@@ -211,15 +209,9 @@ class TestCLIIntegration:
             cwd=str(cli_path.parent)
         )
 
-        # If Cairo is available, should succeed; if not, may fail on PDF
-        if has_cairo_deps():
-            assert result.returncode == 0
-            assert (output_dir / 'Test_Violin_side.svg').exists()
-            assert (output_dir / 'Test_Violin_dimensions.html').exists()
-            assert (output_dir / 'Test_Violin_side.pdf').exists()
-        else:
-            # Without Cairo, --all will fail on PDF step
-            assert result.returncode != 0 or 'svglib' in result.stderr
+        assert result.returncode == 0
+        assert (output_dir / 'Test_Violin_side-view.svg').exists()
+        assert (output_dir / 'Test_Violin_dimensions.html').exists()
 
     def test_cli_missing_view_or_all_errors(self, sample_preset_path, cli_path):
         """Test CLI errors when neither --view nor --all specified."""
@@ -254,16 +246,21 @@ class TestCLIIntegration:
         )
         assert result.returncode != 0
 
-    def test_cli_pdf_requires_output(self, sample_preset_path, cli_path):
-        """Test CLI --view pdf requires --output."""
+    def test_cli_pdf_auto_filename(self, sample_preset_path, cli_path, tmp_path):
+        """Test CLI --pdf auto-generates filename when --output not specified."""
+        from conftest import has_cairo_deps
+        if not has_cairo_deps():
+            pytest.skip("Requires Cairo dependencies")
+
         result = subprocess.run(
-            [sys.executable, str(cli_path), str(sample_preset_path), '--view', 'pdf'],
+            [sys.executable, str(cli_path), str(sample_preset_path), '--view', 'side', '--pdf'],
             capture_output=True,
             text=True,
-            cwd=str(cli_path.parent)
+            cwd=str(tmp_path)  # Run in temp dir so auto-generated file goes there
         )
-        assert result.returncode != 0
-        assert 'output' in result.stderr.lower()
+        assert result.returncode == 0
+        assert 'Generated:' in result.stdout
+        assert 'Test_Violin_side-view.pdf' in result.stdout
 
     def test_cli_file_not_found(self, cli_path, tmp_path):
         """Test CLI handles missing input file."""
@@ -303,11 +300,11 @@ class TestPDFGeneration:
             assert header == b'%PDF'
 
     def test_cli_pdf_view(self, requires_cairo, sample_preset_path, cli_path, tmp_path):
-        """Test CLI --view pdf generates PDF file."""
+        """Test CLI --pdf generates PDF file from side view."""
         output_file = tmp_path / 'output.pdf'
         result = subprocess.run(
             [sys.executable, str(cli_path), str(sample_preset_path),
-             '--view', 'pdf', '--output', str(output_file)],
+             '--view', 'side', '--pdf', '--output', str(output_file)],
             capture_output=True,
             text=True,
             cwd=str(cli_path.parent)

@@ -4,7 +4,7 @@ Command-line interface for generating instrument diagrams from parameter files.
 
 ## Installation
 
-The CLI is located at `src/instrument-gen-cli` and requires Python 3.
+The CLI is located at `src/overstand-cli` and requires Python 3.
 
 Install dependencies:
 ```bash
@@ -19,52 +19,75 @@ pip install -r requirements-cli.txt
 
 Make it executable (already done):
 ```bash
-chmod +x src/instrument-gen-cli
+chmod +x src/overstand-cli
 ```
 
 ## Usage
 
 ```bash
-instrument-gen-cli INPUT_FILE [OPTIONS]
+overstand-cli INPUT_FILE [OPTIONS]
 ```
 
 ### Options
 
-- `--view {side,top,cross_section,dimensions,pdf}` - Generate a specific view
-- `--output FILE` or `-o FILE` - Output file (default: stdout, required for pdf)
+- `--view {side,top,cross_section,dimensions}` - Generate a specific view
+- `--pdf` - Output as PDF instead of native format (SVG/HTML)
+- `--output FILE` or `-o FILE` - Output file (default: auto-generate for PDF, stdout for SVG/HTML)
 - `--all` - Generate all available views (requires `--output-dir`)
 - `--output-dir DIR` - Output directory for `--all` mode
+
+When using `--pdf` without `--output`, the CLI auto-generates a filename based on the instrument name and view type (e.g., `Basic_Violin_side-view.pdf`). If the file already exists, an increment is added (e.g., `Basic_Violin_side-view_1.pdf`).
 
 ## Examples
 
 ### Generate side view SVG
 ```bash
-python src/instrument-gen-cli presets/basic_violin.json --view side --output my-violin-side.svg
+python src/overstand-cli presets/basic_violin.json --view side --output my-violin-side.svg
 ```
 
-### Generate side view as PDF
+### Generate side view as PDF (auto-filename)
 ```bash
-python src/instrument-gen-cli presets/basic_violin.json --view pdf --output my-violin.pdf
+python src/overstand-cli presets/basic_violin.json --view side --pdf
+# → Creates: Basic_Violin_side-view.pdf
+```
+
+### Generate side view as PDF (custom filename)
+```bash
+python src/overstand-cli presets/basic_violin.json --view side --pdf --output my-violin.pdf
 ```
 
 ### Generate dimensions table HTML
 ```bash
-python src/instrument-gen-cli presets/basic_violin.json --view dimensions --output dimensions.html
+python src/overstand-cli presets/basic_violin.json --view dimensions --output dimensions.html
 ```
 
-### Generate all views at once
+### Generate dimensions table as PDF
 ```bash
-python src/instrument-gen-cli presets/basic_violin.json --all --output-dir ./output
+python src/overstand-cli presets/basic_violin.json --view dimensions --pdf
+# → Creates: Basic_Violin_dimensions.pdf
+```
+
+### Generate all views at once (native formats)
+```bash
+python src/overstand-cli presets/basic_violin.json --all --output-dir ./output
 ```
 
 This creates:
-- `Basic_Violin_side.svg` - Side view diagram
-- `Basic_Violin_side.pdf` - Side view as PDF
+- `Basic_Violin_side-view.svg` - Side view diagram
 - `Basic_Violin_dimensions.html` - Dimensions table
+
+### Generate all views as PDFs
+```bash
+python src/overstand-cli presets/basic_violin.json --all --pdf --output-dir ./output
+```
+
+This creates:
+- `Basic_Violin_side-view.pdf` - Side view as PDF
+- `Basic_Violin_dimensions.pdf` - Dimensions table as PDF
 
 ### Print to stdout (useful for piping)
 ```bash
-python src/instrument-gen-cli presets/basic_violin.json --view side > diagram.svg
+python src/overstand-cli presets/basic_violin.json --view side > diagram.svg
 ```
 
 ## Input File Format
@@ -101,9 +124,8 @@ You can also use simplified format with just parameters:
 
 ## Available Views
 
-- **side** - Side view SVG diagram
-- **pdf** - Side view as PDF (scale-accurate for printing)
-- **dimensions** - Dimensions table HTML
+- **side** - Side view diagram (SVG, or PDF with `--pdf`)
+- **dimensions** - Dimensions table (HTML, or PDF with `--pdf`)
 - **top** - Top view SVG (coming soon)
 - **cross_section** - Cross-section view SVG (coming soon)
 
@@ -116,8 +138,9 @@ The side view generates a scalable vector graphic that can be:
 - Printed at any scale
 
 ### PDF Output
-The PDF view generates a print-ready document:
-- Uses svglib + reportlab for conversion
+The `--pdf` flag generates print-ready documents from any view:
+- SVG views (side, top, cross_section) use svglib + reportlab for conversion
+- HTML views (dimensions) use weasyprint for conversion
 - Maintains scale accuracy for workshop use
 
 ### HTML Output

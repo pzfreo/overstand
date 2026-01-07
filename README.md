@@ -122,10 +122,10 @@ A command-line interface is available for batch processing:
 
 ```bash
 # Generate side view SVG
-python src/instrument-gen-cli presets/violin.json --view side --output violin.svg
+python src/overstand-cli presets/violin.json --view side --output violin.svg
 
 # Generate all views
-python src/instrument-gen-cli presets/violin.json --all --output-dir ./output
+python src/overstand-cli presets/violin.json --all --output-dir ./output
 ```
 
 See [CLI_README.md](CLI_README.md) for full documentation.

@@ -23,7 +23,7 @@ The goal is better software, not validation. A good "no" or "have you considered
 
 ### CLI and Web Must Stay in Sync
 
-The CLI (`src/instrument-gen-cli`) and web app share the same Python codebase. Any changes to:
+The CLI (`src/overstand-cli`) and web app share the same Python codebase. Any changes to:
 - `src/parameter_registry.py` - Parameter definitions
 - `src/instrument_geometry.py` - Geometry calculations
 - `src/geometry_engine.py` - Math functions
@@ -114,8 +114,8 @@ npm run test:coverage # with coverage
 ./scripts/build.sh
 
 # CLI usage
-python src/instrument-gen-cli presets/basic_violin.json --view side -o output.svg
-python src/instrument-gen-cli presets/basic_violin.json --all --output-dir ./output
+python src/overstand-cli presets/basic_violin.json --view side -o output.svg
+python src/overstand-cli presets/basic_violin.json --all --output-dir ./output
 ```
 
 ## Project Structure
@@ -127,7 +127,7 @@ src/                           # Python geometry engine (shared by web + CLI)
 ├── instrument_geometry.py     # Geometry orchestration
 ├── geometry_engine.py         # Pure math calculations
 ├── svg_renderer.py            # SVG drawing
-├── instrument-gen-cli         # CLI executable
+├── overstand-cli              # CLI executable
 └── complete_system_summary.md # Architecture documentation
 
 web/                           # Frontend (HTML, CSS, JS)
