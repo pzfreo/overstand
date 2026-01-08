@@ -47,14 +47,14 @@ fi
 BUILD_ID=$(date +%s)
 BUILD_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
-# Fetch full git history if shallow clone (Vercel uses shallow clones)
-if [ -f .git/shallow ]; then
-    echo "📥 Fetching full git history for accurate version count..."
-    git fetch --unshallow 2>/dev/null || true
-fi
+# Fetch full git history (Vercel uses shallow clones with depth=10)
+echo "📥 Fetching full git history for accurate version count..."
+echo "  [Debug] .git/shallow exists: $([ -f .git/shallow ] && echo 'yes' || echo 'no')"
+git fetch --unshallow origin main 2>&1 || git fetch --depth=2147483647 origin main 2>&1 || echo "  [Debug] fetch failed or not needed"
 
 # Get commit count for version number (monotonically increasing)
 COMMIT_COUNT=$(git rev-list --count HEAD 2>/dev/null || echo "0")
+echo "  [Debug] Commit count: $COMMIT_COUNT"
 
 # Debug: Log Vercel environment variables
 echo "  [Debug] VERCEL_ENV=$VERCEL_ENV"
