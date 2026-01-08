@@ -63,7 +63,8 @@ def calculate_derived_values(params: Dict[str, Any]) -> Dict[str, Any]:
 
     neck_result = geometry_engine.calculate_neck_geometry(
         params, vsl, neck_stop, string_angle_to_ribs_rad, string_angle_to_fb,
-        fb_thickness_at_nut, fb_thickness_at_join
+        fb_thickness_at_nut, fb_thickness_at_join,
+        body_stop=angle_result['body_stop']
     )
     neck_result['body_stop'] = angle_result['body_stop']
     derived.update(neck_result)

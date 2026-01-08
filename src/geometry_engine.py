@@ -125,9 +125,14 @@ def calculate_string_angles_guitar(params: Dict[str, Any], vsl: float, fret_posi
     return result
 
 def calculate_neck_geometry(params: Dict[str, Any], vsl: float, neck_stop: float, string_angle_to_ribs_rad: float,
-                          string_angle_to_fb: float, fb_thickness_at_nut: float, fb_thickness_at_join: float) -> Dict[str, Any]:
+                          string_angle_to_fb: float, fb_thickness_at_nut: float, fb_thickness_at_join: float,
+                          body_stop: float = None) -> Dict[str, Any]:
     """
     Calculate neck angle and nut position.
+
+    Args:
+        body_stop: The body stop position. For GUITAR_MANDOLIN this is derived from fret
+                   positions, so must be passed explicitly. Falls back to params if not provided.
     """
     result = {}
 
@@ -135,9 +140,9 @@ def calculate_neck_geometry(params: Dict[str, Any], vsl: float, neck_stop: float
     bridge_height = params.get('bridge_height') or 0
     overstand = params.get('overstand') or 0
     string_height_nut = params.get('string_height_nut') or 0
-    # Note: caller should provide body_stop if needed, but we often derive it earlier
-    
-    bridge_top_x = params.get('body_stop', 0) # Fallback to 0 if not yet set
+
+    # Use passed body_stop (for GUITAR_MANDOLIN) or fall back to params (for VIOLIN/VIOL)
+    bridge_top_x = body_stop if body_stop is not None else params.get('body_stop', 0)
     bridge_top_y = arching_height + bridge_height
     nut_top_x = -neck_stop
     nut_top_y = bridge_top_y - math.sin(string_angle_to_ribs_rad) * vsl
