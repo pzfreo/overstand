@@ -85,7 +85,8 @@ SECTIONS = {
         default_expanded=True,  # Expanded by default, but collapsible
         order=1,
         parameter_names=[
-            'instrument_family',  # First: choose instrument type
+            'instrument_name',    # Name for the instrument
+            'instrument_family',  # Choose instrument type
             'vsl',                # Then the 6 core basic params
             'body_length',
             'body_stop',
@@ -157,7 +158,6 @@ SECTIONS = {
         default_expanded=False,
         order=5,
         parameter_names=[
-            'instrument_name',
             'show_measurements'
         ],
         description='Visualization and annotation settings'
