@@ -109,6 +109,7 @@ SECTIONS = {
             'rib_height',
             'belly_edge_thickness',
             'fingerboard_radius',
+            'tailpiece_height',  # Height of tailpiece above belly
             'break_angle',       # Viol-specific (visible_when filters it)
             'top_block_height'   # Viol-specific (visible_when filters it)
         ],
@@ -174,6 +175,7 @@ SECTIONS = {
             'neck_stop',
             'body_stop',
             'nut_relative_to_ribs',
+            'string_break_angle',
             'fb_thickness_at_nut',
             'fb_thickness_at_join'
         ],

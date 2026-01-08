@@ -495,7 +495,7 @@ PARAMETER_REGISTRY: Dict[str, UnifiedParameter] = {
             default=12,
             step=1,
             visible_when={'instrument_family': 'GUITAR_MANDOLIN'},
-            category='Basic Dimensions'
+            category='Fret Configuration'
         )
     ),
 
