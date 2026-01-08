@@ -2,27 +2,12 @@
   <!-- Background -->
   <rect width="512" height="512" fill="#4F46E5" rx="64"/>
 
-  <!-- Simplified violin/guitar neck icon -->
-  <g transform="translate(256, 256)">
-    <!-- Neck body (simplified violin shape) -->
-    <path d="M -60,-180 L -50,-100 C -50,-80 -40,-40 -35,0 C -40,40 -50,80 -50,100 L -60,180 L 60,180 L 50,100 C 50,80 40,40 35,0 C 40,-40 50,-80 50,-100 L 60,-180 Z"
-          fill="white"
-          opacity="0.95"/>
-
-    <!-- Fingerboard -->
-    <rect x="-30" y="-180" width="60" height="360" fill="#2D2A6E" opacity="0.8"/>
-
-    <!-- Fret markers (dots) -->
-    <circle cx="0" cy="-120" r="6" fill="white" opacity="0.7"/>
-    <circle cx="0" cy="-60" r="6" fill="white" opacity="0.7"/>
-    <circle cx="0" cy="0" r="6" fill="white" opacity="0.7"/>
-    <circle cx="0" cy="60" r="6" fill="white" opacity="0.7"/>
-    <circle cx="0" cy="120" r="6" fill="white" opacity="0.7"/>
-
-    <!-- Strings -->
-    <line x1="-15" y1="-190" x2="-15" y2="190" stroke="white" stroke-width="1.5" opacity="0.4"/>
-    <line x1="-5" y1="-190" x2="-5" y2="190" stroke="white" stroke-width="1.5" opacity="0.4"/>
-    <line x1="5" y1="-190" x2="5" y2="190" stroke="white" stroke-width="1.5" opacity="0.4"/>
-    <line x1="15" y1="-190" x2="15" y2="190" stroke="white" stroke-width="1.5" opacity="0.4"/>
-  </g>
+  <!-- OS text - bold sans-serif, white on purple -->
+  <text x="256" y="256"
+        font-family="Arial Black, Helvetica Bold, sans-serif"
+        font-weight="900"
+        font-size="280"
+        fill="white"
+        text-anchor="middle"
+        dominant-baseline="central">OS</text>
 </svg>
