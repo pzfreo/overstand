@@ -309,7 +309,6 @@ def add_dimensions(exporter: ExportSVG, show_measurements: bool,
         exporter.add_shape(arrow_head, layer="arrows")
 
         # Label (red, right-justified, two lines)
-        # Estimate text widths for right-alignment (char width ≈ 0.6 * font size)
         char_width = DIMENSION_FONT_SIZE * 0.6
         line_height = DIMENSION_FONT_SIZE * 1.2
         right_edge = arrow_x - 3
@@ -321,8 +320,8 @@ def add_dimensions(exporter: ExportSVG, show_measurements: bool,
         percent_text = percent_text.move(Location((right_edge - percent_width, arrow_mid_y + line_height / 2)))
         exporter.add_shape(percent_text, layer="dimensions")
 
-        # Bottom line: "downforce"
-        downforce_width = 9 * char_width  # "downforce" is 9 chars
+        # Bottom line: "downforce" - use 10 char widths (9 chars + extra for letter spacing)
+        downforce_width = 10 * char_width
         downforce_text = Text("downforce", DIMENSION_FONT_SIZE, font=FONT_NAME)
         downforce_text = downforce_text.move(Location((right_edge - downforce_width, arrow_mid_y - line_height / 2)))
         exporter.add_shape(downforce_text, layer="dimensions")
