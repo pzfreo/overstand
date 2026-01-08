@@ -309,6 +309,6 @@ def add_dimensions(exporter: ExportSVG, show_measurements: bool,
         exporter.add_shape(arrow_head, layer="arrows")
 
         # Label (red, next to arrow)
-        downforce_text = Text(f"{downward_force_percent:.0f}%", DIMENSION_FONT_SIZE, font=FONT_NAME)
-        downforce_text = downforce_text.move(Location((arrow_x - 12, arrow_mid_y)))
+        downforce_text = Text(f"{downward_force_percent:.0f}% downforce", DIMENSION_FONT_SIZE, font=FONT_NAME)
+        downforce_text = downforce_text.move(Location((arrow_x - 25, arrow_mid_y)))
         exporter.add_shape(downforce_text, layer="dimensions")
