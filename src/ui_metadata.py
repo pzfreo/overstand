@@ -190,6 +190,7 @@ SECTIONS = {
         default_expanded=False,
         order=11,
         parameter_names=[
+            'downward_force_percent',
             'sagitta_at_nut',
             'sagitta_at_join',
             'string_angle_to_ribs',

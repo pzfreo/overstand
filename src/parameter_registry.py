@@ -477,6 +477,21 @@ PARAMETER_REGISTRY: Dict[str, UnifiedParameter] = {
         )
     ),
 
+    'downward_force_percent': UnifiedParameter(
+        key='downward_force_percent',
+        display_name='Downward Force %',
+        param_type=ParameterType.NUMERIC,
+        unit='%',
+        description='Percentage of string tension that pushes downward on the belly',
+        role=ParameterRole.OUTPUT_ONLY,
+        output_config=OutputConfig(
+            decimals=1,
+            visible=True,
+            category='Geometry',
+            order=10
+        )
+    ),
+
     # ============================================
     # BASIC DIMENSION PARAMETERS (Input Only)
     # ============================================
