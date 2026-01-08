@@ -70,6 +70,13 @@ See `src/complete_system_summary.md` for the "Adding New Parameters" guide.
   - `instrument_geometry.py` - Orchestration layer
   - `instrument_generator.py` - JavaScript bridge, error handling
 
+### No Unasked-For Changes
+- Make ONLY the changes explicitly requested
+- If you think something additional would be beneficial, ASK first - don't just do it
+- When fixing issues, fix only what was reported - don't "improve" nearby code
+- If requirements seem incomplete, ask for clarification rather than filling in gaps
+
+
 ### Commit Practices
 - Write clear, descriptive commit messages explaining "why" not just "what"
 - Make atomic commits - one logical change per commit
