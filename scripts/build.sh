@@ -47,11 +47,16 @@ fi
 BUILD_ID=$(date +%s)
 BUILD_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
-# Fetch full git history (Vercel uses shallow clones with depth=10)
+# Fetch full git history (Vercel uses shallow clones with no remotes)
 echo "📥 Fetching full git history for accurate version count..."
-echo "  [Debug] .git/shallow exists: $([ -f .git/shallow ] && echo 'yes' || echo 'no')"
-echo "  [Debug] git remotes: $(git remote -v 2>&1 | head -2)"
-git fetch --unshallow 2>&1 || echo "  [Debug] unshallow failed or not needed"
+if [ -f .git/shallow ]; then
+    # Add remote if missing (Vercel doesn't configure remotes)
+    if ! git remote | grep -q origin; then
+        git remote add origin "https://github.com/${VERCEL_GIT_REPO_OWNER:-pzfreo}/${VERCEL_GIT_REPO_SLUG:-overstand}.git"
+        echo "  [Debug] Added origin remote"
+    fi
+    git fetch --unshallow origin 2>&1 || echo "  [Debug] unshallow failed"
+fi
 
 # Get commit count for version number (monotonically increasing)
 COMMIT_COUNT=$(git rev-list --count HEAD 2>/dev/null || echo "0")
