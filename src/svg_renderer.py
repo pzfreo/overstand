@@ -249,6 +249,13 @@ def add_dimensions(exporter: ExportSVG, show_measurements: bool,
         )
         exporter.add_shape(tailpiece_ref_line, layer="schematic_dotted")
 
+        # Dotted line from tailpiece top to bridge top (string path to tailpiece)
+        tailpiece_to_bridge_line = Edge.make_line(
+            (body_length, tailpiece_top_y),
+            (bridge_top_x, bridge_top_y)
+        )
+        exporter.add_shape(tailpiece_to_bridge_line, layer="schematic_dotted")
+
         # Dimension with arrows and label
         tailpiece_dim_x = body_length + 20
         dim_p1 = (tailpiece_dim_x, tailpiece_base_y)
