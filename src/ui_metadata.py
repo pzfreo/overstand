@@ -85,7 +85,8 @@ SECTIONS = {
         default_expanded=True,  # Expanded by default, but collapsible
         order=1,
         parameter_names=[
-            'instrument_family',  # First: choose instrument type
+            'instrument_name',    # Name for the instrument
+            'instrument_family',  # Choose instrument type
             'vsl',                # Then the 6 core basic params
             'body_length',
             'body_stop',
@@ -109,6 +110,7 @@ SECTIONS = {
             'rib_height',
             'belly_edge_thickness',
             'fingerboard_radius',
+            'tailpiece_height',  # Height of tailpiece above belly
             'break_angle',       # Viol-specific (visible_when filters it)
             'top_block_height'   # Viol-specific (visible_when filters it)
         ],
@@ -156,7 +158,6 @@ SECTIONS = {
         default_expanded=False,
         order=5,
         parameter_names=[
-            'instrument_name',
             'show_measurements'
         ],
         description='Visualization and annotation settings'
@@ -174,6 +175,7 @@ SECTIONS = {
             'neck_stop',
             'body_stop',
             'nut_relative_to_ribs',
+            'string_break_angle',
             'fb_thickness_at_nut',
             'fb_thickness_at_join'
         ],
@@ -192,16 +194,16 @@ SECTIONS = {
             'sagitta_at_join',
             'string_angle_to_ribs',
             'string_angle_to_fingerboard',
-            'neck_angle_rad',
+            'afterlength_angle',
+            'neck_line_angle_deg',
+            'fb_direction_angle_deg',
             'neck_end_x',
             'neck_end_y',
             'nut_draw_radius',
-            'neck_line_angle',
             'nut_top_x',
             'nut_top_y',
             'bridge_top_x',
             'bridge_top_y',
-            'fb_direction_angle',
             'fb_bottom_end_x',
             'fb_bottom_end_y',
             'fb_thickness_at_end',

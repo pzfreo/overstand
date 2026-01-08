@@ -63,7 +63,8 @@ def calculate_derived_values(params: Dict[str, Any]) -> Dict[str, Any]:
 
     neck_result = geometry_engine.calculate_neck_geometry(
         params, vsl, neck_stop, string_angle_to_ribs_rad, string_angle_to_fb,
-        fb_thickness_at_nut, fb_thickness_at_join
+        fb_thickness_at_nut, fb_thickness_at_join,
+        body_stop=angle_result['body_stop']
     )
     neck_result['body_stop'] = angle_result['body_stop']
     derived.update(neck_result)
@@ -86,6 +87,23 @@ def calculate_derived_values(params: Dict[str, Any]) -> Dict[str, Any]:
         derived['fb_thickness_at_end']
     )
     derived.update(string_height_result)
+
+    # Add degree versions of internal angles for display
+    derived['neck_line_angle_deg'] = derived['neck_line_angle'] * 180 / math.pi
+    derived['fb_direction_angle_deg'] = derived['fb_direction_angle'] * 180 / math.pi
+
+    # Calculate afterlength angle (angle of string from bridge to tailpiece relative to ribs)
+    # Positive angle indicates downward slope from bridge to tailpiece
+    body_length = params.get('body_length', 0)
+    belly_edge_thickness = params.get('belly_edge_thickness', 0)
+    tailpiece_height = params.get('tailpiece_height', 0)
+
+    dx = body_length - derived['bridge_top_x']
+    dy = derived['bridge_top_y'] - (belly_edge_thickness + tailpiece_height)
+    derived['afterlength_angle'] = math.atan2(dy, dx) * 180 / math.pi
+
+    # Calculate string break angle at the bridge
+    derived['string_break_angle'] = 180 - derived['string_angle_to_ribs'] - derived['afterlength_angle']
 
     return derived
 
@@ -153,7 +171,9 @@ def generate_side_view_svg(params: Dict[str, Any], show_measurements: bool = Tru
         derived['fb_surface_point_y'], derived['string_x_at_fb_end'],
         derived['string_y_at_fb_end'], derived['string_height_at_fb_end'],
         derived['nut_perpendicular_intersection_x'], derived['nut_perpendicular_intersection_y'],
-        derived['nut_to_perpendicular_distance']
+        derived['nut_to_perpendicular_distance'],
+        tailpiece_height=params.get('tailpiece_height', 0),
+        string_break_angle=derived['string_break_angle']
     )
     
     return exporter.write(filename=None)

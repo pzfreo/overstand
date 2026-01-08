@@ -171,7 +171,8 @@ def add_dimensions(exporter: ExportSVG, show_measurements: bool,
                   fb_surface_point_y: float, string_x_at_fb_end: float,
                   string_y_at_fb_end: float, string_height_at_fb_end: float,
                   intersect_x: float, intersect_y: float,
-                  nut_to_perp_distance: float) -> None:
+                  nut_to_perp_distance: float, tailpiece_height: float = 0.0,
+                  string_break_angle: float = 0.0) -> None:
     """Add dimension annotations."""
     if show_measurements:
         rib_to_nut_feature_line = Edge.make_line((reference_line_end_x, 0), (reference_line_end_x, nut_top_y))
@@ -236,3 +237,45 @@ def add_dimensions(exporter: ExportSVG, show_measurements: bool,
     rib_text = Text(f"{rib_height:.1f}", DIMENSION_FONT_SIZE, font=FONT_NAME)
     rib_text = rib_text.move(Location((rib_dim_x + DIMENSION_FONT_SIZE, belly_edge_thickness - rib_height/2)))
     exporter.add_shape(rib_text, layer="text")
+
+    # Tailpiece to bridge line (string path to tailpiece)
+    tailpiece_base_y = belly_edge_thickness
+    tailpiece_top_y = belly_edge_thickness + tailpiece_height
+
+    # Always draw dotted line from tailpiece attachment to bridge top
+    tailpiece_to_bridge_line = Edge.make_line(
+        (body_length, tailpiece_top_y),
+        (bridge_top_x, bridge_top_y)
+    )
+    exporter.add_shape(tailpiece_to_bridge_line, layer="schematic_dotted")
+
+    # Draw the string break angle dimension at the bridge
+    if string_break_angle > 0:
+        for shape, layer in create_angle_dimension(
+            string_line, tailpiece_to_bridge_line,
+            label=f"{string_break_angle:.1f}°",
+            arc_radius=20, font_size=DIMENSION_FONT_SIZE,
+            text_inside=True
+        ):
+            exporter.add_shape(shape, layer=layer)
+
+    # Only show height reference and dimension when tailpiece_height > 0
+    if tailpiece_height > 0:
+        # Dotted reference line showing tailpiece height
+        tailpiece_ref_line = Edge.make_line(
+            (body_length, tailpiece_base_y),
+            (body_length, tailpiece_top_y)
+        )
+        exporter.add_shape(tailpiece_ref_line, layer="schematic_dotted")
+
+        # Dimension with arrows and label
+        tailpiece_dim_x = body_length + 20
+        dim_p1 = (tailpiece_dim_x, tailpiece_base_y)
+        dim_p2 = (tailpiece_dim_x, tailpiece_top_y)
+        tailpiece_dim_line = Edge.make_line(dim_p1, dim_p2)
+        exporter.add_shape(tailpiece_dim_line, layer="dimensions")
+        for arrow in create_dimension_arrows(dim_p1, dim_p2, 3.0):
+            exporter.add_shape(arrow, layer="arrows")
+        tailpiece_text = Text(f"{tailpiece_height:.1f}", DIMENSION_FONT_SIZE, font=FONT_NAME)
+        tailpiece_text = tailpiece_text.move(Location((tailpiece_dim_x + DIMENSION_FONT_SIZE, tailpiece_base_y + tailpiece_height/2)))
+        exporter.add_shape(tailpiece_text, layer="text")

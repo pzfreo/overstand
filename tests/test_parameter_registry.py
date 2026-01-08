@@ -34,8 +34,8 @@ def test_registry_validates_on_import():
 
 def test_registry_has_expected_count():
     """Test registry contains expected number of parameters"""
-    # Should have ~53 parameters total (21 input + 30 output + 2 conditional)
-    assert 50 <= len(PARAMETER_REGISTRY) <= 60
+    # Should have ~61 parameters total (21 input + ~38 output + 2 conditional)
+    assert 55 <= len(PARAMETER_REGISTRY) <= 70
 
 
 def test_all_keys_are_snake_case():
@@ -304,6 +304,55 @@ def test_validate_registry_function():
     """Test that validate_registry function works"""
     # Should not raise an exception
     validate_registry()
+
+
+def test_tailpiece_height_parameter():
+    """Test tailpiece_height input parameter exists with correct properties"""
+    assert 'tailpiece_height' in PARAMETER_REGISTRY
+    param = PARAMETER_REGISTRY['tailpiece_height']
+
+    assert param.role == ParameterRole.INPUT_ONLY
+    assert param.param_type == ParameterType.NUMERIC
+    assert param.unit == 'mm'
+    assert param.input_config is not None
+    assert param.input_config.default == 0.0
+    assert param.input_config.min_val == 0.0
+    assert param.input_config.category == 'Advanced Geometry'
+
+
+def test_string_break_angle_parameter():
+    """Test string_break_angle output parameter exists with correct properties"""
+    assert 'string_break_angle' in PARAMETER_REGISTRY
+    param = PARAMETER_REGISTRY['string_break_angle']
+
+    assert param.role == ParameterRole.OUTPUT_ONLY
+    assert param.param_type == ParameterType.NUMERIC
+    assert param.unit == '°'
+    assert param.output_config is not None
+    assert param.output_config.visible == True
+    assert param.output_config.category == 'Geometry'
+
+
+def test_viol_break_angle_display_name():
+    """Test that break_angle parameter has updated display name"""
+    assert 'break_angle' in PARAMETER_REGISTRY
+    param = PARAMETER_REGISTRY['break_angle']
+
+    assert param.display_name == 'Viol Back Break Angle'
+    assert param.role == ParameterRole.INPUT_ONLY
+
+
+def test_afterlength_angle_parameter():
+    """Test afterlength_angle output parameter exists with correct properties"""
+    assert 'afterlength_angle' in PARAMETER_REGISTRY
+    param = PARAMETER_REGISTRY['afterlength_angle']
+
+    assert param.role == ParameterRole.OUTPUT_ONLY
+    assert param.param_type == ParameterType.NUMERIC
+    assert param.unit == '°'
+    assert param.output_config is not None
+    assert param.output_config.visible == True
+    assert param.output_config.category == 'Geometry'
 
 
 if __name__ == '__main__':

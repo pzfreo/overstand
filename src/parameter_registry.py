@@ -447,6 +447,36 @@ PARAMETER_REGISTRY: Dict[str, UnifiedParameter] = {
         )
     ),
 
+    'string_break_angle': UnifiedParameter(
+        key='string_break_angle',
+        display_name='String Break Angle',
+        param_type=ParameterType.NUMERIC,
+        unit='°',
+        description='Angle the string makes as it breaks over the bridge toward the tailpiece',
+        role=ParameterRole.OUTPUT_ONLY,
+        output_config=OutputConfig(
+            decimals=1,
+            visible=True,
+            category='Geometry',
+            order=8
+        )
+    ),
+
+    'afterlength_angle': UnifiedParameter(
+        key='afterlength_angle',
+        display_name='Afterlength Angle',
+        param_type=ParameterType.NUMERIC,
+        unit='°',
+        description='Angle of the string afterlength (bridge to tailpiece) relative to the ribs',
+        role=ParameterRole.OUTPUT_ONLY,
+        output_config=OutputConfig(
+            decimals=1,
+            visible=True,
+            category='Geometry',
+            order=9
+        )
+    ),
+
     # ============================================
     # BASIC DIMENSION PARAMETERS (Input Only)
     # ============================================
@@ -480,7 +510,7 @@ PARAMETER_REGISTRY: Dict[str, UnifiedParameter] = {
             default=12,
             step=1,
             visible_when={'instrument_family': 'GUITAR_MANDOLIN'},
-            category='Basic Dimensions'
+            category='Fret Configuration'
         )
     ),
 
@@ -497,7 +527,7 @@ PARAMETER_REGISTRY: Dict[str, UnifiedParameter] = {
             default=7,
             step=1,
             visible_when={'instrument_family': ['VIOL', 'GUITAR_MANDOLIN']},
-            category='Construction'
+            category='Fret Configuration'
         )
     ),
 
@@ -594,6 +624,22 @@ PARAMETER_REGISTRY: Dict[str, UnifiedParameter] = {
             default=33.0,
             step=0.1,
             category='Basic Dimensions'
+        )
+    ),
+
+    'tailpiece_height': UnifiedParameter(
+        key='tailpiece_height',
+        display_name='Tailpiece Height',
+        param_type=ParameterType.NUMERIC,
+        unit='mm',
+        description='Tailpiece height above the edge of the belly at the bottom end of the instrument',
+        role=ParameterRole.INPUT_ONLY,
+        input_config=InputConfig(
+            min_val=0.0,
+            max_val=100.0,
+            default=0.0,
+            step=0.1,
+            category='Advanced Geometry'
         )
     ),
 
@@ -764,7 +810,7 @@ PARAMETER_REGISTRY: Dict[str, UnifiedParameter] = {
 
     'break_angle': UnifiedParameter(
         key='break_angle',
-        display_name='Break Angle',
+        display_name='Viol Back Break Angle',
         param_type=ParameterType.NUMERIC,
         unit='°',
         description='Angle at which the back breaks (viol back construction)',
@@ -985,6 +1031,21 @@ PARAMETER_REGISTRY: Dict[str, UnifiedParameter] = {
         )
     ),
 
+    'neck_line_angle_deg': UnifiedParameter(
+        key='neck_line_angle_deg',
+        display_name='Neck Line Angle (deg)',
+        param_type=ParameterType.NUMERIC,
+        unit='°',
+        description='Angle of neck center line',
+        role=ParameterRole.OUTPUT_ONLY,
+        output_config=OutputConfig(
+            decimals=1,
+            visible=True,
+            category='Geometry',
+            order=10
+        )
+    ),
+
     'nut_top_x': UnifiedParameter(
         key='nut_top_x',
         display_name='Nut Top X',
@@ -1087,6 +1148,21 @@ PARAMETER_REGISTRY: Dict[str, UnifiedParameter] = {
             visible=False,
             category='Internal',
             order=111
+        )
+    ),
+
+    'fb_direction_angle_deg': UnifiedParameter(
+        key='fb_direction_angle_deg',
+        display_name='Fingerboard Direction Angle (deg)',
+        param_type=ParameterType.NUMERIC,
+        unit='°',
+        description='Angle of fingerboard direction',
+        role=ParameterRole.OUTPUT_ONLY,
+        output_config=OutputConfig(
+            decimals=1,
+            visible=True,
+            category='Geometry',
+            order=11
         )
     ),
 
@@ -1354,6 +1430,8 @@ def get_parameter_categories() -> List[str]:
         'General',
         'Basic Dimensions',
         'Fingerboard Dimensions',
+        'Fret Configuration',
+        'Advanced Geometry',
         'Viol Construction',
         'Display Options'
     ]
