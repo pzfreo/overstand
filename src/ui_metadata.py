@@ -176,6 +176,7 @@ SECTIONS = {
             'body_stop',
             'nut_relative_to_ribs',
             'string_break_angle',
+            'downward_force_percent',
             'fb_thickness_at_nut',
             'fb_thickness_at_join'
         ],
@@ -219,6 +220,21 @@ SECTIONS = {
         description='Internal geometry and detailed calculations for advanced users'
     )
 }
+
+
+# ============================================
+# KEY MEASUREMENTS CONFIGURATION
+# ============================================
+# These are displayed prominently at the top of the parameters panel.
+# The first item is shown as the primary (larger) metric.
+# Use 'key_conditional' for parameters that change based on instrument family.
+
+KEY_MEASUREMENTS = [
+    {'key': 'neck_angle', 'primary': True},
+    {'key': 'neck_stop', 'key_conditional': {'GUITAR_MANDOLIN': 'body_stop'}},
+    {'key': 'nut_relative_to_ribs'},
+    {'key': 'string_break_angle'}
+]
 
 
 # ============================================
@@ -317,7 +333,8 @@ def get_ui_metadata_bundle() -> dict:
         # Use to_input_metadata() explicitly for input params to ensure correct format
         # (CONDITIONAL params have both configs, to_dict() would return output format)
         'parameters': {k: v.to_input_metadata() for k, v in input_params.items()},
-        'derived_values': {k: v.to_dict() for k, v in output_params.items()}
+        'derived_values': {k: v.to_dict() for k, v in output_params.items()},
+        'key_measurements': KEY_MEASUREMENTS
     }
 
 

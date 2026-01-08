@@ -295,6 +295,25 @@ class TestGetUIMetadata:
                     assert param_name in parameters, \
                         f"Section '{section_id}' references parameter '{param_name}' but it's not in parameters dict"
 
+    def test_metadata_has_key_measurements(self):
+        """Test that key_measurements config is included in metadata."""
+        result = json.loads(get_ui_metadata())
+        metadata = result['metadata']
+
+        assert 'key_measurements' in metadata, "key_measurements missing from metadata"
+        key_measurements = metadata['key_measurements']
+
+        assert isinstance(key_measurements, list), "key_measurements should be a list"
+        assert len(key_measurements) > 0, "key_measurements should not be empty"
+
+        # Check expected key measurements are present
+        keys = [m['key'] for m in key_measurements]
+        assert 'neck_angle' in keys, "neck_angle should be in key_measurements"
+        assert 'string_break_angle' in keys, "string_break_angle should be in key_measurements"
+
+        # Check first item has primary flag
+        assert key_measurements[0].get('primary') is True, "First key measurement should be primary"
+
 
 class TestGetPresets:
     """Tests for get_presets function."""

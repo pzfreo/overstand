@@ -105,6 +105,12 @@ def calculate_derived_values(params: Dict[str, Any]) -> Dict[str, Any]:
     # Calculate string break angle at the bridge
     derived['string_break_angle'] = 180 - derived['string_angle_to_ribs'] - derived['afterlength_angle']
 
+    # Calculate percentage of string tension pushing downward on the belly
+    # Convert angles from degrees to radians for sin calculation
+    string_angle_rad = derived['string_angle_to_ribs'] * math.pi / 180
+    afterlength_angle_rad = derived['afterlength_angle'] * math.pi / 180
+    derived['downward_force_percent'] = (math.sin(string_angle_rad) + math.sin(afterlength_angle_rad)) * 100
+
     return derived
 
 def generate_multi_view_svg(params: Dict[str, Any]) -> Dict[str, str]:
@@ -173,7 +179,8 @@ def generate_side_view_svg(params: Dict[str, Any], show_measurements: bool = Tru
         derived['nut_perpendicular_intersection_x'], derived['nut_perpendicular_intersection_y'],
         derived['nut_to_perpendicular_distance'],
         tailpiece_height=params.get('tailpiece_height', 0),
-        string_break_angle=derived['string_break_angle']
+        string_break_angle=derived['string_break_angle'],
+        downward_force_percent=derived['downward_force_percent']
     )
     
     return exporter.write(filename=None)

@@ -410,17 +410,24 @@ function updateCoreMetricsPanel(values, metadata, params) {
     const panel = document.getElementById('core-metrics-grid');
     if (!panel) return;
 
-    // Determine if we're in Fret Join mode (Guitar/Mandolin family)
-    const isFretJoinMode = params && params.instrument_family === 'GUITAR_MANDOLIN';
-
-    // Define core metrics to display (in order, with primary flag for neck angle)
-    // In Fret Join mode, show "Body Stop" instead of "Neck Stop"
-    // Note: Keys use snake_case to match backend parameter registry
-    const coreMetrics = [
+    // Get key measurements config from metadata, or use fallback
+    const keyMeasurementsConfig = state.uiMetadata?.key_measurements || [
         { key: 'neck_angle', primary: true },
-        { key: isFretJoinMode ? 'body_stop' : 'neck_stop' },
-        { key: 'nut_relative_to_ribs' }
+        { key: 'neck_stop', key_conditional: { 'GUITAR_MANDOLIN': 'body_stop' } },
+        { key: 'nut_relative_to_ribs' },
+        { key: 'string_break_angle' }
     ];
+
+    // Build metrics list, resolving conditional keys based on instrument family
+    const instrumentFamily = params?.instrument_family || 'VIOLIN';
+    const coreMetrics = keyMeasurementsConfig.map(metric => {
+        let key = metric.key;
+        // Check if there's a conditional override for this instrument family
+        if (metric.key_conditional && metric.key_conditional[instrumentFamily]) {
+            key = metric.key_conditional[instrumentFamily];
+        }
+        return { key, primary: metric.primary || false };
+    });
 
     panel.innerHTML = '';
 

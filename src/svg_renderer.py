@@ -172,7 +172,8 @@ def add_dimensions(exporter: ExportSVG, show_measurements: bool,
                   string_y_at_fb_end: float, string_height_at_fb_end: float,
                   intersect_x: float, intersect_y: float,
                   nut_to_perp_distance: float, tailpiece_height: float = 0.0,
-                  string_break_angle: float = 0.0) -> None:
+                  string_break_angle: float = 0.0,
+                  downward_force_percent: float = 0.0) -> None:
     """Add dimension annotations."""
     if show_measurements:
         rib_to_nut_feature_line = Edge.make_line((reference_line_end_x, 0), (reference_line_end_x, nut_top_y))
@@ -216,6 +217,12 @@ def add_dimensions(exporter: ExportSVG, show_measurements: bool,
                                                offset_x=8, font_size=DIMENSION_FONT_SIZE):
         exporter.add_shape(shape, layer=layer)
 
+    # Bridge height dimension
+    bridge_feature_line = Edge.make_line((body_stop, arching_height), (body_stop, arching_height + bridge_height))
+    for shape, layer in create_vertical_dimension(bridge_feature_line, f"{bridge_height:.1f}",
+                                               offset_x=8, font_size=DIMENSION_FONT_SIZE):
+        exporter.add_shape(shape, layer=layer)
+
     bottom_y = belly_edge_thickness - rib_height
     body_stop_feature_line = Edge.make_line((0, bottom_y), (body_stop, bottom_y))
     for shape, layer in create_horizontal_dimension(body_stop_feature_line, f"{body_stop:.1f}",
@@ -249,13 +256,13 @@ def add_dimensions(exporter: ExportSVG, show_measurements: bool,
     )
     exporter.add_shape(tailpiece_to_bridge_line, layer="schematic_dotted")
 
-    # Draw the string break angle dimension at the bridge
+    # Draw the string break angle dimension at the bridge (arc and label only, no lines)
     if string_break_angle > 0:
         for shape, layer in create_angle_dimension(
             string_line, tailpiece_to_bridge_line,
             label=f"{string_break_angle:.1f}°",
-            arc_radius=20, font_size=DIMENSION_FONT_SIZE,
-            text_inside=True
+            arc_radius=14, font_size=DIMENSION_FONT_SIZE,
+            text_inside=True, line_extension=0
         ):
             exporter.add_shape(shape, layer=layer)
 
@@ -279,3 +286,43 @@ def add_dimensions(exporter: ExportSVG, show_measurements: bool,
         tailpiece_text = Text(f"{tailpiece_height:.1f}", DIMENSION_FONT_SIZE, font=FONT_NAME)
         tailpiece_text = tailpiece_text.move(Location((tailpiece_dim_x + DIMENSION_FONT_SIZE, tailpiece_base_y + tailpiece_height/2)))
         exporter.add_shape(tailpiece_text, layer="text")
+
+    # Downward force arrow and label (to the left of the bridge)
+    if downward_force_percent > 0:
+        arrow_x = body_stop - 15
+        arrow_mid_y = arching_height + bridge_height / 2
+        arrow_half_length = bridge_height / 4
+        arrow_top_y = arrow_mid_y + arrow_half_length
+        arrow_bottom_y = arrow_mid_y - arrow_half_length
+
+        # Arrow shaft
+        arrow_shaft = Edge.make_line((arrow_x, arrow_top_y), (arrow_x, arrow_bottom_y))
+        exporter.add_shape(arrow_shaft, layer="arrows")
+
+        # Arrowhead (pointing down)
+        arrow_head_size = 2.0
+        arrow_head = Polygon([
+            (arrow_x, arrow_bottom_y),
+            (arrow_x - arrow_head_size, arrow_bottom_y + arrow_head_size * 1.5),
+            (arrow_x + arrow_head_size, arrow_bottom_y + arrow_head_size * 1.5)
+        ], filled=True)
+        exporter.add_shape(arrow_head, layer="arrows")
+
+        # Label (red, right-justified, two lines)
+        line_height = DIMENSION_FONT_SIZE * 1.2
+        right_edge = arrow_x - 3
+
+        # Top line: "xx%" - numbers and % are wider chars
+        percent_str = f"{downward_force_percent:.0f}%"
+        percent_char_width = DIMENSION_FONT_SIZE * 0.6
+        percent_width = len(percent_str) * percent_char_width
+        percent_text = Text(percent_str, DIMENSION_FONT_SIZE, font=FONT_NAME)
+        percent_text = percent_text.move(Location((right_edge - percent_width, arrow_mid_y + line_height / 2)))
+        exporter.add_shape(percent_text, layer="dimensions")
+
+        # Bottom line: "downforce" - lowercase letters are narrower
+        downforce_char_width = DIMENSION_FONT_SIZE * 0.5
+        downforce_width = 7 * downforce_char_width
+        downforce_text = Text("downforce", DIMENSION_FONT_SIZE, font=FONT_NAME)
+        downforce_text = downforce_text.move(Location((right_edge - downforce_width, arrow_mid_y - line_height / 2)))
+        exporter.add_shape(downforce_text, layer="dimensions")
