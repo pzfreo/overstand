@@ -172,7 +172,8 @@ def add_dimensions(exporter: ExportSVG, show_measurements: bool,
                   string_y_at_fb_end: float, string_height_at_fb_end: float,
                   intersect_x: float, intersect_y: float,
                   nut_to_perp_distance: float, tailpiece_height: float = 0.0,
-                  string_break_angle: float = 0.0) -> None:
+                  string_break_angle: float = 0.0,
+                  downward_force_percent: float = 0.0) -> None:
     """Add dimension annotations."""
     if show_measurements:
         rib_to_nut_feature_line = Edge.make_line((reference_line_end_x, 0), (reference_line_end_x, nut_top_y))
@@ -285,3 +286,28 @@ def add_dimensions(exporter: ExportSVG, show_measurements: bool,
         tailpiece_text = Text(f"{tailpiece_height:.1f}", DIMENSION_FONT_SIZE, font=FONT_NAME)
         tailpiece_text = tailpiece_text.move(Location((tailpiece_dim_x + DIMENSION_FONT_SIZE, tailpiece_base_y + tailpiece_height/2)))
         exporter.add_shape(tailpiece_text, layer="text")
+
+    # Downward force arrow and label (to the left of the bridge)
+    if downward_force_percent > 0:
+        arrow_x = body_stop - 20
+        arrow_top_y = arching_height + bridge_height - 5
+        arrow_bottom_y = arching_height + 5
+        arrow_length = arrow_top_y - arrow_bottom_y
+
+        # Arrow shaft
+        arrow_shaft = Edge.make_line((arrow_x, arrow_top_y), (arrow_x, arrow_bottom_y))
+        exporter.add_shape(arrow_shaft, layer="arrows")
+
+        # Arrowhead (pointing down)
+        arrow_head_size = 3.0
+        arrow_head = Polygon([
+            (arrow_x, arrow_bottom_y),
+            (arrow_x - arrow_head_size, arrow_bottom_y + arrow_head_size * 1.5),
+            (arrow_x + arrow_head_size, arrow_bottom_y + arrow_head_size * 1.5)
+        ], filled=True)
+        exporter.add_shape(arrow_head, layer="arrows")
+
+        # Label
+        downforce_text = Text(f"{downward_force_percent:.0f}% downforce", DIMENSION_FONT_SIZE, font=FONT_NAME)
+        downforce_text = downforce_text.move(Location((arrow_x - 25, arrow_top_y + 5)))
+        exporter.add_shape(downforce_text, layer="text")
