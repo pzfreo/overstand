@@ -82,14 +82,14 @@ def test_afterlength_angle_calculation():
     result = calculate_derived_values(params)
 
     assert 'afterlength_angle' in result
-    # Afterlength angle should be negative (string goes downward from bridge to tailpiece)
-    assert result['afterlength_angle'] < 0
-    # Should be within reasonable range (-45 to 0 degrees typically)
-    assert -45 < result['afterlength_angle'] < 0
+    # Afterlength angle should be positive (downward slope from bridge to tailpiece)
+    assert result['afterlength_angle'] > 0
+    # Should be within reasonable range (0 to 45 degrees typically)
+    assert 0 < result['afterlength_angle'] < 45
 
 
-def test_afterlength_angle_increases_with_tailpiece_height():
-    """Test that afterlength angle increases when tailpiece height increases"""
+def test_afterlength_angle_decreases_with_tailpiece_height():
+    """Test that afterlength angle decreases when tailpiece height increases"""
     params = get_default_values()
     params['instrument_family'] = InstrumentFamily.VIOLIN.name
 
@@ -99,5 +99,5 @@ def test_afterlength_angle_increases_with_tailpiece_height():
     params['tailpiece_height'] = 10
     result_with_height = calculate_derived_values(params)
 
-    # Higher tailpiece means less negative angle (string goes down less steeply)
-    assert result_with_height['afterlength_angle'] > result_no_height['afterlength_angle']
+    # Higher tailpiece means smaller angle (string goes down less steeply)
+    assert result_with_height['afterlength_angle'] < result_no_height['afterlength_angle']
