@@ -47,6 +47,12 @@ fi
 BUILD_ID=$(date +%s)
 BUILD_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
+# Fetch full git history if shallow clone (Vercel uses shallow clones)
+if [ -f .git/shallow ]; then
+    echo "📥 Fetching full git history for accurate version count..."
+    git fetch --unshallow 2>/dev/null || true
+fi
+
 # Get commit count for version number (monotonically increasing)
 COMMIT_COUNT=$(git rev-list --count HEAD 2>/dev/null || echo "0")
 
