@@ -306,5 +306,41 @@ def test_validate_registry_function():
     validate_registry()
 
 
+def test_tailpiece_height_parameter():
+    """Test tailpiece_height input parameter exists with correct properties"""
+    assert 'tailpiece_height' in PARAMETER_REGISTRY
+    param = PARAMETER_REGISTRY['tailpiece_height']
+
+    assert param.role == ParameterRole.INPUT_ONLY
+    assert param.param_type == ParameterType.NUMERIC
+    assert param.unit == 'mm'
+    assert param.input_config is not None
+    assert param.input_config.default == 0.0
+    assert param.input_config.min_val == 0.0
+    assert param.input_config.category == 'Advanced Geometry'
+
+
+def test_string_break_angle_parameter():
+    """Test string_break_angle output parameter exists with correct properties"""
+    assert 'string_break_angle' in PARAMETER_REGISTRY
+    param = PARAMETER_REGISTRY['string_break_angle']
+
+    assert param.role == ParameterRole.OUTPUT_ONLY
+    assert param.param_type == ParameterType.NUMERIC
+    assert param.unit == '°'
+    assert param.output_config is not None
+    assert param.output_config.visible == True
+    assert param.output_config.category == 'Geometry'
+
+
+def test_viol_break_angle_display_name():
+    """Test that break_angle parameter has updated display name"""
+    assert 'break_angle' in PARAMETER_REGISTRY
+    param = PARAMETER_REGISTRY['break_angle']
+
+    assert param.display_name == 'Viol Back Break Angle'
+    assert param.role == ParameterRole.INPUT_ONLY
+
+
 if __name__ == '__main__':
     pytest.main([__file__, '-v'])

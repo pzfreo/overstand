@@ -171,7 +171,7 @@ def add_dimensions(exporter: ExportSVG, show_measurements: bool,
                   fb_surface_point_y: float, string_x_at_fb_end: float,
                   string_y_at_fb_end: float, string_height_at_fb_end: float,
                   intersect_x: float, intersect_y: float,
-                  nut_to_perp_distance: float) -> None:
+                  nut_to_perp_distance: float, tailpiece_height: float = 0.0) -> None:
     """Add dimension annotations."""
     if show_measurements:
         rib_to_nut_feature_line = Edge.make_line((reference_line_end_x, 0), (reference_line_end_x, nut_top_y))
@@ -236,3 +236,27 @@ def add_dimensions(exporter: ExportSVG, show_measurements: bool,
     rib_text = Text(f"{rib_height:.1f}", DIMENSION_FONT_SIZE, font=FONT_NAME)
     rib_text = rib_text.move(Location((rib_dim_x + DIMENSION_FONT_SIZE, belly_edge_thickness - rib_height/2)))
     exporter.add_shape(rib_text, layer="text")
+
+    # Tailpiece height reference line and dimension
+    if tailpiece_height > 0:
+        tailpiece_base_y = belly_edge_thickness
+        tailpiece_top_y = belly_edge_thickness + tailpiece_height
+
+        # Dotted reference line showing tailpiece height
+        tailpiece_ref_line = Edge.make_line(
+            (body_length, tailpiece_base_y),
+            (body_length, tailpiece_top_y)
+        )
+        exporter.add_shape(tailpiece_ref_line, layer="schematic_dotted")
+
+        # Dimension with arrows and label
+        tailpiece_dim_x = body_length + 20
+        dim_p1 = (tailpiece_dim_x, tailpiece_base_y)
+        dim_p2 = (tailpiece_dim_x, tailpiece_top_y)
+        tailpiece_dim_line = Edge.make_line(dim_p1, dim_p2)
+        exporter.add_shape(tailpiece_dim_line, layer="dimensions")
+        for arrow in create_dimension_arrows(dim_p1, dim_p2, 3.0):
+            exporter.add_shape(arrow, layer="arrows")
+        tailpiece_text = Text(f"{tailpiece_height:.1f}", DIMENSION_FONT_SIZE, font=FONT_NAME)
+        tailpiece_text = tailpiece_text.move(Location((tailpiece_dim_x + DIMENSION_FONT_SIZE, tailpiece_base_y + tailpiece_height/2)))
+        exporter.add_shape(tailpiece_text, layer="text")

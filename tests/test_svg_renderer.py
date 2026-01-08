@@ -436,3 +436,38 @@ class TestFullSVGGeneration:
 
         # Should contain various SVG elements
         assert '<path' in svg or '<line' in svg or '<rect' in svg
+
+    def test_svg_with_tailpiece_height(self, default_violin_params):
+        """Test that SVG includes tailpiece dimension when tailpiece_height > 0."""
+        from instrument_geometry import generate_side_view_svg
+
+        # Set tailpiece height to 15mm
+        params = default_violin_params.copy()
+        params['tailpiece_height'] = 15.0
+
+        svg = generate_side_view_svg(params)
+
+        # Should contain the dimension value
+        assert '15.0' in svg, "SVG should contain tailpiece height dimension"
+
+    def test_svg_without_tailpiece_height(self, default_violin_params):
+        """Test that SVG excludes tailpiece dimension when tailpiece_height = 0."""
+        from instrument_geometry import generate_side_view_svg
+
+        # Ensure tailpiece height is 0
+        params = default_violin_params.copy()
+        params['tailpiece_height'] = 0.0
+
+        svg = generate_side_view_svg(params)
+
+        # Count dotted lines - should not include tailpiece reference
+        import re
+        dotted_count_zero = len(re.findall(r'stroke-dasharray="1,2"', svg))
+
+        # Now with tailpiece height
+        params['tailpiece_height'] = 10.0
+        svg_with = generate_side_view_svg(params)
+        dotted_count_with = len(re.findall(r'stroke-dasharray="1,2"', svg_with))
+
+        # Should have more dotted lines with tailpiece height
+        assert dotted_count_with > dotted_count_zero

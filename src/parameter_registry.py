@@ -447,6 +447,21 @@ PARAMETER_REGISTRY: Dict[str, UnifiedParameter] = {
         )
     ),
 
+    'string_break_angle': UnifiedParameter(
+        key='string_break_angle',
+        display_name='String Break Angle',
+        param_type=ParameterType.NUMERIC,
+        unit='°',
+        description='Angle the string makes as it breaks over the bridge toward the tailpiece',
+        role=ParameterRole.OUTPUT_ONLY,
+        output_config=OutputConfig(
+            decimals=1,
+            visible=True,
+            category='Geometry',
+            order=8
+        )
+    ),
+
     # ============================================
     # BASIC DIMENSION PARAMETERS (Input Only)
     # ============================================
@@ -497,7 +512,7 @@ PARAMETER_REGISTRY: Dict[str, UnifiedParameter] = {
             default=7,
             step=1,
             visible_when={'instrument_family': ['VIOL', 'GUITAR_MANDOLIN']},
-            category='Construction'
+            category='Fret Configuration'
         )
     ),
 
@@ -594,6 +609,22 @@ PARAMETER_REGISTRY: Dict[str, UnifiedParameter] = {
             default=33.0,
             step=0.1,
             category='Basic Dimensions'
+        )
+    ),
+
+    'tailpiece_height': UnifiedParameter(
+        key='tailpiece_height',
+        display_name='Tailpiece Height',
+        param_type=ParameterType.NUMERIC,
+        unit='mm',
+        description='Tailpiece height above the edge of the belly at the bottom end of the instrument',
+        role=ParameterRole.INPUT_ONLY,
+        input_config=InputConfig(
+            min_val=0.0,
+            max_val=100.0,
+            default=0.0,
+            step=0.1,
+            category='Advanced Geometry'
         )
     ),
 
@@ -764,7 +795,7 @@ PARAMETER_REGISTRY: Dict[str, UnifiedParameter] = {
 
     'break_angle': UnifiedParameter(
         key='break_angle',
-        display_name='Break Angle',
+        display_name='Viol Back Break Angle',
         param_type=ParameterType.NUMERIC,
         unit='°',
         description='Angle at which the back breaks (viol back construction)',
@@ -1354,6 +1385,8 @@ def get_parameter_categories() -> List[str]:
         'General',
         'Basic Dimensions',
         'Fingerboard Dimensions',
+        'Fret Configuration',
+        'Advanced Geometry',
         'Viol Construction',
         'Display Options'
     ]
