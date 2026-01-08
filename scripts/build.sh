@@ -48,24 +48,16 @@ BUILD_ID=$(date +%s)
 BUILD_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
 # Fetch full git history (Vercel uses shallow clones with no remotes)
-echo "📥 Fetching full git history for accurate version count..."
 if [ -f .git/shallow ]; then
     # Add remote if missing (Vercel doesn't configure remotes)
     if ! git remote | grep -q origin; then
         git remote add origin "https://github.com/${VERCEL_GIT_REPO_OWNER:-pzfreo}/${VERCEL_GIT_REPO_SLUG:-overstand}.git"
-        echo "  [Debug] Added origin remote"
     fi
-    git fetch --unshallow origin 2>&1 || echo "  [Debug] unshallow failed"
+    git fetch --unshallow origin 2>/dev/null || true
 fi
 
 # Get commit count for version number (monotonically increasing)
 COMMIT_COUNT=$(git rev-list --count HEAD 2>/dev/null || echo "0")
-echo "  [Debug] Commit count: $COMMIT_COUNT"
-
-# Debug: Log Vercel environment variables
-echo "  [Debug] VERCEL_ENV=$VERCEL_ENV"
-echo "  [Debug] VERCEL_GIT_PULL_REQUEST_ID=$VERCEL_GIT_PULL_REQUEST_ID"
-echo "  [Debug] VERCEL_GIT_COMMIT_REF=$VERCEL_GIT_COMMIT_REF"
 
 # Version format: v1.{env}.{number}
 # - v1.prod.XX  = production (main branch), XX = commit count
