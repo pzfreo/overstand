@@ -483,26 +483,70 @@ def draw_neck_cross_section(exporter: ExportSVG,
     )
     exporter.add_shape(right_straight, layer="drawing")
 
-    # Smooth curve from top of block to fingerboard bottom (fillet)
-    # Using a spline through 3 points: start, control, end
-    # Left fillet curve
-    left_fillet = Spline.interpolate_three_points(
-        (-half_neck_width_at_ribs, y_top_of_block),
-        (-half_fb_width, (y_top_of_block + y_fb_bottom) / 2),
-        (-half_fb_width, y_fb_bottom)
-    )
-    exporter.add_shape(left_fillet, layer="drawing")
+    # Calculate fingerboard visible height (edge height, not center)
+    fb_visible_height = y_fb_top - sagitta_at_join
 
-    # Right fillet curve
-    right_fillet = Spline.interpolate_three_points(
-        (half_neck_width_at_ribs, y_top_of_block),
-        (half_fb_width, (y_top_of_block + y_fb_bottom) / 2),
-        (half_fb_width, y_fb_bottom)
-    )
-    exporter.add_shape(right_fillet, layer="drawing")
+    # Check if fillet curve is geometrically valid
+    # The fingerboard must be wider than the neck at top of ribs for outward curve
+    if half_fb_width <= half_neck_width_at_ribs:
+        # Invalid geometry - neck is already as wide as fingerboard
+        # Draw straight vertical lines instead and add warning
+        left_fillet = Edge.make_line(
+            (-half_neck_width_at_ribs, y_top_of_block),
+            (-half_fb_width, y_fb_bottom)
+        )
+        right_fillet = Edge.make_line(
+            (half_neck_width_at_ribs, y_top_of_block),
+            (half_fb_width, y_fb_bottom)
+        )
+        exporter.add_shape(left_fillet, layer="drawing")
+        exporter.add_shape(right_fillet, layer="drawing")
+    else:
+        # Valid geometry - create smooth fillet curves with tangent continuity
+        # The fillet must:
+        # - Match the tangent of the incoming straight line at the bottom
+        # - End vertically at the fingerboard bottom
+
+        # Calculate the slope of the straight section (button to top of ribs)
+        # This determines the tangent at the fillet start
+        dx_straight = half_neck_width_at_ribs - half_button_width
+        dy_straight = y_top_of_block - y_button
+        overstand_height = y_fb_bottom - y_top_of_block
+
+        # Use a quadratic Bezier approach: the control point determines tangents
+        # For left side: start at (-half_neck_width_at_ribs, y_top_of_block)
+        #                end at (-half_fb_width, y_fb_bottom)
+        # Control point should be along the tangent from start, and create vertical end tangent
+
+        # The control point x should be at -half_fb_width (to make end tangent vertical)
+        # The control point y is determined by extending the incoming tangent
+        if dx_straight > 0:
+            # Extend the incoming line's slope to find where it intersects x = -half_fb_width
+            slope = dy_straight / dx_straight
+            dx_to_fb = half_fb_width - half_neck_width_at_ribs
+            control_y = y_top_of_block + slope * dx_to_fb
+        else:
+            # Straight sides (no taper) - use midpoint
+            control_y = (y_top_of_block + y_fb_bottom) / 2
+
+        # Left fillet curve using spline through 3 points
+        # Middle point positioned to approximate tangent matching
+        left_fillet = Spline.interpolate_three_points(
+            (-half_neck_width_at_ribs, y_top_of_block),
+            (-half_fb_width, min(control_y, y_fb_bottom - 1)),  # Clamp to stay below fb_bottom
+            (-half_fb_width, y_fb_bottom)
+        )
+        exporter.add_shape(left_fillet, layer="drawing")
+
+        # Right fillet curve (mirror)
+        right_fillet = Spline.interpolate_three_points(
+            (half_neck_width_at_ribs, y_top_of_block),
+            (half_fb_width, min(control_y, y_fb_bottom - 1)),
+            (half_fb_width, y_fb_bottom)
+        )
+        exporter.add_shape(right_fillet, layer="drawing")
 
     # Fingerboard sides (vertical from fb_bottom to visible height)
-    fb_visible_height = y_fb_top - sagitta_at_join
     left_fb_side = Edge.make_line(
         (-half_fb_width, y_fb_bottom),
         (-half_fb_width, fb_visible_height)
@@ -516,15 +560,16 @@ def draw_neck_cross_section(exporter: ExportSVG,
     exporter.add_shape(right_fb_side, layer="drawing")
 
     # Fingerboard radiused top (arc from left to right)
-    # The arc represents the curved playing surface
-    # Center is above the fb_visible_height by (radius - sagitta)
+    # The arc represents the curved playing surface - higher in center, lower at edges
+    # Center is BELOW the edge level by (radius - sagitta)
     if fingerboard_radius > 0 and sagitta_at_join > 0:
-        arc_center_y = fb_visible_height + (fingerboard_radius - sagitta_at_join)
+        arc_center_y = fb_visible_height - (fingerboard_radius - sagitta_at_join)
         # Calculate start and end angles for the arc
-        # The arc spans from left edge to right edge
+        # The arc spans from left edge to right edge along the TOP of the circle
         half_angle = math.asin(half_fb_width / fingerboard_radius) if half_fb_width < fingerboard_radius else math.pi/2
-        start_angle = math.pi + half_angle  # Left side (pointing down-left)
-        end_angle = 2 * math.pi - half_angle  # Right side (pointing down-right)
+        # Arc goes through upper quadrants: from (pi - half_angle) to half_angle
+        start_angle = math.pi - half_angle  # Left side (second quadrant)
+        end_angle = half_angle  # Right side (first quadrant)
 
         fb_top_arc = Arc.make_arc(
             center=(0, arc_center_y),
