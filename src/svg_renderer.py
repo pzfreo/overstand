@@ -561,25 +561,20 @@ def draw_neck_cross_section(exporter: ExportSVG,
 
     # Fingerboard radiused top (arc from left to right)
     # The arc represents the curved playing surface - higher in center, lower at edges
-    # Center is BELOW the edge level by (radius - sagitta)
-    if fingerboard_radius > 0 and sagitta_at_join > 0:
-        arc_center_y = fb_visible_height - (fingerboard_radius - sagitta_at_join)
-        # Calculate start and end angles for the arc
-        # The arc spans from left edge to right edge along the TOP of the circle
-        half_angle = math.asin(half_fb_width / fingerboard_radius) if half_fb_width < fingerboard_radius else math.pi/2
-        # Arc goes through upper quadrants: from (pi - half_angle) to half_angle
-        start_angle = math.pi - half_angle  # Left side (second quadrant)
-        end_angle = half_angle  # Right side (first quadrant)
-
-        fb_top_arc = Arc.make_arc(
-            center=(0, arc_center_y),
-            radius=fingerboard_radius,
-            start_angle=start_angle,
-            end_angle=end_angle
+    # The sagitta is how much higher the center is than the edges
+    if sagitta_at_join > 0:
+        # Use a spline through 3 points to create the gentle curve:
+        # - Left edge: (-half_fb_width, fb_visible_height)
+        # - Center peak: (0, fb_visible_height + sagitta)
+        # - Right edge: (half_fb_width, fb_visible_height)
+        fb_top_curve = Spline.interpolate_three_points(
+            (-half_fb_width, fb_visible_height),
+            (0, fb_visible_height + sagitta_at_join),
+            (half_fb_width, fb_visible_height)
         )
-        exporter.add_shape(fb_top_arc, layer="drawing")
+        exporter.add_shape(fb_top_curve, layer="drawing")
     else:
-        # Fallback to flat top if no radius
+        # Flat top if no sagitta
         fb_top_line = Edge.make_line(
             (-half_fb_width, fb_visible_height),
             (half_fb_width, fb_visible_height)
