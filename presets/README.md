@@ -104,7 +104,6 @@ The easiest way to create a new preset:
 - `arching_height`: Body arching height (mm)
 
 ### Advanced Geometry
-- `neck_stop`: Nut to neck/body join (mm) [calculated for VIOLIN/VIOL]
 - `fingerboard_length`: Total fingerboard length (mm)
 - `rib_height`: Body rib height (mm)
 - `belly_edge_thickness`: Top plate edge thickness (mm)

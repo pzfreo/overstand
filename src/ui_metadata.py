@@ -105,7 +105,6 @@ SECTIONS = {
         default_expanded=False,  # Collapsed by default
         order=2,
         parameter_names=[
-            'neck_stop',
             'fingerboard_length',
             'rib_height',
             'belly_edge_thickness',

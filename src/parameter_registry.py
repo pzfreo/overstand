@@ -374,22 +374,17 @@ PARAMETER_REGISTRY: Dict[str, UnifiedParameter] = {
         )
     ),
 
+    # ============================================
+    # OUTPUT ONLY PARAMETERS (Always Calculated)
+    # ============================================
+
     'neck_stop': UnifiedParameter(
         key='neck_stop',
         display_name='Neck Stop',
         param_type=ParameterType.NUMERIC,
         unit='mm',
         description='Horizontal distance from body join to nut',
-        role=ParameterRole.CONDITIONAL,
-        is_output_for={'VIOLIN': True, 'VIOL': True, 'GUITAR_MANDOLIN': True},
-        input_config=InputConfig(
-            min_val=10.0,
-            max_val=500.0,
-            default=130.0,
-            step=0.1,
-            visible_when={'instrument_family': ['VIOLIN', 'VIOL']},
-            category='Basic Dimensions'
-        ),
+        role=ParameterRole.OUTPUT_ONLY,
         output_config=OutputConfig(
             decimals=1,
             visible=True,
@@ -397,10 +392,6 @@ PARAMETER_REGISTRY: Dict[str, UnifiedParameter] = {
             order=3
         )
     ),
-
-    # ============================================
-    # OUTPUT ONLY PARAMETERS (Always Calculated)
-    # ============================================
 
     'neck_angle': UnifiedParameter(
         key='neck_angle',

@@ -106,19 +106,14 @@ def test_body_stop_is_conditional():
     assert param.is_output_for['GUITAR_MANDOLIN'] == True
 
 
-def test_neck_stop_is_conditional():
-    """Test that neck_stop is properly defined as CONDITIONAL"""
+def test_neck_stop_is_output_only():
+    """Test that neck_stop is properly defined as OUTPUT_ONLY"""
     assert 'neck_stop' in PARAMETER_REGISTRY
     param = PARAMETER_REGISTRY['neck_stop']
 
-    assert param.role == ParameterRole.CONDITIONAL
-    assert param.input_config is not None
+    assert param.role == ParameterRole.OUTPUT_ONLY
+    assert param.input_config is None
     assert param.output_config is not None
-
-    # Should be output for all families
-    assert param.is_output_for['VIOLIN'] == True
-    assert param.is_output_for['VIOL'] == True
-    assert param.is_output_for['GUITAR_MANDOLIN'] == True
 
 
 def test_enum_parameters_have_enum_class():
@@ -286,10 +281,10 @@ def test_parameter_counts_by_role():
     for param in PARAMETER_REGISTRY.values():
         roles_count[param.role] += 1
 
-    # Should have around 21 INPUT_ONLY, 30 OUTPUT_ONLY, 2 CONDITIONAL
+    # Should have around 21 INPUT_ONLY, 31 OUTPUT_ONLY, 1 CONDITIONAL
     assert roles_count[ParameterRole.INPUT_ONLY] >= 15
     assert roles_count[ParameterRole.OUTPUT_ONLY] >= 25
-    assert roles_count[ParameterRole.CONDITIONAL] >= 2
+    assert roles_count[ParameterRole.CONDITIONAL] >= 1
 
 
 def test_instrument_family_enum_available():
