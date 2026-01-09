@@ -33,15 +33,40 @@ def setup_exporter(show_measurements: bool) -> ExportSVG:
     return exporter
 
 def draw_body(exporter: ExportSVG, body_length: float, belly_edge_thickness: float,
-             rib_height: float, body_stop: float, arching_height: float) -> None:
-    """Draw body geometry."""
+             rib_height: float, body_stop: float, arching_height: float,
+             viol_break_end_x: float = None, viol_break_end_y: float = None) -> None:
+    """Draw body geometry.
+
+    For viols, pass viol_break_end_x/y to skip drawing the rib rectangle portion
+    that falls below the back break line.
+    """
     belly_rect = Rectangle(width=body_length, height=belly_edge_thickness)
     belly_rect = belly_rect.move(Location((body_length/2, belly_edge_thickness/2)))
     exporter.add_shape(belly_rect, layer="drawing")
 
-    rect = Rectangle(width=body_length, height=rib_height)
-    rect = rect.move(Location((body_length/2, belly_edge_thickness - rib_height/2)))
-    exporter.add_shape(rect, layer="drawing")
+    back_y = belly_edge_thickness - rib_height
+
+    if viol_break_end_x is not None:
+        # For viols: draw individual edges, skipping the cut corner
+        # Top edge (at belly level) is already drawn as belly rectangle bottom
+        # Right edge: full height at x=body_length
+        right_edge = Edge.make_line(
+            (body_length, belly_edge_thickness),
+            (body_length, back_y)
+        )
+        exporter.add_shape(right_edge, layer="drawing")
+        # Bottom edge: only from break_end_x to body_length (skip left portion)
+        bottom_edge = Edge.make_line(
+            (viol_break_end_x, back_y),
+            (body_length, back_y)
+        )
+        exporter.add_shape(bottom_edge, layer="drawing")
+        # Left edge is drawn by draw_viol_back (vertical + break line)
+    else:
+        # For non-viols: draw full rectangle
+        rect = Rectangle(width=body_length, height=rib_height)
+        rect = rect.move(Location((body_length/2, belly_edge_thickness - rib_height/2)))
+        exporter.add_shape(rect, layer="drawing")
 
     arch_spline = Spline.interpolate_three_points(
         (0, belly_edge_thickness),
@@ -49,6 +74,100 @@ def draw_body(exporter: ExportSVG, body_length: float, belly_edge_thickness: flo
         (body_length, belly_edge_thickness)
     )
     exporter.add_shape(arch_spline, layer="schematic")
+
+
+def draw_viol_back(exporter: ExportSVG, body_length: float, belly_edge_thickness: float,
+                   rib_height: float, top_block_height: float,
+                   break_start_x: float, break_start_y: float,
+                   break_end_x: float, break_end_y: float) -> None:
+    """
+    Draw viol back break geometry.
+
+    The viol back has three sections:
+    1. Vertical section: From belly down for top_block_height at x=0
+    2. Break line: From bottom of vertical to break point on back
+    3. Flat back: From break point to tail (already drawn by draw_body)
+    """
+    back_y = belly_edge_thickness - rib_height
+
+    # Vertical section at neck end (from belly to start of break)
+    vertical_line = Edge.make_line(
+        (0, belly_edge_thickness),
+        (break_start_x, break_start_y)
+    )
+    exporter.add_shape(vertical_line, layer="drawing")
+
+    # Break line (angled section from top block to back)
+    break_line = Edge.make_line(
+        (break_start_x, break_start_y),
+        (break_end_x, break_end_y)
+    )
+    exporter.add_shape(break_line, layer="drawing")
+
+    # Flat back section (from break point to tail)
+    flat_back_line = Edge.make_line(
+        (break_end_x, break_end_y),
+        (body_length, back_y)
+    )
+    exporter.add_shape(flat_back_line, layer="drawing")
+
+
+def add_viol_back_dimensions(exporter: ExportSVG, show_measurements: bool,
+                             body_length: float, belly_edge_thickness: float,
+                             rib_height: float, top_block_height: float,
+                             break_angle_deg: float, back_break_length: float,
+                             break_start_x: float, break_start_y: float,
+                             break_end_x: float, break_end_y: float) -> None:
+    """Add dimension annotations for viol back break geometry."""
+    if not show_measurements:
+        return
+
+    back_y = belly_edge_thickness - rib_height
+
+    # Back break length dimension (horizontal, below the back)
+    # Use offset_y=-45 to avoid clashing with body stop (-15) and body length (-30)
+    break_length_line = Edge.make_line(
+        (break_end_x, back_y),
+        (body_length, back_y)
+    )
+    for shape, layer in create_horizontal_dimension(
+        break_length_line, f"{back_break_length:.1f}",
+        offset_y=-45, extension_length=3, font_size=DIMENSION_FONT_SIZE
+    ):
+        exporter.add_shape(shape, layer=layer)
+
+    # Top block height dimension (vertical at x=0)
+    top_block_line = Edge.make_line(
+        (0, belly_edge_thickness),
+        (0, break_start_y)
+    )
+    for shape, layer in create_vertical_dimension(
+        top_block_line, f"{top_block_height:.1f}",
+        offset_x=-12, font_size=DIMENSION_FONT_SIZE
+    ):
+        exporter.add_shape(shape, layer=layer)
+
+    # Break angle dimension - placed at bottom of break segment (break_end)
+    # Horizontal reference line at break end point, pointing left (along the back toward neck)
+    # This shows the actual break angle, not the exterior angle
+    horizontal_ref = Edge.make_line(
+        (break_end_x, break_end_y),
+        (break_end_x - 20, break_end_y)
+    )
+    # Break line from break_end up to break_start
+    break_line = Edge.make_line(
+        (break_end_x, break_end_y),
+        (break_start_x, break_start_y)
+    )
+    for shape, layer in create_angle_dimension(
+        horizontal_ref, break_line,
+        label=f"{break_angle_deg:.1f}°",
+        arc_radius=12, font_size=DIMENSION_FONT_SIZE,
+        text_inside=False, line_extension=0,
+        arc_reference_lines=True
+    ):
+        exporter.add_shape(shape, layer=layer)
+
 
 def draw_neck(exporter: ExportSVG, overstand: float, neck_end_x: float, neck_end_y: float,
              bridge_height: float, body_stop: float, arching_height: float,

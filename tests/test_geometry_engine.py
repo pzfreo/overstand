@@ -25,7 +25,8 @@ from geometry_engine import (
     calculate_neck_geometry,
     calculate_fingerboard_geometry,
     calculate_string_height_and_dimensions,
-    calculate_fret_positions
+    calculate_fret_positions,
+    calculate_viol_back_break
 )
 
 
@@ -397,6 +398,116 @@ class TestIntegration:
             fb_thickness_at_join=fb_result['fb_thickness_at_join']
         )
         assert 'fb_direction_angle' in fb_geom_result
+
+
+class TestCalculateViolBackBreak:
+    """Tests for calculate_viol_back_break function"""
+
+    def test_returns_expected_keys(self):
+        """Should return dict with expected keys"""
+        params = {
+            'break_angle': 15.0,
+            'top_block_height': 40.0,
+            'rib_height': 100.0,
+            'body_length': 480.0,
+            'belly_edge_thickness': 3.5
+        }
+        result = calculate_viol_back_break(params)
+
+        assert 'back_break_length' in result
+        assert 'break_start_x' in result
+        assert 'break_start_y' in result
+        assert 'break_end_x' in result
+        assert 'break_end_y' in result
+        assert 'break_angle_rad' in result
+
+    def test_back_break_length_calculation(self):
+        """Back break length should be body_length minus horizontal distance of break"""
+        params = {
+            'break_angle': 15.0,
+            'top_block_height': 40.0,
+            'rib_height': 100.0,
+            'body_length': 480.0,
+            'belly_edge_thickness': 3.5
+        }
+        result = calculate_viol_back_break(params)
+
+        # remaining_drop = rib_height - top_block_height = 60
+        # break_horizontal = 60 / tan(15°) ≈ 223.9
+        # back_break_length = 480 - 223.9 ≈ 256.1
+        remaining_drop = 100.0 - 40.0
+        break_horizontal = remaining_drop / math.tan(math.radians(15.0))
+        expected = 480.0 - break_horizontal
+
+        assert abs(result['back_break_length'] - expected) < 0.1
+
+    def test_break_start_is_at_top_block_height(self):
+        """Break should start at top_block_height below belly"""
+        params = {
+            'break_angle': 15.0,
+            'top_block_height': 40.0,
+            'rib_height': 100.0,
+            'body_length': 480.0,
+            'belly_edge_thickness': 3.5
+        }
+        result = calculate_viol_back_break(params)
+
+        # Break starts at x=0, y = belly_y - top_block_height
+        assert result['break_start_x'] == 0
+        expected_y = 3.5 - 40.0  # belly_y - top_block_height
+        assert abs(result['break_start_y'] - expected_y) < 0.01
+
+    def test_break_end_is_at_back_level(self):
+        """Break should end at back level (bottom of ribs)"""
+        params = {
+            'break_angle': 15.0,
+            'top_block_height': 40.0,
+            'rib_height': 100.0,
+            'body_length': 480.0,
+            'belly_edge_thickness': 3.5
+        }
+        result = calculate_viol_back_break(params)
+
+        # Break ends at y = belly_y - rib_height (back level)
+        expected_y = 3.5 - 100.0
+        assert abs(result['break_end_y'] - expected_y) < 0.01
+
+    def test_zero_angle_handled(self):
+        """Zero break angle should not cause division by zero"""
+        params = {
+            'break_angle': 0.0,
+            'top_block_height': 40.0,
+            'rib_height': 100.0,
+            'body_length': 480.0,
+            'belly_edge_thickness': 3.5
+        }
+        result = calculate_viol_back_break(params)
+
+        # With zero angle, break_horizontal goes to body_length (clamped)
+        assert result['back_break_length'] == 0  # body_length - body_length
+
+    def test_large_angle_small_break_length(self):
+        """Larger angle should result in smaller back_break_length"""
+        params_small_angle = {
+            'break_angle': 10.0,
+            'top_block_height': 40.0,
+            'rib_height': 100.0,
+            'body_length': 480.0,
+            'belly_edge_thickness': 3.5
+        }
+        params_large_angle = {
+            'break_angle': 30.0,
+            'top_block_height': 40.0,
+            'rib_height': 100.0,
+            'body_length': 480.0,
+            'belly_edge_thickness': 3.5
+        }
+
+        result_small = calculate_viol_back_break(params_small_angle)
+        result_large = calculate_viol_back_break(params_large_angle)
+
+        # Larger angle = steeper break = shorter horizontal distance = longer back_break_length
+        assert result_large['back_break_length'] > result_small['back_break_length']
 
 
 if __name__ == '__main__':

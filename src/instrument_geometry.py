@@ -111,6 +111,13 @@ def calculate_derived_values(params: Dict[str, Any]) -> Dict[str, Any]:
     afterlength_angle_rad = derived['afterlength_angle'] * math.pi / 180
     derived['downward_force_percent'] = (math.sin(string_angle_rad) + math.sin(afterlength_angle_rad)) * 100
 
+    # Calculate viol-specific back break geometry
+    if instrument_family == InstrumentFamily.VIOL.name:
+        back_break_result = geometry_engine.calculate_viol_back_break(params)
+        derived.update(back_break_result)
+    else:
+        derived['back_break_length'] = 0
+
     return derived
 
 def generate_multi_view_svg(params: Dict[str, Any]) -> Dict[str, str]:
@@ -132,13 +139,33 @@ def generate_multi_view_svg(params: Dict[str, Any]) -> Dict[str, str]:
 def generate_side_view_svg(params: Dict[str, Any], show_measurements: bool = True) -> str:
     """Orchestrate full side view SVG generation."""
     derived = calculate_derived_values(params)
-    
+
     exporter = svg_renderer.setup_exporter(show_measurements)
-    
-    svg_renderer.draw_body(
-        exporter, params.get('body_length', 0), params.get('belly_edge_thickness', 0),
-        params.get('rib_height', 0), derived['body_stop'], params.get('arching_height', 0)
-    )
+
+    # Check instrument family for viol-specific drawing
+    instrument_family = params.get('instrument_family', InstrumentFamily.VIOLIN.name)
+
+    # For viols, pass break coordinates to skip drawing rectangle below break
+    if instrument_family == InstrumentFamily.VIOL.name:
+        svg_renderer.draw_body(
+            exporter, params.get('body_length', 0), params.get('belly_edge_thickness', 0),
+            params.get('rib_height', 0), derived['body_stop'], params.get('arching_height', 0),
+            viol_break_end_x=derived['break_end_x'], viol_break_end_y=derived['break_end_y']
+        )
+    else:
+        svg_renderer.draw_body(
+            exporter, params.get('body_length', 0), params.get('belly_edge_thickness', 0),
+            params.get('rib_height', 0), derived['body_stop'], params.get('arching_height', 0)
+        )
+
+    # Draw viol-specific back break geometry
+    if instrument_family == InstrumentFamily.VIOL.name:
+        svg_renderer.draw_viol_back(
+            exporter, params.get('body_length', 0), params.get('belly_edge_thickness', 0),
+            params.get('rib_height', 0), params.get('top_block_height', 40),
+            derived['break_start_x'], derived['break_start_y'],
+            derived['break_end_x'], derived['break_end_y']
+        )
 
     svg_renderer.draw_neck(
         exporter, params.get('overstand', 0), derived['neck_end_x'], derived['neck_end_y'],
@@ -182,5 +209,16 @@ def generate_side_view_svg(params: Dict[str, Any], show_measurements: bool = Tru
         string_break_angle=derived['string_break_angle'],
         downward_force_percent=derived['downward_force_percent']
     )
-    
+
+    # Add viol-specific back break dimensions
+    if instrument_family == InstrumentFamily.VIOL.name:
+        svg_renderer.add_viol_back_dimensions(
+            exporter, show_measurements,
+            params.get('body_length', 0), params.get('belly_edge_thickness', 0),
+            params.get('rib_height', 0), params.get('top_block_height', 40),
+            params.get('break_angle', 15), derived['back_break_length'],
+            derived['break_start_x'], derived['break_start_y'],
+            derived['break_end_x'], derived['break_end_y']
+        )
+
     return exporter.write(filename=None)
