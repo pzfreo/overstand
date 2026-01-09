@@ -849,6 +849,42 @@ PARAMETER_REGISTRY: Dict[str, UnifiedParameter] = {
     ),
 
     # ============================================
+    # NECK ROOT PARAMETERS (for cross-section view)
+    # ============================================
+
+    'button_width_at_join': UnifiedParameter(
+        key='button_width_at_join',
+        display_name='Button Width at Join',
+        param_type=ParameterType.NUMERIC,
+        unit='mm',
+        description='Width of the neck button/heel where it meets the body',
+        role=ParameterRole.INPUT_ONLY,
+        input_config=InputConfig(
+            min_val=15.0,
+            max_val=100.0,
+            default=28.0,
+            step=0.5,
+            category='Neck Root Geometry'
+        )
+    ),
+
+    'neck_width_at_root': UnifiedParameter(
+        key='neck_width_at_root',
+        display_name='Neck Width at Root',
+        param_type=ParameterType.NUMERIC,
+        unit='mm',
+        description='Width of the neck at the base of overstand (neck/body join)',
+        role=ParameterRole.INPUT_ONLY,
+        input_config=InputConfig(
+            min_val=15.0,
+            max_val=80.0,
+            default=30.0,
+            step=0.5,
+            category='Neck Root Geometry'
+        )
+    ),
+
+    # ============================================
     # VIOL-SPECIFIC OUTPUT PARAMETERS
     # ============================================
 
@@ -1436,6 +1472,7 @@ def get_parameter_categories() -> List[str]:
         'General',
         'Basic Dimensions',
         'Fingerboard Dimensions',
+        'Neck Root Geometry',
         'Fret Configuration',
         'Advanced Geometry',
         'Viol Construction',

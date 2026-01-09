@@ -116,13 +116,27 @@ SECTIONS = {
         description='Detailed geometric parameters for fine-tuning'
     ),
 
+    'neck_root': SectionDefinition(
+        id='neck_root',
+        title='Neck Root Parameters',
+        type=SectionType.INPUT_ADVANCED,
+        icon='🔲',
+        default_expanded=False,
+        order=3,
+        parameter_names=[
+            'button_width_at_join',
+            'neck_width_at_root'
+        ],
+        description='Neck dimensions at the body join for cross-section view'
+    ),
+
     'advanced_fingerboard': SectionDefinition(
         id='advanced_fingerboard',
         title='Fingerboard Details',
         type=SectionType.INPUT_ADVANCED,
         icon='🎵',
         default_expanded=False,
-        order=3,
+        order=4,
         parameter_names=[
             'fingerboard_width_at_nut',
             'fingerboard_width_at_end',
@@ -141,7 +155,7 @@ SECTIONS = {
         type=SectionType.INPUT_ADVANCED,
         icon='🎸',
         default_expanded=False,
-        order=4,
+        order=5,
         parameter_names=[
             'no_frets',
             'fret_join'
@@ -155,7 +169,7 @@ SECTIONS = {
         type=SectionType.INPUT_ADVANCED,
         icon='⚙️',
         default_expanded=False,
-        order=5,
+        order=6,
         parameter_names=[
             'show_measurements'
         ],
