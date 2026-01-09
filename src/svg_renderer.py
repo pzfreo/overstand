@@ -445,3 +445,112 @@ def add_dimensions(exporter: ExportSVG, show_measurements: bool,
         downforce_text = Text("downforce", DIMENSION_FONT_SIZE, font=FONT_NAME)
         downforce_text = downforce_text.move(Location((right_edge - downforce_width, arrow_mid_y - line_height / 2)))
         exporter.add_shape(downforce_text, layer="dimensions")
+
+
+def draw_neck_cross_section(exporter: ExportSVG,
+                            y_button: float, y_top_of_block: float,
+                            y_fb_bottom: float, y_fb_top: float,
+                            half_button_width: float, half_neck_width_at_ribs: float,
+                            half_fb_width: float, fingerboard_radius: float,
+                            sagitta_at_join: float) -> None:
+    """
+    Draw the neck cross-section at the body join.
+
+    The cross-section is symmetrical about X=0.
+    Y=0 is at the back plate level (button).
+
+    Segments drawn (from bottom to top):
+    1. Button - thin horizontal slice at Y=0
+    2. Straight angled sides - from button width to neck width at ribs
+    3. Smooth curve outward - from neck width at ribs to fingerboard width
+    4. Fingerboard - with radiused top
+    """
+    # Button line (bottom horizontal)
+    button_line = Edge.make_line((-half_button_width, y_button), (half_button_width, y_button))
+    exporter.add_shape(button_line, layer="drawing")
+
+    # Left side: straight angled line from button to top of block
+    left_straight = Edge.make_line(
+        (-half_button_width, y_button),
+        (-half_neck_width_at_ribs, y_top_of_block)
+    )
+    exporter.add_shape(left_straight, layer="drawing")
+
+    # Right side: straight angled line from button to top of block
+    right_straight = Edge.make_line(
+        (half_button_width, y_button),
+        (half_neck_width_at_ribs, y_top_of_block)
+    )
+    exporter.add_shape(right_straight, layer="drawing")
+
+    # Smooth curve from top of block to fingerboard bottom (fillet)
+    # Using a spline through 3 points: start, control, end
+    # Left fillet curve
+    left_fillet = Spline.interpolate_three_points(
+        (-half_neck_width_at_ribs, y_top_of_block),
+        (-half_fb_width, (y_top_of_block + y_fb_bottom) / 2),
+        (-half_fb_width, y_fb_bottom)
+    )
+    exporter.add_shape(left_fillet, layer="drawing")
+
+    # Right fillet curve
+    right_fillet = Spline.interpolate_three_points(
+        (half_neck_width_at_ribs, y_top_of_block),
+        (half_fb_width, (y_top_of_block + y_fb_bottom) / 2),
+        (half_fb_width, y_fb_bottom)
+    )
+    exporter.add_shape(right_fillet, layer="drawing")
+
+    # Fingerboard sides (vertical from fb_bottom to visible height)
+    fb_visible_height = y_fb_top - sagitta_at_join
+    left_fb_side = Edge.make_line(
+        (-half_fb_width, y_fb_bottom),
+        (-half_fb_width, fb_visible_height)
+    )
+    exporter.add_shape(left_fb_side, layer="drawing")
+
+    right_fb_side = Edge.make_line(
+        (half_fb_width, y_fb_bottom),
+        (half_fb_width, fb_visible_height)
+    )
+    exporter.add_shape(right_fb_side, layer="drawing")
+
+    # Fingerboard radiused top (arc from left to right)
+    # The arc represents the curved playing surface
+    # Center is above the fb_visible_height by (radius - sagitta)
+    if fingerboard_radius > 0 and sagitta_at_join > 0:
+        arc_center_y = fb_visible_height + (fingerboard_radius - sagitta_at_join)
+        # Calculate start and end angles for the arc
+        # The arc spans from left edge to right edge
+        half_angle = math.asin(half_fb_width / fingerboard_radius) if half_fb_width < fingerboard_radius else math.pi/2
+        start_angle = math.pi + half_angle  # Left side (pointing down-left)
+        end_angle = 2 * math.pi - half_angle  # Right side (pointing down-right)
+
+        fb_top_arc = Arc.make_arc(
+            center=(0, arc_center_y),
+            radius=fingerboard_radius,
+            start_angle=start_angle,
+            end_angle=end_angle
+        )
+        exporter.add_shape(fb_top_arc, layer="drawing")
+    else:
+        # Fallback to flat top if no radius
+        fb_top_line = Edge.make_line(
+            (-half_fb_width, fb_visible_height),
+            (half_fb_width, fb_visible_height)
+        )
+        exporter.add_shape(fb_top_line, layer="drawing")
+
+    # Fingerboard bottom line (connecting the sides)
+    fb_bottom_line = Edge.make_line(
+        (-half_fb_width, y_fb_bottom),
+        (half_fb_width, y_fb_bottom)
+    )
+    exporter.add_shape(fb_bottom_line, layer="drawing")
+
+    # Add a horizontal reference line at top of block (belly level)
+    block_ref_line = Edge.make_line(
+        (-half_fb_width - 5, y_top_of_block),
+        (half_fb_width + 5, y_top_of_block)
+    )
+    exporter.add_shape(block_ref_line, layer="schematic")

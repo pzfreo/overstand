@@ -125,7 +125,7 @@ SECTIONS = {
         order=3,
         parameter_names=[
             'button_width_at_join',
-            'neck_width_at_root'
+            'neck_width_at_top_of_ribs'
         ],
         description='Neck dimensions at the body join for cross-section view'
     ),

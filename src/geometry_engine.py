@@ -345,3 +345,94 @@ def calculate_viol_back_break(params: Dict[str, Any]) -> Dict[str, Any]:
     result['break_angle_rad'] = break_angle_rad
 
     return result
+
+
+def calculate_cross_section_geometry(params: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Calculate geometry for the neck cross-section view at the body join.
+
+    The cross-section is symmetrical about the Y-axis (X=0 is centerline).
+    Y=0 is at the back plate level (button).
+
+    Returns coordinates for:
+    - Button (thin slice at back plate)
+    - Neck sides (straight angled from button to top of block)
+    - Fillet curve (from top of block to fingerboard width)
+    - Fingerboard (full thickness with radiused top)
+    """
+    result = {}
+
+    # Get instrument family to determine block height
+    instrument_family = params.get('instrument_family', 'VIOLIN')
+
+    # Block height varies by instrument family
+    if instrument_family == InstrumentFamily.VIOL.name:
+        block_height = params.get('top_block_height', params.get('rib_height', 35.0))
+    else:
+        block_height = params.get('rib_height', 35.0)
+
+    # Get width parameters
+    button_width = params.get('button_width_at_join', 28.0)
+    neck_width_at_ribs = params.get('neck_width_at_top_of_ribs', 30.0)
+    overstand = params.get('overstand', 6.0)
+
+    # Fingerboard parameters
+    fb_width_at_nut = params.get('fingerboard_width_at_nut', DEFAULT_FB_WIDTH_AT_NUT)
+    fb_width_at_end = params.get('fingerboard_width_at_end', DEFAULT_FB_WIDTH_AT_END)
+    fingerboard_length = params.get('fingerboard_length', 270.0)
+    fingerboard_radius = params.get('fingerboard_radius', DEFAULT_FINGERBOARD_RADIUS)
+    fb_visible_height_at_join = params.get('fb_visible_height_at_join', DEFAULT_FB_VISIBLE_HEIGHT_AT_JOIN)
+
+    # Calculate neck_stop to determine position along fingerboard
+    # For this, we need to get neck_stop from derived values or calculate it
+    # Using body_stop and vsl to estimate neck_stop = vsl - body_stop
+    vsl = params.get('vsl', 330.0)
+    body_stop = params.get('body_stop', 195.0)
+    neck_stop = vsl - body_stop
+
+    # Interpolate fingerboard width at body join
+    # Position along fingerboard as ratio (0 = nut, 1 = end)
+    if fingerboard_length > 0:
+        position_ratio = min(neck_stop / fingerboard_length, 1.0)
+    else:
+        position_ratio = 0.0
+
+    fb_width_at_body_join = fb_width_at_nut + (fb_width_at_end - fb_width_at_nut) * position_ratio
+
+    # Calculate fingerboard thickness at body join (including sagitta for curve)
+    sagitta_at_join = calculate_sagitta(fingerboard_radius, fb_width_at_body_join)
+    fb_thickness_at_join = fb_visible_height_at_join + sagitta_at_join
+
+    # Y coordinates (from bottom to top)
+    y_button = 0.0
+    y_top_of_block = block_height
+    y_fb_bottom = block_height + overstand
+    y_fb_top = y_fb_bottom + fb_thickness_at_join
+
+    # Half-widths (for symmetrical drawing about X=0)
+    half_button_width = button_width / 2.0
+    half_neck_width_at_ribs = neck_width_at_ribs / 2.0
+    half_fb_width = fb_width_at_body_join / 2.0
+
+    # Store results
+    result['block_height'] = block_height
+    result['overstand'] = overstand
+    result['button_width'] = button_width
+    result['neck_width_at_ribs'] = neck_width_at_ribs
+    result['fb_width_at_body_join'] = fb_width_at_body_join
+    result['fb_thickness_at_join'] = fb_thickness_at_join
+    result['sagitta_at_join'] = sagitta_at_join
+    result['fingerboard_radius'] = fingerboard_radius
+
+    # Y coordinates
+    result['y_button'] = y_button
+    result['y_top_of_block'] = y_top_of_block
+    result['y_fb_bottom'] = y_fb_bottom
+    result['y_fb_top'] = y_fb_top
+
+    # Half-widths for symmetrical drawing
+    result['half_button_width'] = half_button_width
+    result['half_neck_width_at_ribs'] = half_neck_width_at_ribs
+    result['half_fb_width'] = half_fb_width
+
+    return result

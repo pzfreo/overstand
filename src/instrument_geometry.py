@@ -8,6 +8,7 @@ This module acts as an orchestrator, combining logic from:
 """
 
 from buildprimitives import *
+from buildprimitives import FONT_NAME, TITLE_FONT_SIZE
 import geometry_engine
 import svg_renderer
 import view_generator
@@ -127,14 +128,52 @@ def generate_multi_view_svg(params: Dict[str, Any]) -> Dict[str, str]:
     """
     side_svg = generate_side_view_svg(params)
     radius_template = generate_radius_template_svg(params)
-    
-    # Placeholder views for now (as in original code)
+    cross_section_svg = generate_cross_section_svg(params)
+
     return {
         'side': side_svg,
         'top': "Top View Placeholder",
-        'cross_section': "Cross-Section Placeholder",
+        'cross_section': cross_section_svg,
         'radius_template': radius_template
     }
+
+
+def generate_cross_section_svg(params: Dict[str, Any], show_measurements: bool = True) -> str:
+    """
+    Generate the neck cross-section SVG at the body join.
+
+    The cross-section shows the neck profile when viewed from the body toward the nut.
+    It is symmetrical about the Y-axis (X=0 is centerline).
+    """
+    # Calculate cross-section geometry
+    cs_geom = geometry_engine.calculate_cross_section_geometry(params)
+
+    # Setup exporter
+    exporter = svg_renderer.setup_exporter(show_measurements)
+
+    # Draw the cross-section
+    svg_renderer.draw_neck_cross_section(
+        exporter,
+        y_button=cs_geom['y_button'],
+        y_top_of_block=cs_geom['y_top_of_block'],
+        y_fb_bottom=cs_geom['y_fb_bottom'],
+        y_fb_top=cs_geom['y_fb_top'],
+        half_button_width=cs_geom['half_button_width'],
+        half_neck_width_at_ribs=cs_geom['half_neck_width_at_ribs'],
+        half_fb_width=cs_geom['half_fb_width'],
+        fingerboard_radius=cs_geom['fingerboard_radius'],
+        sagitta_at_join=cs_geom['sagitta_at_join']
+    )
+
+    # Add title text
+    instrument_name = params.get('instrument_name', 'Instrument')
+    title_text = Text(f"{instrument_name} - Neck Cross-Section", TITLE_FONT_SIZE, font=FONT_NAME)
+    # Position title above the drawing
+    title_y = cs_geom['y_fb_top'] + 10
+    title_text = title_text.move(Location((-cs_geom['half_fb_width'], title_y)))
+    exporter.add_shape(title_text, layer="text")
+
+    return exporter.write(filename=None)
 
 def generate_side_view_svg(params: Dict[str, Any], show_measurements: bool = True) -> str:
     """Orchestrate full side view SVG generation."""

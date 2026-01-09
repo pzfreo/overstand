@@ -868,12 +868,12 @@ PARAMETER_REGISTRY: Dict[str, UnifiedParameter] = {
         )
     ),
 
-    'neck_width_at_root': UnifiedParameter(
-        key='neck_width_at_root',
-        display_name='Neck Width at Root',
+    'neck_width_at_top_of_ribs': UnifiedParameter(
+        key='neck_width_at_top_of_ribs',
+        display_name='Neck Width at Top of Ribs',
         param_type=ParameterType.NUMERIC,
         unit='mm',
-        description='Width of the neck at the base of overstand (neck/body join)',
+        description='Width of the neck at the top of ribs (belly level)',
         role=ParameterRole.INPUT_ONLY,
         input_config=InputConfig(
             min_val=15.0,

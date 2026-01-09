@@ -91,11 +91,11 @@ class TestGenerateView:
         assert '<svg>' in result
         assert 'not yet implemented' in result.lower()
 
-    def test_generate_cross_section_view_placeholder(self, default_violin_params):
-        """Test that cross_section view returns placeholder SVG."""
+    def test_generate_cross_section_view_returns_svg(self, default_violin_params):
+        """Test that cross_section view returns valid SVG."""
         result = cli.generate_view(default_violin_params, 'cross_section')
-        assert '<svg>' in result
-        assert 'not yet implemented' in result.lower()
+        assert '<svg' in result
+        assert '</svg>' in result
 
     def test_generate_unknown_view_exits(self, default_violin_params):
         """Test that unknown view type causes SystemExit."""
