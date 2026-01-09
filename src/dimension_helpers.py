@@ -248,7 +248,8 @@ def create_horizontal_dimension(feature_line, label, offset_y=-10,
 
 
 def create_angle_dimension(line1, line2, label=None, arc_radius=15,
-                          font_size=8*PTS_MM, line_extension=5, text_inside=False):
+                          font_size=8*PTS_MM, line_extension=5, text_inside=False,
+                          arc_reference_lines=False):
     """
     Create angle dimension shapes from two lines that meet at a junction point.
 
@@ -258,8 +259,10 @@ def create_angle_dimension(line1, line2, label=None, arc_radius=15,
         label: Text label for the angle (e.g., "90.0°"). If None, angle is calculated.
         arc_radius: Radius of the arc showing the angle
         font_size: Font size for dimension text
-        line_extension: How far to extend the lines beyond their endpoints
+        line_extension: How far to extend the lines beyond their endpoints (solid lines)
         text_inside: If True, position text inside the arc instead of outside
+        arc_reference_lines: If True, draw dashed lines from vertex to arc ends
+                            (use instead of line_extension for dashed reference lines)
 
     Returns:
         List of (shape, layer) tuples to add to exporter
@@ -359,6 +362,20 @@ def create_angle_dimension(line1, line2, label=None, arc_radius=15,
         end_angle=end_angle
     )
     shapes.append((angle_arc, "dimensions"))
+
+    # Draw dashed reference lines from vertex to arc ends if requested
+    if arc_reference_lines:
+        # Line from junction to start of arc
+        arc_start_x = jx + arc_radius * math.cos(start_angle)
+        arc_start_y = jy + arc_radius * math.sin(start_angle)
+        ref_line1 = Edge.make_line(junction, (arc_start_x, arc_start_y))
+        shapes.append((ref_line1, "dimensions"))
+
+        # Line from junction to end of arc
+        arc_end_x = jx + arc_radius * math.cos(end_angle)
+        arc_end_y = jy + arc_radius * math.sin(end_angle)
+        ref_line2 = Edge.make_line(junction, (arc_end_x, arc_end_y))
+        shapes.append((ref_line2, "dimensions"))
 
     # Position text near the middle of the arc
     mid_angle = (start_angle + end_angle) / 2
