@@ -541,6 +541,7 @@ function handleLoadParameters(event) {
             ui.hideErrors();
             ui.updateParameterVisibility(collectParameters());
             updateDerivedValues();
+            debouncedGenerate();
             ui.setStatus('ready', '✅ Parameters loaded');
 
             analytics.trackParametersLoaded();
