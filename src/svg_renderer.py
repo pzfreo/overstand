@@ -148,10 +148,11 @@ def add_viol_back_dimensions(exporter: ExportSVG, show_measurements: bool,
         exporter.add_shape(shape, layer=layer)
 
     # Break angle dimension - placed at bottom of break segment (break_end)
-    # Horizontal reference line at break end point, pointing right (toward tail)
+    # Horizontal reference line at break end point, pointing left (along the back toward neck)
+    # This shows the actual break angle, not the exterior angle
     horizontal_ref = Edge.make_line(
         (break_end_x, break_end_y),
-        (break_end_x + 20, break_end_y)
+        (break_end_x - 20, break_end_y)
     )
     # Break line from break_end up to break_start
     break_line = Edge.make_line(
