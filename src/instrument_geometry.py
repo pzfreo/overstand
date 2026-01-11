@@ -32,7 +32,7 @@ def calculate_derived_values(params: Dict[str, Any]) -> Dict[str, Any]:
     """Calculate derived values by orchestrating engine functions."""
     derived = {}
     vsl = params.get('vsl') or 0
-    instrument_family = params.get('instrument_famil') or InstrumentFamily.VIOLIN.name
+    instrument_family = params.get('instrument_family') or InstrumentFamily.VIOLIN.name
 
     if params.get('no_frets') is not None:
         no_frets = params.get('no_frets')
