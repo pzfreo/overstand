@@ -50,11 +50,11 @@ const PYTHON_MODULES = [
   `${BASE_PATH}view_generator.py`
 ];
 
-// Pyodide runtime (large, cache separately)
+// Pyodide runtime (large, cache separately) - using unpkg as fallback CDN
 const PYODIDE_URLS = [
-  'https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js',
-  'https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.asm.js',
-  'https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.asm.wasm'
+  'https://unpkg.com/pyodide@0.26.2/pyodide.js',
+  'https://unpkg.com/pyodide@0.26.2/pyodide.asm.js',
+  'https://unpkg.com/pyodide@0.26.2/pyodide.asm.wasm'
 ];
 
 // CDN libraries
