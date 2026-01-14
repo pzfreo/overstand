@@ -458,7 +458,8 @@ def draw_neck_cross_section(exporter: ExportSVG,
                             blend_p0: tuple = None,
                             blend_cp1: tuple = None,
                             blend_cp2: tuple = None,
-                            blend_p3: tuple = None) -> None:
+                            blend_p3: tuple = None,
+                            belly_edge_thickness: float = 3.5) -> None:
     """
     Draw the neck cross-section at the body join.
 
@@ -611,15 +612,25 @@ def draw_neck_cross_section(exporter: ExportSVG,
         )
         exporter.add_shape(fb_bottom_line, layer="drawing")
 
+    # Calculate belly top position (above the rib top by belly thickness)
+    y_belly_top = y_top_of_block + belly_edge_thickness
+
     # Add horizontal reference lines for key levels
-    # 1. Belly/ribs top line (dashed, extends beyond profile)
-    belly_ref_line = Edge.make_line(
+    # 1. Rib top line (dashed, extends beyond profile)
+    rib_top_ref = Edge.make_line(
         (-half_fb_width - 15, y_top_of_block),
         (half_fb_width + 15, y_top_of_block)
     )
-    exporter.add_shape(belly_ref_line, layer="schematic")
+    exporter.add_shape(rib_top_ref, layer="schematic")
 
-    # 2. Fingerboard bottom reference line (dashed)
+    # 2. Belly top line (solid line showing belly surface)
+    belly_top_line = Edge.make_line(
+        (-half_fb_width - 5, y_belly_top),
+        (half_fb_width + 5, y_belly_top)
+    )
+    exporter.add_shape(belly_top_line, layer="drawing")
+
+    # 3. Fingerboard bottom reference line (dashed)
     fb_bottom_ref = Edge.make_line(
         (-half_fb_width - 15, y_fb_bottom),
         (half_fb_width + 15, y_fb_bottom)
@@ -636,13 +647,15 @@ def draw_neck_cross_section(exporter: ExportSVG,
     neck_root_label = neck_root_label.move(Location((label_x - 15, neck_root_y)))
     exporter.add_shape(neck_root_label, layer="dimensions")
 
-    # Belly label (at top of block level)
+    # Belly label (centered between rib top and belly top)
+    belly_label_y = (y_top_of_block + y_belly_top) / 2
     belly_label = Text("Belly", label_font_size, font=FONT_NAME)
-    belly_label = belly_label.move(Location((label_x - 15, y_top_of_block)))
+    belly_label = belly_label.move(Location((label_x - 15, belly_label_y)))
     exporter.add_shape(belly_label, layer="dimensions")
 
-    # Overstand label (centered between top of block and fb bottom)
-    overstand_y = (y_top_of_block + y_fb_bottom) / 2
+    # Overstand label (centered between belly top and fb bottom)
+    # Note: overstand is measured from belly top, not rib top
+    overstand_y = (y_belly_top + y_fb_bottom) / 2
     overstand_label = Text("Overstand", label_font_size, font=FONT_NAME)
     overstand_label = overstand_label.move(Location((label_x - 15, overstand_y)))
     exporter.add_shape(overstand_label, layer="dimensions")

@@ -536,6 +536,7 @@ def calculate_cross_section_geometry(params: Dict[str, Any]) -> Dict[str, Any]:
     button_width = params.get('button_width_at_join', 28.0)
     neck_width_at_ribs = params.get('neck_width_at_top_of_ribs', 30.0)
     overstand = params.get('overstand', 6.0)
+    belly_edge_thickness = params.get('belly_edge_thickness', 3.5)
 
     # Fingerboard parameters
     fb_width_at_nut = params.get('fingerboard_width_at_nut', DEFAULT_FB_WIDTH_AT_NUT)
@@ -609,6 +610,7 @@ def calculate_cross_section_geometry(params: Dict[str, Any]) -> Dict[str, Any]:
     # Store results
     result['block_height'] = block_height
     result['overstand'] = overstand
+    result['belly_edge_thickness'] = belly_edge_thickness
     result['button_width'] = button_width
     result['neck_width_at_ribs'] = neck_width_at_ribs
     result['fb_width_at_body_join'] = fb_width_at_body_join

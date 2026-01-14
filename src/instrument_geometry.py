@@ -172,7 +172,8 @@ def generate_cross_section_svg(params: Dict[str, Any], show_measurements: bool =
         blend_p0=cs_geom.get('blend_p0'),
         blend_cp1=cs_geom.get('blend_cp1'),
         blend_cp2=cs_geom.get('blend_cp2'),
-        blend_p3=cs_geom.get('blend_p3')
+        blend_p3=cs_geom.get('blend_p3'),
+        belly_edge_thickness=cs_geom.get('belly_edge_thickness', 3.5)
     )
 
     # Add dimensions with blend info
