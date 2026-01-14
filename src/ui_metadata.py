@@ -77,100 +77,163 @@ class InstrumentPreset:
 # ============================================
 
 SECTIONS = {
-    'basic': SectionDefinition(
-        id='basic',
-        title='Basic Parameters',
+    # ============================================
+    # STAGE 1: INSTRUMENT IDENTITY
+    # ============================================
+    'identity': SectionDefinition(
+        id='identity',
+        title='Instrument Identity',
         type=SectionType.INPUT_BASIC,
-        icon='🎯',
-        default_expanded=True,  # Expanded by default, but collapsible
+        icon='🎻',
+        default_expanded=True,
         order=1,
         parameter_names=[
-            'instrument_name',    # Name for the instrument
-            'instrument_family',  # Choose instrument type
-            'vsl',                # Then the 6 core basic params
-            'body_length',
-            'body_stop',
-            'overstand',
-            'bridge_height',
-            'arching_height'
+            'instrument_name',
+            'instrument_family',
+            'vsl'
         ],
-        description='Essential parameters required for all instruments'
+        description='What you\'re building and at what scale - these define the foundation'
     ),
 
-    'advanced_geometry': SectionDefinition(
-        id='advanced_geometry',
-        title='Advanced Geometry',
-        type=SectionType.INPUT_ADVANCED,
+    # ============================================
+    # STAGE 2: SIDE VIEW - BODY & BRIDGE
+    # ============================================
+    'body_and_bridge': SectionDefinition(
+        id='body_and_bridge',
+        title='Body & Bridge',
+        type=SectionType.INPUT_BASIC,
         icon='📐',
-        default_expanded=False,  # Collapsed by default
+        default_expanded=True,
         order=2,
         parameter_names=[
-            'fingerboard_length',
-            'rib_height',
-            'belly_edge_thickness',
-            'fingerboard_radius',
-            'tailpiece_height',  # Height of tailpiece above belly
-            'break_angle',       # Viol-specific (visible_when filters it)
-            'top_block_height'   # Viol-specific (visible_when filters it)
+            'body_length',
+            'overstand',
+            'bridge_height',
+            'arching_height',
+            'body_stop',    # Violin/Viol only (visible_when filters it)
+            'fret_join'     # Guitar/Mandolin only (visible_when filters it)
         ],
-        description='Detailed geometric parameters for fine-tuning'
+        description='Core side-view geometry: the "triangle" that defines your instrument\'s profile. For guitars, fret_join defines where the neck meets the body (like body_stop for violins)'
     ),
 
-    'neck_root': SectionDefinition(
-        id='neck_root',
-        title='Neck Root Parameters',
-        type=SectionType.INPUT_ADVANCED,
-        icon='🔲',
-        default_expanded=False,
+    # ============================================
+    # STAGE 3: SIDE VIEW - STRING ACTION
+    # ============================================
+    'string_action': SectionDefinition(
+        id='string_action',
+        title='String Action',
+        type=SectionType.INPUT_BASIC,
+        icon='🎼',
+        default_expanded=True,
         order=3,
+        parameter_names=[
+            'string_height_nut',
+            'string_height_eof',         # Violin/Viol only
+            'string_height_12th_fret'    # Guitar/Mandolin only
+        ],
+        description='String height at key points - REQUIRED for side view generation. The neck angle is calculated from these values'
+    ),
+
+    # ============================================
+    # STAGE 4: SIDE VIEW - VIOL SPECIFIC
+    # ============================================
+    'viol_specific': SectionDefinition(
+        id='viol_specific',
+        title='Viol Geometry',
+        type=SectionType.INPUT_ADVANCED,
+        icon='🎻',
+        default_expanded=False,
+        order=4,
+        parameter_names=[
+            'break_angle',
+            'top_block_height'
+        ],
+        description='Viol-specific side view geometry: back break angle and top block height'
+    ),
+
+    # ============================================
+    # STAGE 5: FINGERBOARD GEOMETRY
+    # ============================================
+    'fingerboard': SectionDefinition(
+        id='fingerboard',
+        title='Fingerboard',
+        type=SectionType.INPUT_ADVANCED,
+        icon='🎯',
+        default_expanded=False,
+        order=5,
+        parameter_names=[
+            'fingerboard_length',
+            'fingerboard_radius',
+            'fingerboard_width_at_nut',
+            'fingerboard_width_at_end',
+            'fb_visible_height_at_nut',
+            'fb_visible_height_at_join'
+        ],
+        description='Fingerboard dimensions - length (side view), curvature and width (cross-section), visible heights (both views)'
+    ),
+
+    # ============================================
+    # STAGE 6: CROSS-SECTION - NECK DIMENSIONS
+    # ============================================
+    'neck_cross_section': SectionDefinition(
+        id='neck_cross_section',
+        title='Cross-Section: Neck',
+        type=SectionType.INPUT_ADVANCED,
+        icon='📏',
+        default_expanded=False,
+        order=6,
         parameter_names=[
             'button_width_at_join',
             'neck_width_at_top_of_ribs',
             'fb_blend_percent'
         ],
-        description='Neck dimensions at the body join for cross-section view'
+        description='Neck dimensions at the body join - defines the neck cross-section view'
     ),
 
-    'advanced_fingerboard': SectionDefinition(
-        id='advanced_fingerboard',
-        title='Fingerboard Details',
+    # ============================================
+    # STAGE 7: FRETS
+    # ============================================
+    'frets': SectionDefinition(
+        id='frets',
+        title='Frets',
         type=SectionType.INPUT_ADVANCED,
-        icon='🎵',
+        icon='📊',
         default_expanded=False,
-        order=4,
+        order=7,
         parameter_names=[
-            'fingerboard_width_at_nut',
-            'fingerboard_width_at_end',
-            'fb_visible_height_at_nut',
-            'fb_visible_height_at_join',
-            'string_height_nut',
-            'string_height_eof',
-            'string_height_12th_fret'
+            'no_frets'
         ],
-        description='Fingerboard dimensions and string action'
+        description='Number of frets to calculate (fret_join is in Body & Bridge section)'
     ),
 
-    'advanced_frets': SectionDefinition(
-        id='advanced_frets',
-        title='Fret Configuration',
+    # ============================================
+    # STAGE 8: ADVANCED GEOMETRY
+    # ============================================
+    'advanced_geometry': SectionDefinition(
+        id='advanced_geometry',
+        title='Advanced Geometry',
         type=SectionType.INPUT_ADVANCED,
-        icon='🎸',
+        icon='⚙️',
         default_expanded=False,
-        order=5,
+        order=8,
         parameter_names=[
-            'no_frets',
-            'fret_join'
+            'rib_height',
+            'belly_edge_thickness',
+            'tailpiece_height'
         ],
-        description='Fret positions and neck/body junction (optional for body-stop driven instruments)'
+        description='Advanced geometric parameters for fine-tuning. Note: neck_angle is always calculated, never manually input'
     ),
 
+    # ============================================
+    # STAGE 9: DISPLAY OPTIONS
+    # ============================================
     'display': SectionDefinition(
         id='display',
         title='Display Options',
         type=SectionType.INPUT_ADVANCED,
-        icon='⚙️',
+        icon='👁️',
         default_expanded=False,
-        order=6,
+        order=9,
         parameter_names=[
             'show_measurements'
         ],
