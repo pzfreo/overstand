@@ -11,7 +11,7 @@
  */
 
 const CACHE_NAME = 'overstand-v__BUILD_ID__';
-const PYODIDE_CACHE = 'pyodide-runtime-v1';
+const PYODIDE_CACHE = 'pyodide-runtime-v2';
 const CDN_CACHE = 'cdn-libraries-v1';
 const ENVIRONMENT = '__ENVIRONMENT__';
 
@@ -52,9 +52,9 @@ const PYTHON_MODULES = [
 
 // Pyodide runtime (large, cache separately)
 const PYODIDE_URLS = [
-  'https://cdn.jsdelivr.net/pyodide/v0.26.2/full/pyodide.js',
-  'https://cdn.jsdelivr.net/pyodide/v0.26.2/full/pyodide.asm.js',
-  'https://cdn.jsdelivr.net/pyodide/v0.26.2/full/pyodide.asm.wasm'
+  'https://cdn.jsdelivr.net/pyodide/v0.29.1/full/pyodide.js',
+  'https://cdn.jsdelivr.net/pyodide/v0.29.1/full/pyodide.asm.js',
+  'https://cdn.jsdelivr.net/pyodide/v0.29.1/full/pyodide.asm.wasm'
 ];
 
 // CDN libraries
