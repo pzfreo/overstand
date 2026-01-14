@@ -119,6 +119,10 @@ def calculate_derived_values(params: Dict[str, Any]) -> Dict[str, Any]:
     else:
         derived['back_break_length'] = 0
 
+    # Calculate cross-section geometry (for neck_block_max_width)
+    cs_geom = geometry_engine.calculate_cross_section_geometry(params)
+    derived['neck_block_max_width'] = cs_geom.get('neck_block_max_width', cs_geom.get('fb_width_at_body_join', 0))
+
     return derived
 
 def generate_multi_view_svg(params: Dict[str, Any]) -> Dict[str, str]:
@@ -151,7 +155,7 @@ def generate_cross_section_svg(params: Dict[str, Any], show_measurements: bool =
     # Setup exporter
     exporter = svg_renderer.setup_exporter(show_measurements)
 
-    # Draw the cross-section
+    # Draw the cross-section with blend parameters
     svg_renderer.draw_neck_cross_section(
         exporter,
         y_button=cs_geom['y_button'],
@@ -162,10 +166,17 @@ def generate_cross_section_svg(params: Dict[str, Any], show_measurements: bool =
         half_neck_width_at_ribs=cs_geom['half_neck_width_at_ribs'],
         half_fb_width=cs_geom['half_fb_width'],
         fingerboard_radius=cs_geom['fingerboard_radius'],
-        sagitta_at_join=cs_geom['sagitta_at_join']
+        sagitta_at_join=cs_geom['sagitta_at_join'],
+        fb_blend_percent=cs_geom.get('fb_blend_percent', 0.0),
+        curve_end_y=cs_geom.get('curve_end_y'),
+        blend_p0=cs_geom.get('blend_p0'),
+        blend_cp1=cs_geom.get('blend_cp1'),
+        blend_cp2=cs_geom.get('blend_cp2'),
+        blend_p3=cs_geom.get('blend_p3'),
+        belly_edge_thickness=cs_geom.get('belly_edge_thickness', 3.5)
     )
 
-    # Add dimensions
+    # Add dimensions with blend info
     svg_renderer.add_cross_section_dimensions(
         exporter, show_measurements,
         y_button=cs_geom['y_button'],
@@ -175,7 +186,9 @@ def generate_cross_section_svg(params: Dict[str, Any], show_measurements: bool =
         half_button_width=cs_geom['half_button_width'],
         half_neck_width_at_ribs=cs_geom['half_neck_width_at_ribs'],
         half_fb_width=cs_geom['half_fb_width'],
-        sagitta_at_join=cs_geom['sagitta_at_join']
+        sagitta_at_join=cs_geom['sagitta_at_join'],
+        fb_blend_percent=cs_geom.get('fb_blend_percent', 0.0),
+        neck_block_max_width=cs_geom.get('neck_block_max_width')
     )
 
     # Add title text

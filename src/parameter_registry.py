@@ -884,6 +884,22 @@ PARAMETER_REGISTRY: Dict[str, UnifiedParameter] = {
         )
     ),
 
+    'fb_blend_percent': UnifiedParameter(
+        key='fb_blend_percent',
+        display_name='Fingerboard Blend %',
+        param_type=ParameterType.NUMERIC,
+        unit='%',
+        description='Percentage of fingerboard side that blends into the fillet curve (0=traditional square edge, 100=fully blended)',
+        role=ParameterRole.INPUT_ONLY,
+        input_config=InputConfig(
+            min_val=0.0,
+            max_val=100.0,
+            default=0.0,
+            step=5.0,
+            category='Neck Root Geometry'
+        )
+    ),
+
     # ============================================
     # VIOL-SPECIFIC OUTPUT PARAMETERS
     # ============================================
@@ -964,6 +980,21 @@ PARAMETER_REGISTRY: Dict[str, UnifiedParameter] = {
             visible=False,
             category='Internal',
             order=21
+        )
+    ),
+
+    'neck_block_max_width': UnifiedParameter(
+        key='neck_block_max_width',
+        display_name='Neck Block Max Width',
+        param_type=ParameterType.NUMERIC,
+        unit='mm',
+        description='Maximum width of neck block at fingerboard bottom (equals fb_width when blend=0)',
+        role=ParameterRole.OUTPUT_ONLY,
+        output_config=OutputConfig(
+            decimals=1,
+            visible=True,
+            category='Geometry',
+            order=22
         )
     ),
 

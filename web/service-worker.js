@@ -52,9 +52,9 @@ const PYTHON_MODULES = [
 
 // Pyodide runtime (large, cache separately)
 const PYODIDE_URLS = [
-  'https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js',
-  'https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.asm.js',
-  'https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.asm.wasm'
+  'https://cdn.jsdelivr.net/pyodide/v0.26.2/full/pyodide.js',
+  'https://cdn.jsdelivr.net/pyodide/v0.26.2/full/pyodide.asm.js',
+  'https://cdn.jsdelivr.net/pyodide/v0.26.2/full/pyodide.asm.wasm'
 ];
 
 // CDN libraries

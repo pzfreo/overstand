@@ -156,6 +156,7 @@ class Spline:
 
     def __init__(self, *points: Tuple[float, float]):
         self.points = points
+        self._is_cubic = False  # Track if this is a cubic Bezier
 
     @staticmethod
     def interpolate_three_points(p0: Tuple[float, float],
@@ -182,8 +183,33 @@ class Spline:
         # Return spline with: start, control, end
         return Spline(p0, (control_x, control_y), p2)
 
+    @staticmethod
+    def cubic_bezier(p0: Tuple[float, float],
+                     cp1: Tuple[float, float],
+                     cp2: Tuple[float, float],
+                     p3: Tuple[float, float]) -> 'Spline':
+        """
+        Create a cubic Bezier curve with two control points.
+
+        The curve:
+        - Starts at p0 with tangent direction toward cp1
+        - Ends at p3 with tangent direction from cp2
+
+        Args:
+            p0: Start point
+            cp1: First control point (determines start tangent)
+            cp2: Second control point (determines end tangent)
+            p3: End point
+
+        Returns:
+            Spline configured for cubic Bezier rendering
+        """
+        spline = Spline(p0, cp1, cp2, p3)
+        spline._is_cubic = True
+        return spline
+
     def to_svg_path(self) -> str:
-        """Convert spline to SVG path using quadratic bezier curves"""
+        """Convert spline to SVG path using quadratic or cubic bezier curves"""
         if len(self.points) < 2:
             return ""
 
@@ -197,6 +223,9 @@ class Spline:
         elif len(self.points) == 3:
             # Perfect for quadratic bezier: start, control, end
             path += f" Q {self.points[1][0]},{self.points[1][1]} {self.points[2][0]},{self.points[2][1]}"
+        elif len(self.points) == 4 and self._is_cubic:
+            # Cubic bezier: start, cp1, cp2, end
+            path += f" C {self.points[1][0]},{self.points[1][1]} {self.points[2][0]},{self.points[2][1]} {self.points[3][0]},{self.points[3][1]}"
         else:
             # Multiple points - use quadratic bezier segments
             for i in range(1, len(self.points) - 1):
@@ -399,11 +428,34 @@ class ExportSVG:
                 max_x = max(max_x, x1, x2)
                 min_y = min(min_y, y1, y2)
                 max_y = max(max_y, y1, y2)
-            elif isinstance(shape, (Spline, Polygon)):
-                points = shape.points if isinstance(shape, Spline) else shape.vertices
-                for p in points:
-                    px = p[0] + (shape.x if isinstance(shape, Polygon) else 0)
-                    py = p[1] + (shape.y if isinstance(shape, Polygon) else 0)
+            elif isinstance(shape, Spline):
+                points = shape.points
+                if len(points) == 4 and hasattr(shape, '_is_cubic') and shape._is_cubic:
+                    # Sample cubic Bezier curve for bounds
+                    for t in [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]:
+                        # De Casteljau's algorithm for cubic Bezier
+                        mt = 1 - t
+                        mt2 = mt * mt
+                        mt3 = mt2 * mt
+                        t2 = t * t
+                        t3 = t2 * t
+                        px = mt3 * points[0][0] + 3*mt2*t * points[1][0] + 3*mt*t2 * points[2][0] + t3 * points[3][0]
+                        py = mt3 * points[0][1] + 3*mt2*t * points[1][1] + 3*mt*t2 * points[2][1] + t3 * points[3][1]
+                        min_x = min(min_x, px)
+                        max_x = max(max_x, px)
+                        min_y = min(min_y, py)
+                        max_y = max(max_y, py)
+                else:
+                    # Quadratic or other splines - use control points
+                    for p in points:
+                        min_x = min(min_x, p[0])
+                        max_x = max(max_x, p[0])
+                        min_y = min(min_y, p[1])
+                        max_y = max(max_y, p[1])
+            elif isinstance(shape, Polygon):
+                for p in shape.vertices:
+                    px = p[0] + shape.x
+                    py = p[1] + shape.y
                     min_x = min(min_x, px)
                     max_x = max(max_x, px)
                     min_y = min(min_y, py)

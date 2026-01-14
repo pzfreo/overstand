@@ -125,7 +125,8 @@ SECTIONS = {
         order=3,
         parameter_names=[
             'button_width_at_join',
-            'neck_width_at_top_of_ribs'
+            'neck_width_at_top_of_ribs',
+            'fb_blend_percent'
         ],
         description='Neck dimensions at the body join for cross-section view'
     ),
@@ -191,7 +192,8 @@ SECTIONS = {
             'string_break_angle',
             'downward_force_percent',
             'fb_thickness_at_nut',
-            'fb_thickness_at_join'
+            'fb_thickness_at_join',
+            'neck_block_max_width'
         ],
         description='Primary calculated values'
     ),

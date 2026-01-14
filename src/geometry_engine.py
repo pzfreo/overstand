@@ -33,6 +33,167 @@ def calculate_sagitta(radius: float, width: float) -> float:
 
     return radius - math.sqrt(radius ** 2 - half_width ** 2)
 
+
+# ============================================================================
+# Cubic Bezier Helper Functions
+# ============================================================================
+
+def evaluate_cubic_bezier(p0: tuple, cp1: tuple, cp2: tuple, p3: tuple,
+                          t: float) -> tuple:
+    """
+    Evaluate a cubic Bezier curve at parameter t.
+
+    Args:
+        p0: Start point (x, y)
+        cp1: First control point
+        cp2: Second control point
+        p3: End point
+        t: Parameter value (0 to 1)
+
+    Returns:
+        (x, y) coordinates at parameter t
+    """
+    mt = 1 - t
+    mt2 = mt * mt
+    mt3 = mt2 * mt
+    t2 = t * t
+    t3 = t2 * t
+
+    x = mt3 * p0[0] + 3*mt2*t * cp1[0] + 3*mt*t2 * cp2[0] + t3 * p3[0]
+    y = mt3 * p0[1] + 3*mt2*t * cp1[1] + 3*mt*t2 * cp2[1] + t3 * p3[1]
+
+    return (x, y)
+
+
+def find_bezier_t_for_y(p0: tuple, cp1: tuple, cp2: tuple, p3: tuple,
+                        target_y: float, tolerance: float = 0.0001) -> float:
+    """
+    Find parameter t where Bezier curve has the given y coordinate.
+
+    Uses bisection method for robustness. Assumes y increases monotonically with t.
+
+    Args:
+        p0, cp1, cp2, p3: Bezier control points
+        target_y: Target Y coordinate
+        tolerance: Convergence tolerance
+
+    Returns:
+        Parameter t (0 to 1) where curve Y equals target_y
+    """
+    t_low, t_high = 0.0, 1.0
+
+    for _ in range(50):  # Max iterations
+        t_mid = (t_low + t_high) / 2
+        _, y_mid = evaluate_cubic_bezier(p0, cp1, cp2, p3, t_mid)
+
+        if abs(y_mid - target_y) < tolerance:
+            return t_mid
+
+        # Assuming y increases with t (monotonic curve)
+        if y_mid < target_y:
+            t_low = t_mid
+        else:
+            t_high = t_mid
+
+    return (t_low + t_high) / 2
+
+
+def calculate_blend_curve(half_neck_width_at_ribs: float,
+                          half_fb_width: float,
+                          y_top_of_block: float,
+                          y_fb_bottom: float,
+                          fb_visible_height: float,
+                          fb_blend_percent: float,
+                          half_button_width: float,
+                          y_button: float) -> Dict[str, Any]:
+    """
+    Calculate cubic Bezier curve parameters for the blended fillet.
+
+    The curve:
+    - Starts at (half_neck_width_at_ribs, y_top_of_block)
+    - Ends at (half_fb_width, curve_end_y) with vertical tangent
+    - Matches the incoming tangent from the straight line at the start
+    - Is monotonic (X always increases as Y increases)
+
+    Args:
+        half_neck_width_at_ribs: Half neck width at top of block
+        half_fb_width: Half fingerboard width
+        y_top_of_block: Y coordinate at top of ribs/belly
+        y_fb_bottom: Y coordinate at fingerboard bottom
+        fb_visible_height: Visible height of fingerboard edge
+        fb_blend_percent: Blend percentage (0-100)
+        half_button_width: Half button width (for calculating incoming slope)
+        y_button: Y coordinate at button (typically 0)
+
+    Returns:
+        Dictionary with:
+        - p0, cp1, cp2, p3: Bezier control points
+        - curve_end_y: Y coordinate where curve ends
+        - neck_block_max_width: Full width at y_fb_bottom
+    """
+    result = {}
+
+    # Start point
+    p0 = (half_neck_width_at_ribs, y_top_of_block)
+
+    # End Y coordinate based on blend percentage
+    curve_end_y = y_fb_bottom + (fb_blend_percent / 100.0) * fb_visible_height
+
+    # End point - always at full fingerboard width
+    p3 = (half_fb_width, curve_end_y)
+
+    # Calculate incoming slope from button to top of block
+    dx_straight = half_neck_width_at_ribs - half_button_width
+    dy_straight = y_top_of_block - y_button
+
+    # Calculate curve length (approximate straight-line distance)
+    dx = p3[0] - p0[0]
+    dy = p3[1] - p0[1]
+    curve_length = math.sqrt(dx*dx + dy*dy)
+
+    # Control point distances (1/3 of curve length is standard heuristic)
+    t1 = curve_length / 3.0
+    t2 = curve_length / 3.0
+
+    # cp1: Along incoming tangent direction from p0
+    if dx_straight > EPSILON:
+        # Normalize the incoming tangent
+        tangent_length = math.sqrt(dx_straight*dx_straight + dy_straight*dy_straight)
+        tangent_dx = dx_straight / tangent_length
+        tangent_dy = dy_straight / tangent_length
+        cp1 = (p0[0] + t1 * tangent_dx, p0[1] + t1 * tangent_dy)
+    else:
+        # Vertical or near-vertical incoming line - use a small horizontal offset
+        cp1 = (p0[0] + t1 * 0.1, p0[1] + t1)
+
+    # cp2: Directly below p3 (same x) to ensure vertical end tangent
+    cp2 = (p3[0], p3[1] - t2)
+
+    result['p0'] = p0
+    result['cp1'] = cp1
+    result['cp2'] = cp2
+    result['p3'] = p3
+    result['curve_end_y'] = curve_end_y
+
+    # Calculate width at y_fb_bottom
+    if fb_blend_percent < EPSILON:
+        # No blend - width equals fingerboard width
+        result['neck_block_max_width'] = half_fb_width * 2
+    elif y_fb_bottom <= y_top_of_block:
+        # Edge case: fb_bottom at or below top of block
+        result['neck_block_max_width'] = half_neck_width_at_ribs * 2
+    elif y_fb_bottom >= curve_end_y:
+        # Edge case: fb_bottom at or above curve end
+        result['neck_block_max_width'] = half_fb_width * 2
+    else:
+        # Find x at y_fb_bottom on the curve
+        t = find_bezier_t_for_y(p0, cp1, cp2, p3, y_fb_bottom)
+        x_at_fb_bottom, _ = evaluate_cubic_bezier(p0, cp1, cp2, p3, t)
+        result['neck_block_max_width'] = x_at_fb_bottom * 2
+
+    return result
+
+
 def calculate_fingerboard_thickness(params: Dict[str, Any]) -> Dict[str, Any]:
     """
     Calculate fingerboard thickness including sagitta for radiused fingerboard.
@@ -375,6 +536,7 @@ def calculate_cross_section_geometry(params: Dict[str, Any]) -> Dict[str, Any]:
     button_width = params.get('button_width_at_join', 28.0)
     neck_width_at_ribs = params.get('neck_width_at_top_of_ribs', 30.0)
     overstand = params.get('overstand', 6.0)
+    belly_edge_thickness = params.get('belly_edge_thickness', 3.5)
 
     # Fingerboard parameters
     fb_width_at_nut = params.get('fingerboard_width_at_nut', DEFAULT_FB_WIDTH_AT_NUT)
@@ -414,9 +576,41 @@ def calculate_cross_section_geometry(params: Dict[str, Any]) -> Dict[str, Any]:
     half_neck_width_at_ribs = neck_width_at_ribs / 2.0
     half_fb_width = fb_width_at_body_join / 2.0
 
+    # Blend parameters
+    fb_blend_percent = params.get('fb_blend_percent', 0.0)
+    fb_visible_height = fb_thickness_at_join - sagitta_at_join  # Edge height of FB
+
+    # Calculate blend curve if fingerboard is wider than neck
+    if half_fb_width > half_neck_width_at_ribs:
+        blend_result = calculate_blend_curve(
+            half_neck_width_at_ribs=half_neck_width_at_ribs,
+            half_fb_width=half_fb_width,
+            y_top_of_block=y_top_of_block,
+            y_fb_bottom=y_fb_bottom,
+            fb_visible_height=fb_visible_height,
+            fb_blend_percent=fb_blend_percent,
+            half_button_width=half_button_width,
+            y_button=y_button
+        )
+        curve_end_y = blend_result['curve_end_y']
+        neck_block_max_width = blend_result['neck_block_max_width']
+        blend_p0 = blend_result['p0']
+        blend_cp1 = blend_result['cp1']
+        blend_cp2 = blend_result['cp2']
+        blend_p3 = blend_result['p3']
+    else:
+        # Invalid geometry - no blend possible
+        curve_end_y = y_fb_bottom
+        neck_block_max_width = fb_width_at_body_join
+        blend_p0 = None
+        blend_cp1 = None
+        blend_cp2 = None
+        blend_p3 = None
+
     # Store results
     result['block_height'] = block_height
     result['overstand'] = overstand
+    result['belly_edge_thickness'] = belly_edge_thickness
     result['button_width'] = button_width
     result['neck_width_at_ribs'] = neck_width_at_ribs
     result['fb_width_at_body_join'] = fb_width_at_body_join
@@ -434,5 +628,15 @@ def calculate_cross_section_geometry(params: Dict[str, Any]) -> Dict[str, Any]:
     result['half_button_width'] = half_button_width
     result['half_neck_width_at_ribs'] = half_neck_width_at_ribs
     result['half_fb_width'] = half_fb_width
+
+    # Blend curve data
+    result['fb_blend_percent'] = fb_blend_percent
+    result['fb_visible_height'] = fb_visible_height
+    result['curve_end_y'] = curve_end_y
+    result['neck_block_max_width'] = neck_block_max_width
+    result['blend_p0'] = blend_p0
+    result['blend_cp1'] = blend_cp1
+    result['blend_cp2'] = blend_cp2
+    result['blend_p3'] = blend_p3
 
     return result
