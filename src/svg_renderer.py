@@ -655,15 +655,16 @@ def add_cross_section_dimensions(exporter: ExportSVG, show_measurements: bool,
     ):
         exporter.add_shape(shape, layer=layer)
 
-    # 3. Fingerboard width (at fb bottom level)
-    fb_line = Edge.make_line((-half_fb_width, y_fb_bottom), (half_fb_width, y_fb_bottom))
+    # 3. Fingerboard width - shown above the fingerboard top
+    fb_line = Edge.make_line((-half_fb_width, y_fb_top), (half_fb_width, y_fb_top))
     fb_width = half_fb_width * 2
     for shape, layer in create_horizontal_dimension(
-        fb_line, f"{fb_width:.1f}", offset_y=y_fb_top - y_fb_bottom + 5, font_size=DIMENSION_FONT_SIZE
+        fb_line, f"{fb_width:.1f}", offset_y=8, font_size=DIMENSION_FONT_SIZE
     ):
         exporter.add_shape(shape, layer=layer)
 
     # 4. Neck block max width (only when blend > 0 and different from fb_width)
+    # Shown at fb_bottom level where the measurement is actually taken
     if fb_blend_percent > 0.1 and neck_block_max_width is not None:
         half_block_width = neck_block_max_width / 2.0
         if abs(half_block_width - half_fb_width) > 0.1:  # Only show if meaningfully different
@@ -673,7 +674,7 @@ def add_cross_section_dimensions(exporter: ExportSVG, show_measurements: bool,
             )
             for shape, layer in create_horizontal_dimension(
                 block_width_line, f"{neck_block_max_width:.1f}",
-                offset_y=dim_offset_y - 16, font_size=DIMENSION_FONT_SIZE
+                offset_y=dim_offset_y, font_size=DIMENSION_FONT_SIZE
             ):
                 exporter.add_shape(shape, layer=layer)
 
