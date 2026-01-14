@@ -794,7 +794,7 @@ input[type="checkbox"] {
     flex-direction: column;
     background: var(--color-gray-50);
     height: 100%;
-    overflow: hidden;
+    overflow: auto;
 }
 
 .view-controls-header {
@@ -996,6 +996,9 @@ input[type="checkbox"] {
     margin-top: 1rem;
     display: none;
     box-shadow: var(--shadow-md);
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
 }
 
 .error-panel.show {
