@@ -12,7 +12,7 @@
 
 const CACHE_NAME = 'overstand-v__BUILD_ID__';
 const PYODIDE_CACHE = 'pyodide-runtime-v2';
-const CDN_CACHE = 'cdn-libraries-v1';
+const CDN_CACHE = 'cdn-libraries-v2';
 const ENVIRONMENT = '__ENVIRONMENT__';
 
 // Get the base path (works both locally and on GitHub Pages)
@@ -61,8 +61,9 @@ const PYODIDE_URLS = [
 const CDN_URLS = [
   'https://cdn.jsdelivr.net/npm/@svgdotjs/svg.js@3.2/dist/svg.min.js',
   'https://cdn.jsdelivr.net/npm/@svgdotjs/svg.panzoom.js@2.1/dist/svg.panzoom.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
-  'https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js'
+  'https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js',
+  'https://cdn.jsdelivr.net/npm/svg2pdf.js@2.7.0/dist/svg2pdf.umd.min.js',
+  'https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js'
 ];
 
 /**
