@@ -63,7 +63,7 @@ const CDN_URLS = [
   'https://cdn.jsdelivr.net/npm/@svgdotjs/svg.panzoom.js@2.1/dist/svg.panzoom.min.js',
   'https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js',
   'https://cdn.jsdelivr.net/npm/svg2pdf.js@2.7.0/dist/svg2pdf.umd.min.js',
-  'https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js'
+  'https://cdn.jsdelivr.net/npm/jspdf-autotable@5.0.7/dist/jspdf.plugin.autotable.min.js'
 ];
 
 /**
