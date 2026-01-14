@@ -192,6 +192,67 @@ class TestPresetValidation:
             if params.get('no_frets', 0) > 0:
                 assert result['fret_positions']['available'] is True
 
+    def test_all_presets_all_views(self, all_presets):
+        """
+        Comprehensive test: every preset must successfully generate all expected views.
+
+        This catches issues like the 'instrument_famil' typo that broke viol presets.
+        Each preset/view combination is tested and failures are collected with details.
+        """
+        # The views that should always be generated
+        expected_views = ['side', 'top', 'cross_section', 'radius_template']
+
+        failures = []
+
+        for preset_name, params in all_presets.items():
+            result = json.loads(generate_violin_neck(json.dumps(params)))
+
+            # Check overall success
+            if not result['success']:
+                errors = result.get('errors', ['Unknown error'])
+                failures.append(f"{preset_name}: Generation failed - {errors}")
+                continue
+
+            # Check that all expected views are present
+            views = result.get('views', {})
+            for view_name in expected_views:
+                if view_name not in views:
+                    failures.append(f"{preset_name}/{view_name}: View missing from result")
+                    continue
+
+                svg = views[view_name]
+
+                # Skip 'top' view if it's a placeholder
+                if view_name == 'top' and 'placeholder' in svg.lower():
+                    continue
+
+                # Validate SVG structure
+                if '<svg' not in svg:
+                    failures.append(f"{preset_name}/{view_name}: Missing <svg> tag")
+                elif '</svg>' not in svg:
+                    failures.append(f"{preset_name}/{view_name}: Unclosed </svg> tag")
+                elif 'viewBox' not in svg:
+                    failures.append(f"{preset_name}/{view_name}: Missing viewBox attribute")
+
+            # Check derived values exist and are valid
+            derived = result.get('derived_values', {})
+            if not derived:
+                failures.append(f"{preset_name}: No derived values returned")
+            else:
+                # Check for NaN or Inf values
+                for key, value in derived.items():
+                    if isinstance(value, float):
+                        if math.isnan(value):
+                            failures.append(f"{preset_name}: derived_values['{key}'] is NaN")
+                        elif math.isinf(value):
+                            failures.append(f"{preset_name}: derived_values['{key}'] is Inf")
+
+        # Report all failures at once for easier debugging
+        assert len(failures) == 0, (
+            f"Found {len(failures)} preset/view failures:\n" +
+            "\n".join(f"  - {f}" for f in failures)
+        )
+
 
 class TestSVGOutputValidation:
     """Validate the structure and content of generated SVG."""
