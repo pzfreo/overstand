@@ -144,6 +144,12 @@ def generate_radius_template_svg(params: Dict[str, Any]) -> str:
 
     # Arc along BOTTOM edge - CONCAVE (cutting into rectangle)
     # Arc center is BELOW the rectangle (negative y)
+    if half_template_width >= fingerboard_radius:
+        raise ValueError(
+            f"Fingerboard radius ({fingerboard_radius:.1f}mm) must be larger than half the template width ({half_template_width:.1f}mm). "
+            f"Increase fingerboard_radius or decrease fb_width_at_end."
+        )
+
     arc_center_y = -math.sqrt(fingerboard_radius**2 - half_template_width**2)
 
     num_arc_points = ARC_POINT_RESOLUTION

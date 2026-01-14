@@ -268,7 +268,17 @@ def calculate_string_angles_guitar(params: Dict[str, Any], vsl: float, fret_posi
     string_height_at_join = ((string_height_12th_fret - string_height_nut) * (fret_positions[fret_join] / fret_positions[12])) + string_height_nut
     hypotenuse = vsl - fret_positions[fret_join]
     opposite = arching_height + bridge_height - overstand - fb_thickness_at_join - string_height_at_join
-    string_angle_to_ribs_rad = math.asin(opposite / hypotenuse)
+
+    # Validate that the angle calculation is geometrically possible
+    sin_value = opposite / hypotenuse
+    if abs(sin_value) > 1.0:
+        raise ValueError(
+            f"Geometric constraints are impossible: string angle calculation requires sin({sin_value:.3f}). "
+            f"Try adjusting: bridge_height ({bridge_height:.1f}mm), arching_height ({arching_height:.1f}mm), "
+            f"overstand ({overstand:.1f}mm), or neck angle to make the geometry work."
+        )
+
+    string_angle_to_ribs_rad = math.asin(sin_value)
     string_angle_to_ribs = string_angle_to_ribs_rad * 180 / math.pi
     string_nut_to_join = fret_positions[fret_join]
     neck_stop = math.cos(string_angle_to_ribs_rad) * string_nut_to_join

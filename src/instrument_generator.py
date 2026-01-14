@@ -85,6 +85,16 @@ def generate_violin_neck(params_json: str) -> str:
                 "errors": []
             })
 
+        except ValueError as e:
+            # Math domain errors or invalid geometric constraints
+            error_msg = str(e)
+            if "math domain error" in error_msg:
+                error_msg = "Invalid geometric constraints - check that neck dimensions, angles, and measurements are compatible. Common issues: bridge height too low, neck angle too steep, or fingerboard radius too small for the width."
+            return json.dumps({
+                "success": False,
+                "views": None,
+                "errors": [error_msg]
+            })
         except Exception as e:
             return json.dumps({
                 "success": False,
