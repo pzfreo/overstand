@@ -24,21 +24,35 @@ export async function initAuth() {
     try {
         supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // Listen for auth state changes
+        // Listen for auth state changes (fires after code exchange, sign-in, sign-out)
         supabase.auth.onAuthStateChange((event, session) => {
             const user = session?.user || null;
             currentUser = user;
+            console.log(`[Auth] State change: ${event}, user: ${user?.email || 'none'}`);
             notifyListeners(user, event);
         });
 
-        // Check for existing session
-        const { data: { session } } = await supabase.auth.getSession();
-        currentUser = session?.user || null;
-
-        // Handle OAuth redirect (clean up URL hash/params from OAuth callback)
-        if (window.location.hash.includes('access_token') ||
-            window.location.search.includes('code=')) {
+        // Handle OAuth redirect — exchange code for session before anything else
+        const params = new URLSearchParams(window.location.search);
+        if (params.has('code')) {
+            console.log('[Auth] OAuth code detected, exchanging for session...');
+            const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(params.get('code'));
+            if (exchangeError) {
+                console.error('[Auth] Code exchange failed:', exchangeError);
+            } else {
+                currentUser = data.session?.user || null;
+                console.log('[Auth] Code exchange succeeded:', currentUser?.email);
+            }
             cleanupOAuthRedirect();
+        } else if (window.location.hash.includes('access_token')) {
+            // Implicit flow fallback (older Supabase or non-PKCE)
+            const { data: { session } } = await supabase.auth.getSession();
+            currentUser = session?.user || null;
+            cleanupOAuthRedirect();
+        } else {
+            // No OAuth redirect — just check for existing session
+            const { data: { session } } = await supabase.auth.getSession();
+            currentUser = session?.user || null;
         }
 
         notifyListeners(currentUser, 'INITIAL');
