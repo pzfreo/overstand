@@ -618,7 +618,7 @@ function showKeyboardShortcuts() {
                     </div>
                 </li>
                 <li class="shortcut-item">
-                    <span class="shortcut-description">Save Parameters</span>
+                    <span class="shortcut-description">Save Profile / Export JSON</span>
                     <div class="shortcut-keys">
                         <span class="key">${mod}</span>
                         <span class="key-separator">+</span>
@@ -626,7 +626,7 @@ function showKeyboardShortcuts() {
                     </div>
                 </li>
                 <li class="shortcut-item">
-                    <span class="shortcut-description">Load Parameters</span>
+                    <span class="shortcut-description">Import from JSON</span>
                     <div class="shortcut-keys">
                         <span class="key">${mod}</span>
                         <span class="key-separator">+</span>
@@ -759,6 +759,7 @@ function updateAuthUI(user) {
     const cloudSection = document.getElementById('cloud-preset-section');
     const cloudPrompt = document.getElementById('cloud-signed-out-prompt');
     const shareSaveBtn = document.getElementById('share-save-btn');
+    const menuSaveCloud = document.getElementById('menu-save-cloud');
 
     if (user) {
         // Logged in
@@ -767,6 +768,7 @@ function updateAuthUI(user) {
         if (cloudSection) cloudSection.style.display = 'block';
         if (cloudPrompt) cloudPrompt.style.display = 'none';
         if (shareSaveBtn) shareSaveBtn.style.display = 'inline-block';
+        if (menuSaveCloud) menuSaveCloud.style.display = 'flex';
 
         // Update user info
         const avatar = document.getElementById('menu-user-avatar');
@@ -786,6 +788,7 @@ function updateAuthUI(user) {
         if (cloudSection) cloudSection.style.display = 'none';
         if (cloudPrompt) cloudPrompt.style.display = 'block';
         if (shareSaveBtn) shareSaveBtn.style.display = 'none';
+        if (menuSaveCloud) menuSaveCloud.style.display = 'none';
         state.cloudPresets = [];
     }
 }
@@ -1192,13 +1195,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Menu items (menu open/close and clear cache already set up above)
-    const menuSaveParams = document.getElementById('menu-save-params');
-    const menuLoadParams = document.getElementById('menu-load-params');
+    const menuSaveCloud = document.getElementById('menu-save-cloud');
+    const menuExportParams = document.getElementById('menu-export-params');
+    const menuImportParams = document.getElementById('menu-import-params');
     const menuKeyboardShortcuts = document.getElementById('menu-keyboard-shortcuts');
     const menuAbout = document.getElementById('menu-about');
 
-    if (menuSaveParams) menuSaveParams.addEventListener('click', () => { closeMenu(); saveParameters(); });
-    if (menuLoadParams) menuLoadParams.addEventListener('click', () => { closeMenu(); elements.loadParamsInput.click(); });
+    if (menuSaveCloud) menuSaveCloud.addEventListener('click', () => { closeMenu(); handleCloudSave(); });
+    if (menuExportParams) menuExportParams.addEventListener('click', () => { closeMenu(); saveParameters(); });
+    if (menuImportParams) menuImportParams.addEventListener('click', () => { closeMenu(); elements.loadParamsInput.click(); });
     if (menuKeyboardShortcuts) menuKeyboardShortcuts.addEventListener('click', showKeyboardShortcuts);
     if (menuAbout) menuAbout.addEventListener('click', showAbout);
 
@@ -1263,10 +1268,14 @@ document.addEventListener('keydown', (e) => {
         if (!elements.genBtn.disabled && !state.isGenerating) generateNeck();
     }
 
-    // Save parameters: ⌘/Ctrl + S
+    // Save: ⌘/Ctrl + S — cloud save if logged in, JSON export if not
     if ((e.metaKey || e.ctrlKey) && e.key === 's') {
         e.preventDefault();
-        saveParameters();
+        if (isAuthenticated()) {
+            handleCloudSave();
+        } else {
+            saveParameters();
+        }
     }
 
     // Load parameters: ⌘/Ctrl + O
