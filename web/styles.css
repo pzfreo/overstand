@@ -82,6 +82,26 @@ body {
     margin: 0 auto 0 56px; /* Account for 56px icon bar on left */
 }
 
+.app-footer {
+    text-align: center;
+    padding: 1rem;
+    font-size: 0.8rem;
+    color: var(--color-gray-400);
+}
+
+.app-footer a {
+    color: var(--color-gray-400);
+    text-decoration: none;
+}
+
+.app-footer a:hover {
+    color: var(--color-primary);
+}
+
+.footer-sep {
+    margin: 0 0.5rem;
+}
+
 h1 {
     font-size: 1.25rem;
     font-weight: 700;
