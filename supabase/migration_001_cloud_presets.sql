@@ -125,24 +125,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- ============================================================================
--- AUTO-CREATE PROFILE ON SIGNUP
--- ============================================================================
-
--- When a new user signs up via OAuth, automatically create a profiles row
-CREATE OR REPLACE FUNCTION handle_new_user()
-RETURNS TRIGGER AS $$
-BEGIN
-    INSERT INTO profiles (id, username, avatar_url)
-    VALUES (
-        NEW.id,
-        COALESCE(NEW.raw_user_meta_data->>'preferred_username', split_part(NEW.email, '@', 1)),
-        NEW.raw_user_meta_data->>'avatar_url'
-    );
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
-CREATE TRIGGER on_auth_user_created
-    AFTER INSERT ON auth.users
-    FOR EACH ROW EXECUTE FUNCTION handle_new_user();
+-- NOTE: No auto-create profile trigger. Profiles are created on-demand
+-- by the app if needed. The trigger approach is fragile (username uniqueness
+-- conflicts block signup entirely).
