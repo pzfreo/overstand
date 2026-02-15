@@ -80,6 +80,9 @@ body {
 .app-container {
     max-width: 1400px;
     margin: 0 auto 0 56px; /* Account for 56px icon bar on left */
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 2rem); /* Account for body padding */
 }
 
 .app-footer {
@@ -226,7 +229,8 @@ header {
     grid-template-columns: 500px 1fr;
     gap: 0;
     overflow: hidden;
-    height: calc(100vh - 145px);
+    flex: 1;
+    min-height: 0;
     border: 1px solid var(--color-gray-200);
     transition: grid-template-columns 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
