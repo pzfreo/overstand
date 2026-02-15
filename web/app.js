@@ -798,20 +798,12 @@ function showLoginModal() {
                 <span class="login-btn-icon">G</span>
                 Sign in with Google
             </button>
-            <button class="login-btn" id="login-github">
-                <span class="login-btn-icon">GH</span>
-                Sign in with GitHub
-            </button>
         </div>
     `;
     showModal('Sign In', content);
 
-    // Wire up login buttons inside the modal
     document.getElementById('login-google')?.addEventListener('click', async () => {
         try { await signInWithProvider('google'); } catch (e) { showErrorModal('Sign In Failed', e.message); }
-    });
-    document.getElementById('login-github')?.addEventListener('click', async () => {
-        try { await signInWithProvider('github'); } catch (e) { showErrorModal('Sign In Failed', e.message); }
     });
 }
 
