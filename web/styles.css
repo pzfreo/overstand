@@ -73,7 +73,7 @@ body {
     background: linear-gradient(135deg, #f0f4ff 0%, #e0e7ff 100%);
     color: var(--color-gray-800);
     min-height: 100vh;
-    padding: 1rem 1rem 1rem 0; /* No left padding - icon bar handles it */
+    padding: 1rem 1rem 0 0; /* No left padding - icon bar handles it; no bottom padding - footer sits flush */
     line-height: 1.5;
 }
 
@@ -82,7 +82,7 @@ body {
     margin: 0 auto 0 56px; /* Account for 56px icon bar on left */
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 2rem); /* Account for body padding */
+    height: calc(100vh - 1rem); /* Account for body top padding only */
 }
 
 .app-footer {
