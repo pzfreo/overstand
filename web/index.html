@@ -141,7 +141,7 @@
         <div id="share-banner" class="share-banner" style="display: none;">
             <span id="share-banner-text"></span>
             <div class="share-banner-actions">
-                <button class="share-banner-btn" id="share-save-btn" style="display: none;">Save to My Presets</button>
+                <button class="share-banner-btn" id="share-save-btn" style="display: none;">Save to My Profiles</button>
                 <button class="share-banner-dismiss" id="share-dismiss-btn" title="Dismiss">✕</button>
             </div>
         </div>
@@ -163,19 +163,19 @@
 
                     <!-- Cloud Presets (visible when logged in) -->
                     <div id="cloud-preset-section" class="cloud-preset-section" style="display: none;">
-                        <label for="cloud-preset">Cloud Presets:</label>
+                        <label for="cloud-preset">My Profiles:</label>
                         <div class="cloud-preset-controls">
                             <select id="cloud-preset">
                                 <option value="">-- Select --</option>
                             </select>
-                            <button class="cloud-btn" id="cloud-save-btn" title="Save current parameters to cloud">Save</button>
-                            <button class="cloud-btn cloud-btn-danger" id="cloud-delete-btn" title="Delete selected cloud preset" disabled>Del</button>
+                            <button class="cloud-btn" id="cloud-save-btn" title="Save current parameters as a profile">Save</button>
+                            <button class="cloud-btn cloud-btn-danger" id="cloud-delete-btn" title="Delete selected profile" disabled>Del</button>
                             <button class="cloud-btn cloud-btn-share" id="cloud-share-btn" title="Share current parameters via link">Share</button>
                         </div>
                     </div>
                     <!-- Signed-out prompt (visible when logged out) -->
                     <div id="cloud-signed-out-prompt" class="cloud-signed-out-prompt">
-                        <a href="#" id="cloud-sign-in-link">Sign in</a> to save presets to the cloud
+                        <a href="#" id="cloud-sign-in-link">Sign in</a> to save profiles to the cloud
                     </div>
 
                     <input type="file" id="load-params-input" accept=".json" style="display: none;" />
@@ -271,7 +271,7 @@
                         </div>
                         <button class="menu-item" id="menu-my-presets">
                             <span class="menu-item-icon">☁️</span>
-                            <span class="menu-item-text">My Cloud Presets</span>
+                            <span class="menu-item-text">My Profiles</span>
                         </button>
                         <button class="menu-item" id="menu-sign-out">
                             <span class="menu-item-icon">🚪</span>

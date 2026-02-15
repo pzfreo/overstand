@@ -793,7 +793,7 @@ function updateAuthUI(user) {
 function showLoginModal() {
     const content = `
         <div class="login-modal-content">
-            <p>Sign in to save presets to the cloud and share your designs.</p>
+            <p>Sign in to save instrument profiles to the cloud and share your designs.</p>
             <button class="login-btn" id="login-google">
                 <span class="login-btn-icon">G</span>
                 Sign in with Google
@@ -881,14 +881,14 @@ async function handleCloudSave() {
     const params = collectParameters();
     const defaultName = params.instrument_name || 'My Preset';
 
-    const presetName = prompt('Preset name:', defaultName);
+    const presetName = prompt('Profile name:', defaultName);
     if (!presetName) return;
 
     try {
         // Check if name exists and confirm overwrite
         const exists = await cloudPresetExists(presetName);
         if (exists) {
-            if (!confirm(`A cloud preset named "${presetName}" already exists. Overwrite it?`)) return;
+            if (!confirm(`A profile named "${presetName}" already exists. Overwrite it?`)) return;
         }
 
         await saveToCloud(presetName, '', params);
@@ -908,7 +908,7 @@ async function handleCloudDelete() {
     const preset = state.cloudPresets.find(p => p.id === select.value);
     if (!preset) return;
 
-    if (!confirm(`Delete cloud preset "${preset.preset_name}"?`)) return;
+    if (!confirm(`Delete profile "${preset.preset_name}"?`)) return;
 
     try {
         await deleteCloudPreset(preset.id);
@@ -1002,7 +1002,7 @@ async function handleShareURL() {
 async function handleShareSave() {
     if (!isAuthenticated() || !state.sharedPreset) return;
 
-    const presetName = prompt('Save as:', state.sharedPreset.preset_name);
+    const presetName = prompt('Save profile as:', state.sharedPreset.preset_name);
     if (!presetName) return;
 
     try {
