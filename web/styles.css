@@ -84,10 +84,11 @@ body {
 
 .app-footer {
     text-align: center;
-    padding: 0.15rem;
-    font-size: 0.65rem;
+    padding: 0;
+    font-size: 0.6rem;
     color: var(--color-gray-400);
     line-height: 1;
+    opacity: 0.7;
 }
 
 .app-footer a {
@@ -225,7 +226,7 @@ header {
     grid-template-columns: 500px 1fr;
     gap: 0;
     overflow: hidden;
-    height: calc(100vh - 152px);
+    height: calc(100vh - 145px);
     border: 1px solid var(--color-gray-200);
     transition: grid-template-columns 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
