@@ -40,3 +40,6 @@ web/.dist/
 *.backup
 .vercel
 .env*.local
+
+# Supabase config (per-environment credentials)
+web/config.js
