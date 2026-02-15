@@ -11,7 +11,12 @@ export const state = {
     derivedValues: null,      // Stores calculated derived values
     derivedMetadata: null,    // Stores metadata for derived values
     derivedFormatted: null,   // Stores formatted derived values from backend
-    parametersModified: false // Tracks if parameters have been changed since load/save
+    parametersModified: false, // Tracks if parameters have been changed since load/save
+
+    // Auth & cloud state
+    authUser: null,           // Current Supabase user object (or null)
+    cloudPresets: [],         // Array of user's cloud presets
+    sharedPreset: null        // Currently loaded shared preset (from ?share= URL)
 };
 
 // Elements will be populated after DOM is ready

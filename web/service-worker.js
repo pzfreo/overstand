@@ -29,6 +29,9 @@ const APP_SHELL = [
   `${BASE_PATH}pdf_export.js`,
   `${BASE_PATH}pwa_manager.js`,
   `${BASE_PATH}constants.js`,
+  `${BASE_PATH}auth.js`,
+  `${BASE_PATH}cloud_presets.js`,
+  `${BASE_PATH}config.js`,
   `${BASE_PATH}version.json`,
   `${BASE_PATH}fonts/AllertaStencil-Regular.ttf`,
   `${BASE_PATH}manifest.json`
@@ -63,7 +66,8 @@ const CDN_URLS = [
   'https://cdn.jsdelivr.net/npm/@svgdotjs/svg.panzoom.js@2.1/dist/svg.panzoom.min.js',
   'https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js',
   'https://cdn.jsdelivr.net/npm/svg2pdf.js@2.7.0/dist/svg2pdf.umd.min.js',
-  'https://cdn.jsdelivr.net/npm/jspdf-autotable@5.0.7/dist/jspdf.plugin.autotable.min.js'
+  'https://cdn.jsdelivr.net/npm/jspdf-autotable@5.0.7/dist/jspdf.plugin.autotable.min.js',
+  'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js'
 ];
 
 /**
@@ -227,6 +231,12 @@ self.addEventListener('fetch', (event) => {
           });
         })
     );
+    return;
+  }
+
+  // Strategy 5: Supabase API - Network only (never cache cloud operations)
+  if (url.hostname.endsWith('.supabase.co')) {
+    event.respondWith(fetch(request));
     return;
   }
 

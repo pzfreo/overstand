@@ -1950,3 +1950,198 @@ input[type="checkbox"] {
         padding: 1.25rem;
     }
 }
+
+/* ============================================================================
+   AUTH & CLOUD PRESETS
+   ============================================================================ */
+
+/* Menu account section */
+.menu-user-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    margin-bottom: 0.25rem;
+}
+
+.menu-user-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: var(--color-gray-200);
+}
+
+.menu-user-email {
+    font-size: 0.8rem;
+    color: var(--color-gray-600);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 180px;
+}
+
+/* Login modal */
+.login-modal-content {
+    text-align: center;
+    padding: 1rem 0;
+}
+
+.login-modal-content p {
+    margin-bottom: 1.5rem;
+    color: var(--color-gray-600);
+}
+
+.login-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.75rem;
+    border: 1px solid var(--color-gray-300);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    color: var(--color-gray-800);
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.login-btn:hover {
+    background: var(--color-gray-50);
+    border-color: var(--color-primary);
+}
+
+.login-btn-icon {
+    font-size: 1.2rem;
+}
+
+/* Cloud preset section in controls panel */
+.cloud-preset-section {
+    margin-top: 0.5rem;
+}
+
+.cloud-preset-section label {
+    font-size: 0.8rem;
+    color: var(--color-gray-600);
+    margin-bottom: 0.25rem;
+    display: block;
+}
+
+.cloud-preset-controls {
+    display: flex;
+    gap: 0.25rem;
+    align-items: center;
+}
+
+.cloud-preset-controls select {
+    flex: 1;
+    min-width: 0;
+    padding: 0.35rem;
+    border: 1px solid var(--color-gray-300);
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+    background: var(--color-surface);
+}
+
+.cloud-btn {
+    padding: 0.35rem 0.5rem;
+    border: 1px solid var(--color-gray-300);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface);
+    color: var(--color-gray-700);
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.cloud-btn:hover {
+    background: var(--color-gray-50);
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+}
+
+.cloud-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.cloud-btn-danger:hover:not(:disabled) {
+    border-color: var(--color-error);
+    color: var(--color-error);
+}
+
+.cloud-btn-share:hover:not(:disabled) {
+    border-color: var(--color-blue);
+    color: var(--color-blue);
+}
+
+/* Signed-out cloud prompt */
+.cloud-signed-out-prompt {
+    margin-top: 0.5rem;
+    font-size: 0.8rem;
+    color: var(--color-gray-500);
+}
+
+.cloud-signed-out-prompt a {
+    color: var(--color-primary);
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+/* Share banner */
+.share-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.5rem 1rem;
+    margin-bottom: 0.5rem;
+    background: var(--color-blue-light);
+    border: 1px solid var(--color-blue);
+    border-radius: var(--radius-md);
+    font-size: 0.85rem;
+    color: var(--color-gray-800);
+}
+
+.share-banner-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.share-banner-btn {
+    padding: 0.3rem 0.6rem;
+    border: 1px solid var(--color-blue);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface);
+    color: var(--color-blue-dark);
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.share-banner-btn:hover {
+    background: var(--color-blue-light);
+}
+
+.share-banner-dismiss {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--color-gray-500);
+    font-size: 1rem;
+    padding: 0.2rem;
+    line-height: 1;
+}
+
+.share-banner-dismiss:hover {
+    color: var(--color-gray-800);
+}

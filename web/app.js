@@ -6,6 +6,8 @@ import { showModal, closeModal, showErrorModal } from './modal.js';
 import { DEBOUNCE_GENERATE, ZOOM_CONFIG } from './constants.js';
 import { markdownToHtml } from './markdown-parser.js';
 import * as analytics from './analytics.js';
+import { initAuth, signInWithProvider, signOut, isAuthenticated, getCurrentUser, onAuthStateChange } from './auth.js';
+import { saveToCloud, loadUserPresets, deleteCloudPreset, createShareLink, loadSharedPreset, copyToClipboard, cloudPresetExists } from './cloud_presets.js';
 
 // Helper: Debounce
 function debounce(func, wait) {
@@ -169,8 +171,13 @@ async function initializePython() {
         ui.generateUI(UI_CALLBACKS);
         ui.populatePresets();
 
-        // Load the first preset's parameters (the one selected by default in dropdown)
-        if (elements.presetSelect && elements.presetSelect.value) {
+        // Check for ?share= URL parameter (shared preset link)
+        const loadedShared = await handleShareURL();
+
+        // Load the first preset's parameters (unless a shared preset was loaded)
+        if (loadedShared) {
+            // Shared preset already applied parameters
+        } else if (elements.presetSelect && elements.presetSelect.value) {
             await loadPreset();
         } else {
             // No presets available, just use defaults
@@ -611,7 +618,7 @@ function showKeyboardShortcuts() {
                     </div>
                 </li>
                 <li class="shortcut-item">
-                    <span class="shortcut-description">Save Parameters</span>
+                    <span class="shortcut-description">Save Profile / Export JSON</span>
                     <div class="shortcut-keys">
                         <span class="key">${mod}</span>
                         <span class="key-separator">+</span>
@@ -619,7 +626,7 @@ function showKeyboardShortcuts() {
                     </div>
                 </li>
                 <li class="shortcut-item">
-                    <span class="shortcut-description">Load Parameters</span>
+                    <span class="shortcut-description">Import from JSON</span>
                     <div class="shortcut-keys">
                         <span class="key">${mod}</span>
                         <span class="key-separator">+</span>
@@ -738,6 +745,280 @@ async function clearCacheAndReload() {
     } catch (error) {
         console.error('[ClearCache] Error:', error);
         alert('Failed to clear cache: ' + error.message + '\n\nTry manually clearing your browser cache.');
+    }
+}
+
+// ============================================================================
+// Auth & Cloud Presets
+// ============================================================================
+
+function updateAuthUI(user) {
+    state.authUser = user;
+    const signedOut = document.getElementById('menu-signed-out');
+    const signedIn = document.getElementById('menu-signed-in');
+    const cloudSection = document.getElementById('cloud-preset-section');
+    const cloudPrompt = document.getElementById('cloud-signed-out-prompt');
+    const shareSaveBtn = document.getElementById('share-save-btn');
+    const menuSaveCloud = document.getElementById('menu-save-cloud');
+
+    if (user) {
+        // Logged in
+        if (signedOut) signedOut.style.display = 'none';
+        if (signedIn) signedIn.style.display = 'block';
+        if (cloudSection) cloudSection.style.display = 'block';
+        if (cloudPrompt) cloudPrompt.style.display = 'none';
+        if (shareSaveBtn) shareSaveBtn.style.display = 'inline-block';
+        if (menuSaveCloud) menuSaveCloud.style.display = 'flex';
+
+        // Update user info
+        const avatar = document.getElementById('menu-user-avatar');
+        const email = document.getElementById('menu-user-email');
+        if (avatar) {
+            avatar.src = user.user_metadata?.avatar_url || '';
+            avatar.style.display = user.user_metadata?.avatar_url ? 'block' : 'none';
+        }
+        if (email) email.textContent = user.email || 'Signed in';
+
+        // Load cloud presets
+        refreshCloudPresets();
+    } else {
+        // Logged out
+        if (signedOut) signedOut.style.display = 'block';
+        if (signedIn) signedIn.style.display = 'none';
+        if (cloudSection) cloudSection.style.display = 'none';
+        if (cloudPrompt) cloudPrompt.style.display = 'block';
+        if (shareSaveBtn) shareSaveBtn.style.display = 'none';
+        if (menuSaveCloud) menuSaveCloud.style.display = 'none';
+        state.cloudPresets = [];
+    }
+}
+
+function showLoginModal() {
+    const content = `
+        <div class="login-modal-content">
+            <p>Sign in to save instrument profiles to the cloud and share your designs.</p>
+            <button class="login-btn" id="login-google">
+                <span class="login-btn-icon">G</span>
+                Sign in with Google
+            </button>
+        </div>
+    `;
+    showModal('Sign In', content);
+
+    document.getElementById('login-google')?.addEventListener('click', async () => {
+        try { await signInWithProvider('google'); } catch (e) { showErrorModal('Sign In Failed', e.message); }
+    });
+}
+
+async function refreshCloudPresets() {
+    try {
+        state.cloudPresets = await loadUserPresets();
+    } catch (e) {
+        console.error('[Cloud] Failed to load presets:', e);
+        state.cloudPresets = [];
+    }
+    populateCloudPresetSelect();
+}
+
+function populateCloudPresetSelect() {
+    const select = document.getElementById('cloud-preset');
+    if (!select) return;
+
+    const currentValue = select.value;
+    select.innerHTML = '<option value="">-- Select --</option>';
+
+    for (const preset of state.cloudPresets) {
+        const option = document.createElement('option');
+        option.value = preset.id;
+        option.textContent = preset.preset_name;
+        option.title = preset.description || '';
+        select.appendChild(option);
+    }
+
+    // Restore selection if still present
+    if (currentValue && select.querySelector(`option[value="${currentValue}"]`)) {
+        select.value = currentValue;
+    }
+
+    // Enable/disable delete button
+    const deleteBtn = document.getElementById('cloud-delete-btn');
+    if (deleteBtn) deleteBtn.disabled = !select.value;
+}
+
+async function handleCloudPresetSelect() {
+    const select = document.getElementById('cloud-preset');
+    const deleteBtn = document.getElementById('cloud-delete-btn');
+    if (!select) return;
+
+    if (deleteBtn) deleteBtn.disabled = !select.value;
+
+    const presetId = select.value;
+    if (!presetId) return;
+
+    const preset = state.cloudPresets.find(p => p.id === presetId);
+    if (!preset || !preset.parameters) return;
+
+    // Apply parameters
+    for (const [name, value] of Object.entries(preset.parameters)) {
+        const el = document.getElementById(name);
+        if (el) {
+            if (el.type === 'checkbox') el.checked = value;
+            else el.value = value;
+        }
+    }
+
+    // Clear the standard preset selector
+    if (elements.presetSelect) elements.presetSelect.value = '';
+    state.parametersModified = false;
+
+    ui.hideErrors();
+    ui.updateParameterVisibility(collectParameters());
+    updateDerivedValues();
+    debouncedGenerate();
+    ui.setStatus('ready', `☁️ Loaded "${preset.preset_name}"`);
+}
+
+async function handleCloudSave() {
+    if (!isAuthenticated()) { showLoginModal(); return; }
+
+    const params = collectParameters();
+    const defaultName = params.instrument_name || 'My Preset';
+
+    const presetName = prompt('Profile name:', defaultName);
+    if (!presetName) return;
+
+    try {
+        // Check if name exists and confirm overwrite
+        const exists = await cloudPresetExists(presetName);
+        if (exists) {
+            if (!confirm(`A profile named "${presetName}" already exists. Overwrite it?`)) return;
+        }
+
+        await saveToCloud(presetName, '', params);
+        await refreshCloudPresets();
+        ui.setStatus('ready', `☁️ Saved "${presetName}" to cloud`);
+        state.parametersModified = false;
+    } catch (e) {
+        console.error('[Cloud] Save failed:', e);
+        showErrorModal('Save Failed', e.message);
+    }
+}
+
+async function handleCloudDelete() {
+    const select = document.getElementById('cloud-preset');
+    if (!select || !select.value) return;
+
+    const preset = state.cloudPresets.find(p => p.id === select.value);
+    if (!preset) return;
+
+    if (!confirm(`Delete profile "${preset.preset_name}"?`)) return;
+
+    try {
+        await deleteCloudPreset(preset.id);
+        await refreshCloudPresets();
+        ui.setStatus('ready', `Deleted "${preset.preset_name}"`);
+    } catch (e) {
+        console.error('[Cloud] Delete failed:', e);
+        showErrorModal('Delete Failed', e.message);
+    }
+}
+
+async function handleShare() {
+    if (!isAuthenticated()) { showLoginModal(); return; }
+
+    const params = collectParameters();
+    const presetName = params.instrument_name || 'Shared Preset';
+
+    try {
+        ui.setStatus('loading', 'Creating share link...');
+        const url = await createShareLink(presetName, params);
+        const copied = await copyToClipboard(url);
+
+        if (copied) {
+            ui.setStatus('ready', 'Share link copied to clipboard!');
+        } else {
+            // Fallback: show the URL in a prompt
+            prompt('Share this link:', url);
+            ui.setStatus('ready', 'Share link created');
+        }
+    } catch (e) {
+        console.error('[Share] Failed:', e);
+        showErrorModal('Share Failed', e.message);
+        ui.setStatus('error', 'Share link creation failed');
+    }
+}
+
+async function handleShareURL() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const shareToken = urlParams.get('share');
+    if (!shareToken) return false;
+
+    try {
+        const shared = await loadSharedPreset(shareToken);
+        if (!shared || !shared.parameters) {
+            console.warn('[Share] Shared preset not found:', shareToken);
+            // Clean up URL
+            window.history.replaceState({}, document.title,
+                window.location.origin + window.location.pathname);
+            return false;
+        }
+
+        state.sharedPreset = shared;
+
+        // Apply parameters
+        for (const [name, value] of Object.entries(shared.parameters)) {
+            const el = document.getElementById(name);
+            if (el) {
+                if (el.type === 'checkbox') el.checked = value;
+                else el.value = value;
+            }
+        }
+
+        // Show share banner
+        const banner = document.getElementById('share-banner');
+        const bannerText = document.getElementById('share-banner-text');
+        if (banner && bannerText) {
+            bannerText.textContent = `Viewing shared preset: "${shared.preset_name}"`;
+            banner.style.display = 'flex';
+        }
+
+        // Clear standard preset selector
+        if (elements.presetSelect) elements.presetSelect.value = '';
+        state.parametersModified = false;
+
+        // Clean up URL
+        window.history.replaceState({}, document.title,
+            window.location.origin + window.location.pathname);
+
+        ui.hideErrors();
+        ui.updateParameterVisibility(collectParameters());
+        updateDerivedValues();
+        debouncedGenerate();
+
+        return true;
+    } catch (e) {
+        console.error('[Share] Failed to load shared preset:', e);
+        return false;
+    }
+}
+
+async function handleShareSave() {
+    if (!isAuthenticated() || !state.sharedPreset) return;
+
+    const presetName = prompt('Save profile as:', state.sharedPreset.preset_name);
+    if (!presetName) return;
+
+    try {
+        await saveToCloud(presetName, '', state.sharedPreset.parameters);
+        await refreshCloudPresets();
+        ui.setStatus('ready', `☁️ Saved "${presetName}" to cloud`);
+
+        // Dismiss banner
+        const banner = document.getElementById('share-banner');
+        if (banner) banner.style.display = 'none';
+        state.sharedPreset = null;
+    } catch (e) {
+        showErrorModal('Save Failed', e.message);
     }
 }
 
@@ -914,15 +1195,56 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Menu items (menu open/close and clear cache already set up above)
-    const menuSaveParams = document.getElementById('menu-save-params');
-    const menuLoadParams = document.getElementById('menu-load-params');
+    const menuSaveCloud = document.getElementById('menu-save-cloud');
+    const menuExportParams = document.getElementById('menu-export-params');
+    const menuImportParams = document.getElementById('menu-import-params');
     const menuKeyboardShortcuts = document.getElementById('menu-keyboard-shortcuts');
     const menuAbout = document.getElementById('menu-about');
 
-    if (menuSaveParams) menuSaveParams.addEventListener('click', () => { closeMenu(); saveParameters(); });
-    if (menuLoadParams) menuLoadParams.addEventListener('click', () => { closeMenu(); elements.loadParamsInput.click(); });
+    if (menuSaveCloud) menuSaveCloud.addEventListener('click', () => { closeMenu(); handleCloudSave(); });
+    if (menuExportParams) menuExportParams.addEventListener('click', () => { closeMenu(); saveParameters(); });
+    if (menuImportParams) menuImportParams.addEventListener('click', () => { closeMenu(); elements.loadParamsInput.click(); });
     if (menuKeyboardShortcuts) menuKeyboardShortcuts.addEventListener('click', showKeyboardShortcuts);
     if (menuAbout) menuAbout.addEventListener('click', showAbout);
+
+    // Auth & Cloud Preset event listeners
+    const menuSignIn = document.getElementById('menu-sign-in');
+    const menuSignOut = document.getElementById('menu-sign-out');
+    const menuMyPresets = document.getElementById('menu-my-presets');
+    const cloudSignInLink = document.getElementById('cloud-sign-in-link');
+    const cloudPresetSelect = document.getElementById('cloud-preset');
+    const cloudSaveBtn = document.getElementById('cloud-save-btn');
+    const cloudDeleteBtn = document.getElementById('cloud-delete-btn');
+    const cloudShareBtn = document.getElementById('cloud-share-btn');
+    const shareDismissBtn = document.getElementById('share-dismiss-btn');
+    const shareSaveBtn = document.getElementById('share-save-btn');
+
+    if (menuSignIn) menuSignIn.addEventListener('click', () => { closeMenu(); showLoginModal(); });
+    if (menuSignOut) menuSignOut.addEventListener('click', async () => {
+        closeMenu();
+        try { await signOut(); } catch (e) { showErrorModal('Sign Out Failed', e.message); }
+    });
+    if (menuMyPresets) menuMyPresets.addEventListener('click', () => {
+        closeMenu();
+        // Scroll to cloud preset section
+        const cloudSection = document.getElementById('cloud-preset-section');
+        if (cloudSection) cloudSection.scrollIntoView({ behavior: 'smooth' });
+    });
+    if (cloudSignInLink) cloudSignInLink.addEventListener('click', (e) => { e.preventDefault(); showLoginModal(); });
+    if (cloudPresetSelect) cloudPresetSelect.addEventListener('change', handleCloudPresetSelect);
+    if (cloudSaveBtn) cloudSaveBtn.addEventListener('click', handleCloudSave);
+    if (cloudDeleteBtn) cloudDeleteBtn.addEventListener('click', handleCloudDelete);
+    if (cloudShareBtn) cloudShareBtn.addEventListener('click', handleShare);
+    if (shareDismissBtn) shareDismissBtn.addEventListener('click', () => {
+        const banner = document.getElementById('share-banner');
+        if (banner) banner.style.display = 'none';
+        state.sharedPreset = null;
+    });
+    if (shareSaveBtn) shareSaveBtn.addEventListener('click', handleShareSave);
+
+    // Initialize auth (non-blocking — cloud features activate when ready)
+    onAuthStateChange(updateAuthUI);
+    initAuth();
 
     // Modal dialog
     const modalCloseBtn = document.getElementById('modal-close-btn');
@@ -946,10 +1268,14 @@ document.addEventListener('keydown', (e) => {
         if (!elements.genBtn.disabled && !state.isGenerating) generateNeck();
     }
 
-    // Save parameters: ⌘/Ctrl + S
+    // Save: ⌘/Ctrl + S — cloud save if logged in, JSON export if not
     if ((e.metaKey || e.ctrlKey) && e.key === 's') {
         e.preventDefault();
-        saveParameters();
+        if (isAuthenticated()) {
+            handleCloudSave();
+        } else {
+            saveParameters();
+        }
     }
 
     // Load parameters: ⌘/Ctrl + O
