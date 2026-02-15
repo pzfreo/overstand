@@ -34,7 +34,9 @@ const APP_SHELL = [
   `${BASE_PATH}config.js`,
   `${BASE_PATH}version.json`,
   `${BASE_PATH}fonts/AllertaStencil-Regular.ttf`,
-  `${BASE_PATH}manifest.json`
+  `${BASE_PATH}manifest.json`,
+  `${BASE_PATH}privacy.html`,
+  `${BASE_PATH}terms.html`
 ];
 
 // Python modules
