@@ -804,14 +804,10 @@ function updateAuthUI(user) {
             }
         }
 
-        // Show sign-in link in status bar
+        // Show sign-in link in status bar (click handled by delegation on #auth-status)
         const authStatus = document.getElementById('auth-status');
         if (authStatus) {
-            authStatus.innerHTML = '<a href="#" id="auth-login-link" class="auth-login-link">Sign in</a>';
-            document.getElementById('auth-login-link')?.addEventListener('click', (e) => {
-                e.preventDefault();
-                showLoginModal();
-            });
+            authStatus.innerHTML = '<a href="#" class="auth-login-link">Sign in</a>';
         }
 
         state.cloudPresets = [];
@@ -1494,9 +1490,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (shareViaFacebookBtn) shareViaFacebookBtn.addEventListener('click', shareViaFacebook);
 
     // Initialize auth (non-blocking — cloud features activate when ready)
-    document.getElementById('auth-login-link')?.addEventListener('click', (e) => {
-        e.preventDefault();
-        showLoginModal();
+    // Use event delegation on parent — the link gets replaced by updateAuthUI
+    document.getElementById('auth-status')?.addEventListener('click', (e) => {
+        const link = e.target.closest('.auth-login-link');
+        if (link) {
+            e.preventDefault();
+            showLoginModal();
+        }
     });
     onAuthStateChange(updateAuthUI);
     initAuth();
