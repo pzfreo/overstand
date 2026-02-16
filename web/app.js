@@ -759,6 +759,7 @@ function updateAuthUI(user) {
     const shareSaveBtn = document.getElementById('share-save-btn');
     const menuSaveCloud = document.getElementById('menu-save-cloud');
     const menuLoadProfile = document.getElementById('menu-load-profile');
+    const menuShare = document.getElementById('menu-share');
 
     if (user) {
         // Logged in
@@ -767,13 +768,11 @@ function updateAuthUI(user) {
         if (shareSaveBtn) shareSaveBtn.style.display = 'inline-block';
 
         // Enable cloud menu items
-        if (menuSaveCloud) {
-            menuSaveCloud.classList.remove('menu-item-disabled');
-            menuSaveCloud.title = '';
-        }
-        if (menuLoadProfile) {
-            menuLoadProfile.classList.remove('menu-item-disabled');
-            menuLoadProfile.title = '';
+        for (const el of [menuSaveCloud, menuLoadProfile, menuShare]) {
+            if (el) {
+                el.classList.remove('menu-item-disabled');
+                el.title = '';
+            }
         }
 
         // Update user info
@@ -794,13 +793,11 @@ function updateAuthUI(user) {
         if (shareSaveBtn) shareSaveBtn.style.display = 'none';
 
         // Grey out cloud menu items
-        if (menuSaveCloud) {
-            menuSaveCloud.classList.add('menu-item-disabled');
-            menuSaveCloud.title = 'Sign in to use cloud profiles';
-        }
-        if (menuLoadProfile) {
-            menuLoadProfile.classList.add('menu-item-disabled');
-            menuLoadProfile.title = 'Sign in to use cloud profiles';
+        for (const el of [menuSaveCloud, menuLoadProfile, menuShare]) {
+            if (el) {
+                el.classList.add('menu-item-disabled');
+                el.title = 'Sign in to use cloud profiles';
+            }
         }
 
         state.cloudPresets = [];
@@ -1412,6 +1409,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (menuSaveCloud.classList.contains('menu-item-disabled')) return;
         closeMenu();
         handleCloudSave();
+    });
+    const menuShareBtn = document.getElementById('menu-share');
+    if (menuShareBtn) menuShareBtn.addEventListener('click', () => {
+        if (menuShareBtn.classList.contains('menu-item-disabled')) return;
+        closeMenu();
+        handleShare();
     });
     if (menuExportParams) menuExportParams.addEventListener('click', () => { closeMenu(); saveParameters(); });
     if (menuImportParams) menuImportParams.addEventListener('click', () => { closeMenu(); elements.loadParamsInput.click(); });
