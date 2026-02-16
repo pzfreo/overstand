@@ -6,10 +6,29 @@
 </div>
 <script>
 (function() {
-    var code = new URLSearchParams(window.location.search).get('code');
-    if (code) {
-        try { localStorage.setItem('oauth-code', code); } catch(e) {}
+    // Supabase may return tokens in the hash (implicit flow) or code in the query (PKCE)
+    var hashParams = new URLSearchParams(window.location.hash.substring(1));
+    var queryParams = new URLSearchParams(window.location.search);
+
+    var accessToken = hashParams.get('access_token');
+    var refreshToken = hashParams.get('refresh_token');
+    var code = queryParams.get('code');
+
+    if (accessToken && refreshToken) {
+        // Implicit flow — pass tokens to opener via localStorage
+        try {
+            localStorage.setItem('oauth-result', JSON.stringify({
+                access_token: accessToken,
+                refresh_token: refreshToken
+            }));
+        } catch(e) {}
+    } else if (code) {
+        // PKCE flow — pass code to opener via localStorage
+        try {
+            localStorage.setItem('oauth-result', JSON.stringify({ code: code }));
+        } catch(e) {}
     }
+
     // Close popup, or redirect to main page if not a popup
     setTimeout(function() {
         try { window.close(); } catch(e) {}

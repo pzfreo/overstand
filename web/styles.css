@@ -186,6 +186,23 @@ header {
     font-family: 'Courier New', monospace;
 }
 
+.auth-status {
+    font-size: 0.75rem;
+    color: var(--color-gray-500);
+    margin-left: 8px;
+    white-space: nowrap;
+}
+
+.auth-login-link {
+    color: var(--color-primary);
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.auth-login-link:hover {
+    text-decoration: underline;
+}
+
 .reset-link {
     font-size: 0.65rem;
     color: var(--color-gray-400);

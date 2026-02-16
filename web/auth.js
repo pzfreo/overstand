@@ -5,8 +5,8 @@
  * and auth state change notifications.
  *
  * Sign-in uses a popup window to avoid reloading the main page (and Pyodide).
- * The popup completes OAuth, writes the auth code to localStorage,
- * and the opener picks it up via the storage event and exchanges it.
+ * The popup completes OAuth, writes tokens (implicit) or code (PKCE) to localStorage,
+ * and the opener picks it up via polling and sets the session.
  */
 
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js';
@@ -60,7 +60,7 @@ export async function initAuth() {
             currentUser = session?.user || null;
         }
 
-        // Listen for oauth-code from popup via localStorage (storage event fires cross-window)
+        // Listen for oauth-result from popup via localStorage (storage event fires cross-window)
         window.addEventListener('storage', handleOAuthStorage);
 
         notifyListeners(currentUser, 'INITIAL');
@@ -75,34 +75,52 @@ export async function initAuth() {
  * This is a backup — signInWithProvider also polls localStorage directly.
  */
 async function handleOAuthStorage(event) {
-    if (event.key !== 'oauth-code' || !event.newValue) return;
+    if (event.key !== 'oauth-result' || !event.newValue) return;
 
-    const code = event.newValue;
-    localStorage.removeItem('oauth-code');
-    await exchangeOAuthCode(code);
+    const result = event.newValue;
+    localStorage.removeItem('oauth-result');
+    await handleOAuthResult(result);
 }
 
 /**
- * Exchange an OAuth authorization code for a session.
+ * Process OAuth result from the popup (either implicit tokens or PKCE code).
  * Called by both the storage event handler and the polling fallback.
  */
-async function exchangeOAuthCode(code) {
+async function handleOAuthResult(resultJson) {
     if (!supabase || exchangingCode) return;
     exchangingCode = true;
 
-    console.log('[Auth] Exchanging oauth code for session...');
     try {
-        const { data: sessionData, error: exchangeError } =
-            await supabase.auth.exchangeCodeForSession(code);
-        if (exchangeError) {
-            console.error('[Auth] Code exchange failed:', exchangeError);
-        } else {
-            currentUser = sessionData.session?.user || null;
-            console.log('[Auth] Popup sign-in succeeded:', currentUser?.email);
-            notifyListeners(currentUser, 'SIGNED_IN');
+        const result = JSON.parse(resultJson);
+
+        if (result.access_token && result.refresh_token) {
+            // Implicit flow — set session directly from tokens
+            console.log('[Auth] Setting session from popup tokens...');
+            const { data, error } = await supabase.auth.setSession({
+                access_token: result.access_token,
+                refresh_token: result.refresh_token
+            });
+            if (error) {
+                console.error('[Auth] setSession failed:', error);
+            } else {
+                currentUser = data.session?.user || null;
+                console.log('[Auth] Popup sign-in succeeded:', currentUser?.email);
+                notifyListeners(currentUser, 'SIGNED_IN');
+            }
+        } else if (result.code) {
+            // PKCE flow — exchange code for session
+            console.log('[Auth] Exchanging oauth code for session...');
+            const { data, error } = await supabase.auth.exchangeCodeForSession(result.code);
+            if (error) {
+                console.error('[Auth] Code exchange failed:', error);
+            } else {
+                currentUser = data.session?.user || null;
+                console.log('[Auth] Popup sign-in succeeded:', currentUser?.email);
+                notifyListeners(currentUser, 'SIGNED_IN');
+            }
         }
     } catch (e) {
-        console.error('[Auth] Code exchange error:', e);
+        console.error('[Auth] OAuth result processing error:', e);
     } finally {
         exchangingCode = false;
     }
@@ -136,7 +154,7 @@ export async function signInWithProvider(provider) {
     }
 
     // Clear any stale oauth code
-    localStorage.removeItem('oauth-code');
+    localStorage.removeItem('oauth-result');
 
     // Open in a centered popup
     const width = 500, height = 650;
@@ -158,11 +176,11 @@ export async function signInWithProvider(provider) {
     // Poll localStorage as a fallback — the storage event can be unreliable
     // when the popup closes immediately after writing.
     const pollInterval = setInterval(async () => {
-        const code = localStorage.getItem('oauth-code');
-        if (code) {
+        const result = localStorage.getItem('oauth-result');
+        if (result) {
             clearInterval(pollInterval);
-            localStorage.removeItem('oauth-code');
-            await exchangeOAuthCode(code);
+            localStorage.removeItem('oauth-result');
+            await handleOAuthResult(result);
         }
     }, 300);
 
