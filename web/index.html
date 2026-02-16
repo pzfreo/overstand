@@ -62,18 +62,7 @@
             window.stop();
         }
 
-        // OAuth popup callback — send code to opener and close immediately.
-        // Must run before Pyodide/Supabase script tags load.
-        // Uses window.name (survives cross-origin redirects, unlike window.opener)
-        // and localStorage (works without window.opener reference).
-        if (window.name === 'oauth-popup' && new URLSearchParams(window.location.search).get('code')) {
-            document.write('<div style="font-family:system-ui;padding:40px;text-align:center;color:#666;">Signing in...</div>');
-            var oauthCode = new URLSearchParams(window.location.search).get('code');
-            try { localStorage.setItem('oauth-code', oauthCode); } catch (e) {}
-            setTimeout(function() { window.close(); }, 1000);
-            window.stop();
-        }
-    })();
+})();
     </script>
 
     <!-- PWA Meta Tags -->

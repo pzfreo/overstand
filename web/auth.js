@@ -109,7 +109,7 @@ export async function signInWithProvider(provider) {
     const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-            redirectTo: window.location.origin + window.location.pathname,
+            redirectTo: window.location.origin + window.location.pathname.replace(/[^/]*$/, '') + 'oauth-callback.html',
             skipBrowserRedirect: true
         }
     });
@@ -142,8 +142,8 @@ export async function signInWithProvider(provider) {
         window.location.href = data.url;
     }
 
-    // The popup will postMessage back with the code when it redirects.
-    // handleOAuthMessage() (registered in initAuth) handles the rest.
+    // The popup redirects to oauth-callback.html, which writes the code
+    // to localStorage. The storage event handler picks it up from here.
 }
 
 /**
