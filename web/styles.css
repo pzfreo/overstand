@@ -179,16 +179,28 @@ header {
     border-left: 4px solid var(--color-primary);
 }
 
-.auth-status {
+.version-info {
     margin-left: auto;
     font-size: 0.75rem;
     color: var(--color-gray-500);
+    font-family: 'Courier New', monospace;
 }
 
-.version-info {
+.auth-status {
     font-size: 0.75rem;
     color: var(--color-gray-500);
-    font-family: 'Courier New', monospace;
+    margin-left: 8px;
+    white-space: nowrap;
+}
+
+.auth-login-link {
+    color: var(--color-primary);
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.auth-login-link:hover {
+    text-decoration: underline;
 }
 
 .reset-link {

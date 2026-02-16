@@ -784,9 +784,9 @@ function updateAuthUI(user) {
         }
         if (email) email.textContent = user.email || 'Signed in';
 
-        // Show signed-in status in status bar
+        // Show signed-in email in status bar
         const authStatus = document.getElementById('auth-status');
-        if (authStatus) authStatus.textContent = `Signed in as ${user.email}`;
+        if (authStatus) authStatus.textContent = user.email;
 
         // Load cloud presets
         refreshCloudPresets();
@@ -804,9 +804,15 @@ function updateAuthUI(user) {
             }
         }
 
-        // Clear signed-in status from status bar
+        // Show sign-in link in status bar
         const authStatus = document.getElementById('auth-status');
-        if (authStatus) authStatus.textContent = '';
+        if (authStatus) {
+            authStatus.innerHTML = '<a href="#" id="auth-login-link" class="auth-login-link">Sign in</a>';
+            document.getElementById('auth-login-link')?.addEventListener('click', (e) => {
+                e.preventDefault();
+                showLoginModal();
+            });
+        }
 
         state.cloudPresets = [];
     }
@@ -1488,6 +1494,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (shareViaFacebookBtn) shareViaFacebookBtn.addEventListener('click', shareViaFacebook);
 
     // Initialize auth (non-blocking — cloud features activate when ready)
+    document.getElementById('auth-login-link')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        showLoginModal();
+    });
     onAuthStateChange(updateAuthUI);
     initAuth();
 
