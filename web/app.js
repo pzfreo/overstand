@@ -2,7 +2,7 @@ import { state, elements, initElements } from './state.js';
 import * as ui from './ui.js';
 import { downloadPDF } from './pdf_export.js';
 import { registerServiceWorker, initInstallPrompt } from './pwa_manager.js';
-import { showModal, closeModal, showErrorModal } from './modal.js';
+import { showModal, closeModal, showErrorModal, escapeHtml } from './modal.js';
 import { DEBOUNCE_GENERATE, ZOOM_CONFIG } from './constants.js';
 import { markdownToHtml } from './markdown-parser.js';
 import * as analytics from './analytics.js';
@@ -26,6 +26,32 @@ function debounce(func, wait) {
 const debouncedGenerate = debounce(() => {
     generateNeck();
 }, DEBOUNCE_GENERATE);
+
+// Apply a set of parameters to the form elements
+function applyParametersToForm(parameters) {
+    for (const [name, value] of Object.entries(parameters)) {
+        const el = document.getElementById(name);
+        if (el) {
+            if (el.type === 'checkbox') el.checked = value;
+            else el.value = value;
+        }
+    }
+}
+
+// Common sequence after loading parameters from any source
+function refreshAfterParameterLoad() {
+    ui.hideErrors();
+    ui.updateParameterVisibility(collectParameters());
+    updateDerivedValues();
+    debouncedGenerate();
+}
+
+// Close an overlay and restore body scroll
+function closeOverlay(overlayId) {
+    const overlay = document.getElementById(overlayId);
+    if (overlay) overlay.classList.remove('active');
+    document.body.style.overflow = '';
+}
 
 function markParametersModified() {
     state.parametersModified = true;
@@ -260,13 +286,7 @@ async function loadPreset() {
     }
 
     // Apply preset parameters
-    for (const [name, value] of Object.entries(parameters)) {
-        const element = document.getElementById(name);
-        if (element) {
-            if (element.type === 'checkbox') element.checked = value;
-            else element.value = value;
-        }
-    }
+    applyParametersToForm(parameters);
 
     // Reset modified flag - we just loaded a preset
     state.parametersModified = false;
@@ -276,10 +296,7 @@ async function loadPreset() {
         elements.presetSelect.dataset.previousValue = presetId;
     }
 
-    ui.hideErrors();
-    ui.updateParameterVisibility(collectParameters());
-    updateDerivedValues();
-    debouncedGenerate();
+    refreshAfterParameterLoad();
 
     // Track preset selection
     analytics.trackPresetSelected(presetId, parameters.instrument_family || 'unknown');
@@ -556,22 +573,13 @@ function handleLoadParameters(event) {
         try {
             const saveData = JSON.parse(e.target.result);
             if (!saveData.parameters) return;
-            for (const [name, value] of Object.entries(saveData.parameters)) {
-                const el = document.getElementById(name);
-                if (el) {
-                    if (el.type === 'checkbox') el.checked = value;
-                    else el.value = value;
-                }
-            }
+            applyParametersToForm(saveData.parameters);
             elements.presetSelect.value = '';
 
             // Reset modified flag - we just loaded a file
             state.parametersModified = false;
 
-            ui.hideErrors();
-            ui.updateParameterVisibility(collectParameters());
-            updateDerivedValues();
-            debouncedGenerate();
+            refreshAfterParameterLoad();
             ui.setStatus('ready', '✅ Parameters loaded');
 
             analytics.trackParametersLoaded();
@@ -595,10 +603,8 @@ function openMenu() {
 
 function closeMenu() {
     const menuPanel = document.getElementById('menu-panel');
-    const menuOverlay = document.getElementById('menu-overlay');
-    menuPanel.classList.remove('open');
-    menuOverlay.classList.remove('active');
-    document.body.style.overflow = '';
+    if (menuPanel) menuPanel.classList.remove('open');
+    closeOverlay('menu-overlay');
 }
 
 // Modal Dialog Functions - imported from modal.js
@@ -864,9 +870,7 @@ function showLoadProfileModal() {
 }
 
 function closeLoadProfileModal() {
-    const overlay = document.getElementById('load-profile-overlay');
-    if (overlay) overlay.classList.remove('active');
-    document.body.style.overflow = '';
+    closeOverlay('load-profile-overlay');
 }
 
 function switchProfileTab(tabName) {
@@ -967,22 +971,13 @@ function loadCloudPreset(preset) {
     if (!preset || !preset.parameters) return;
 
     // Apply parameters
-    for (const [name, value] of Object.entries(preset.parameters)) {
-        const el = document.getElementById(name);
-        if (el) {
-            if (el.type === 'checkbox') el.checked = value;
-            else el.value = value;
-        }
-    }
+    applyParametersToForm(preset.parameters);
 
     // Clear the standard preset selector
     if (elements.presetSelect) elements.presetSelect.value = '';
     state.parametersModified = false;
 
-    ui.hideErrors();
-    ui.updateParameterVisibility(collectParameters());
-    updateDerivedValues();
-    debouncedGenerate();
+    refreshAfterParameterLoad();
     ui.setStatus('ready', `☁️ Loaded "${preset.preset_name}"`);
 
     closeLoadProfileModal();
@@ -1049,9 +1044,7 @@ function showShareModal(profileName, shareUrl) {
 }
 
 function closeShareModal() {
-    const overlay = document.getElementById('share-profile-overlay');
-    if (overlay) overlay.classList.remove('active');
-    document.body.style.overflow = '';
+    closeOverlay('share-profile-overlay');
 }
 
 async function handleShareCopy() {
@@ -1091,12 +1084,6 @@ function shareViaFacebook() {
     const url = document.getElementById('share-url-input')?.value;
     if (!url) return;
     window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
-}
-
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
 }
 
 async function handleCloudSave() {
@@ -1181,13 +1168,7 @@ async function handleShareURL() {
         state.sharedPreset = shared;
 
         // Apply parameters
-        for (const [name, value] of Object.entries(shared.parameters)) {
-            const el = document.getElementById(name);
-            if (el) {
-                if (el.type === 'checkbox') el.checked = value;
-                else el.value = value;
-            }
-        }
+        applyParametersToForm(shared.parameters);
 
         // Show share banner
         const banner = document.getElementById('share-banner');
@@ -1205,10 +1186,7 @@ async function handleShareURL() {
         window.history.replaceState({}, document.title,
             window.location.origin + window.location.pathname);
 
-        ui.hideErrors();
-        ui.updateParameterVisibility(collectParameters());
-        updateDerivedValues();
-        debouncedGenerate();
+        refreshAfterParameterLoad();
 
         return true;
     } catch (e) {
