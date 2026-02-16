@@ -1226,23 +1226,6 @@ async function handleShareSave() {
 
 // Initialize on load
 document.addEventListener('DOMContentLoaded', () => {
-    // If we're an OAuth popup, post the code back to the opener and close
-    const popupParams = new URLSearchParams(window.location.search);
-    if (window.opener && popupParams.has('code')) {
-        try {
-            window.opener.postMessage(
-                { type: 'oauth-code', code: popupParams.get('code') },
-                window.location.origin
-            );
-        } catch (e) {
-            console.error('[Auth Popup] postMessage failed:', e);
-        }
-        // Show brief message then close
-        document.body.innerHTML = '<div style="font-family:system-ui;padding:40px;text-align:center;color:#666;">Signing in... this window will close automatically.</div>';
-        setTimeout(() => window.close(), 1000);
-        return;
-    }
-
     // Start engagement time tracking
     analytics.startEngagementTracking();
 

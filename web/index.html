@@ -61,6 +61,20 @@
             // Stop the page from loading anything else
             window.stop();
         }
+
+        // OAuth popup callback — post code to opener and close immediately
+        // Must run before Pyodide/Supabase script tags load
+        if (window.opener && new URLSearchParams(window.location.search).get('code')) {
+            document.write('<div style="font-family:system-ui;padding:40px;text-align:center;color:#666;">Signing in...</div>');
+            try {
+                window.opener.postMessage(
+                    { type: 'oauth-code', code: new URLSearchParams(window.location.search).get('code') },
+                    window.location.origin
+                );
+            } catch (e) {}
+            setTimeout(function() { window.close(); }, 1000);
+            window.stop();
+        }
     })();
     </script>
 
