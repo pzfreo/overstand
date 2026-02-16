@@ -807,7 +807,7 @@ function updateAuthUI(user) {
         // Show sign-in link in status bar (click handled by delegation on #auth-status)
         const authStatus = document.getElementById('auth-status');
         if (authStatus) {
-            authStatus.innerHTML = '<a href="#" class="auth-login-link">Sign in</a>';
+            authStatus.innerHTML = '<a href="#" class="auth-login-link">Sign in / Sign up</a>';
         }
 
         state.cloudPresets = [];
@@ -817,14 +817,14 @@ function updateAuthUI(user) {
 function showLoginModal() {
     const content = `
         <div class="login-modal-content">
-            <p>Sign in to save instrument profiles to the cloud and share your designs.</p>
+            <p>Sign in or create an account to save instrument profiles to the cloud and share your designs.</p>
             <button class="login-btn" id="login-google">
                 <span class="login-btn-icon">G</span>
-                Sign in with Google
+                Sign in / Sign up with Google
             </button>
         </div>
     `;
-    showModal('Sign In', content);
+    showModal('Sign In / Sign Up', content);
 
     document.getElementById('login-google')?.addEventListener('click', async () => {
         closeModal();
