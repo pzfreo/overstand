@@ -775,8 +775,8 @@ function updateAuthUI(user) {
         if (signedIn) signedIn.style.display = 'block';
         if (shareSaveBtn) shareSaveBtn.style.display = 'inline-block';
 
-        // Enable cloud menu items
-        for (const el of [menuSaveCloud, menuLoadProfile, menuShare]) {
+        // Enable cloud menu items (Load Profile is always enabled — it has standard presets)
+        for (const el of [menuSaveCloud, menuShare]) {
             if (el) {
                 el.classList.remove('menu-item-disabled');
                 el.title = '';
@@ -804,8 +804,8 @@ function updateAuthUI(user) {
         if (signedIn) signedIn.style.display = 'none';
         if (shareSaveBtn) shareSaveBtn.style.display = 'none';
 
-        // Grey out cloud menu items
-        for (const el of [menuSaveCloud, menuLoadProfile, menuShare]) {
+        // Grey out cloud menu items (Load Profile stays enabled — it has standard presets)
+        for (const el of [menuSaveCloud, menuShare]) {
             if (el) {
                 el.classList.add('menu-item-disabled');
                 el.title = 'Sign in to use cloud profiles';
@@ -1396,7 +1396,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const menuAbout = document.getElementById('menu-about');
 
     if (menuLoadProfile) menuLoadProfile.addEventListener('click', () => {
-        if (menuLoadProfile.classList.contains('menu-item-disabled')) return;
         closeMenu();
         showLoadProfileModal();
     });
