@@ -784,6 +784,10 @@ function updateAuthUI(user) {
         }
         if (email) email.textContent = user.email || 'Signed in';
 
+        // Show signed-in status in status bar
+        const statusText = document.getElementById('status-text');
+        if (statusText) statusText.textContent = `Signed in as ${user.email}`;
+
         // Load cloud presets
         refreshCloudPresets();
     } else {
@@ -798,6 +802,12 @@ function updateAuthUI(user) {
                 el.classList.add('menu-item-disabled');
                 el.title = 'Sign in to use cloud profiles';
             }
+        }
+
+        // Clear signed-in status from status bar
+        const statusText = document.getElementById('status-text');
+        if (statusText && statusText.textContent.startsWith('Signed in as')) {
+            statusText.textContent = 'Ready';
         }
 
         state.cloudPresets = [];
