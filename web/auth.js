@@ -157,9 +157,11 @@ export async function signInWithProvider(provider) {
 
     // Poll localStorage as a fallback — the storage event can be unreliable
     // when the popup closes immediately after writing.
+    console.log('[Auth] Popup opened, polling for oauth-code...');
     const pollInterval = setInterval(async () => {
         const code = localStorage.getItem('oauth-code');
         if (code) {
+            console.log('[Auth] Poll found oauth-code in localStorage');
             clearInterval(pollInterval);
             localStorage.removeItem('oauth-code');
             await exchangeOAuthCode(code);

@@ -1,16 +1,36 @@
 <!DOCTYPE html>
 <html><head><title>Signing in...</title></head>
 <body>
-<div style="font-family:system-ui;padding:40px;text-align:center;color:#666;">
+<div id="msg" style="font-family:system-ui;padding:40px;text-align:center;color:#666;">
   Signing in...
 </div>
 <script>
 (function() {
+    var el = document.getElementById('msg');
+    var url = window.location.href;
     var code = new URLSearchParams(window.location.search).get('code');
+
+    // Show debug info in the popup so user can report what happened
     if (code) {
-        try { localStorage.setItem('oauth-code', code); } catch(e) {}
+        el.textContent = 'Got code, saving...';
+        try {
+            localStorage.setItem('oauth-code', code);
+            el.textContent = 'Code saved! Closing...';
+        } catch(e) {
+            el.textContent = 'localStorage error: ' + e.message;
+        }
+    } else {
+        // No code — show the full URL for debugging
+        el.textContent = 'No code found in URL';
+        var detail = document.createElement('pre');
+        detail.style.cssText = 'font-size:11px;word-break:break-all;text-align:left;margin-top:20px;';
+        detail.textContent = url;
+        el.appendChild(detail);
+        // Don't auto-close — let user see what went wrong
+        return;
     }
-    // Close popup, or redirect to main page if not a popup
+
+    // Close popup after a short delay, or redirect to main page if not a popup
     setTimeout(function() {
         try { window.close(); } catch(e) {}
         // If window.close() didn't work (not a popup), redirect to main page
