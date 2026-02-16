@@ -3,6 +3,10 @@
  *
  * Handles Supabase auth: OAuth sign-in (Google/GitHub), session management,
  * and auth state change notifications.
+ *
+ * Sign-in uses a popup window to avoid reloading the main page (and Pyodide).
+ * The popup completes OAuth, posts the auth code back via postMessage,
+ * and the opener exchanges it for a session.
  */
 
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js';
@@ -32,13 +36,10 @@ export async function initAuth() {
             notifyListeners(user, event);
         });
 
-        // Handle OAuth redirect — exchange code for session before anything else
-        // If we're in a popup, the opener's polling will handle the code exchange.
-        // Just let the popup sit with ?code= until the opener reads it and closes it.
+        // Handle OAuth redirect (only when popup was blocked and we got a full redirect)
         const params = new URLSearchParams(window.location.search);
         if (params.has('code') && !window.opener) {
-            // Direct redirect (popup was blocked) — exchange code here
-            console.log('[Auth] OAuth code detected (no popup), exchanging for session...');
+            console.log('[Auth] OAuth code detected (redirect fallback), exchanging...');
             const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(params.get('code'));
             if (exchangeError) {
                 console.error('[Auth] Code exchange failed:', exchangeError);
@@ -47,11 +48,6 @@ export async function initAuth() {
                 console.log('[Auth] Code exchange succeeded:', currentUser?.email);
             }
             cleanupOAuthRedirect();
-        } else if (params.has('code') && window.opener) {
-            // We're in a popup — the opener will read our URL and exchange the code.
-            // Nothing to do here; the opener's polling interval handles everything.
-            console.log('[Auth] In popup with code, waiting for opener to handle...');
-            return; // Skip the rest of init — no need to load presets etc.
         } else if (window.location.hash.includes('access_token')) {
             // Implicit flow fallback (older Supabase or non-PKCE)
             const { data: { session } } = await supabase.auth.getSession();
@@ -63,6 +59,9 @@ export async function initAuth() {
             currentUser = session?.user || null;
         }
 
+        // Listen for oauth-code messages from popup windows
+        window.addEventListener('message', handleOAuthMessage);
+
         notifyListeners(currentUser, 'INITIAL');
     } catch (error) {
         console.error('[Auth] Initialization failed:', error);
@@ -70,8 +69,35 @@ export async function initAuth() {
 }
 
 /**
+ * Handle postMessage from OAuth popup.
+ */
+async function handleOAuthMessage(event) {
+    if (event.origin !== window.location.origin) return;
+    if (event.data?.type !== 'oauth-code') return;
+
+    const code = event.data.code;
+    if (!code || !supabase) return;
+
+    console.log('[Auth] Received oauth-code from popup, exchanging...');
+    try {
+        const { data: sessionData, error: exchangeError } =
+            await supabase.auth.exchangeCodeForSession(code);
+        if (exchangeError) {
+            console.error('[Auth] Code exchange failed:', exchangeError);
+        } else {
+            currentUser = sessionData.session?.user || null;
+            console.log('[Auth] Popup sign-in succeeded:', currentUser?.email);
+            notifyListeners(currentUser, 'SIGNED_IN');
+        }
+    } catch (e) {
+        console.error('[Auth] Code exchange error:', e);
+    }
+}
+
+/**
  * Sign in with an OAuth provider using a popup window.
  * This avoids a full page reload (which would re-initialize Pyodide).
+ * Falls back to redirect if popup is blocked.
  * @param {'google'|'github'} provider
  */
 export async function signInWithProvider(provider) {
@@ -95,7 +121,7 @@ export async function signInWithProvider(provider) {
         throw new Error('No OAuth URL returned');
     }
 
-    // Open in a popup
+    // Open in a centered popup
     const width = 500, height = 650;
     const left = window.screenX + (window.outerWidth - width) / 2;
     const top = window.screenY + (window.outerHeight - height) / 2;
@@ -106,55 +132,13 @@ export async function signInWithProvider(provider) {
     );
 
     if (!popup) {
-        // Popup blocked — fall back to redirect
+        // Popup blocked — fall back to full redirect
         console.warn('[Auth] Popup blocked, falling back to redirect');
         window.location.href = data.url;
-        return;
     }
 
-    // Poll for the popup to redirect back with ?code= or to close
-    return new Promise((resolve, reject) => {
-        const interval = setInterval(async () => {
-            try {
-                // Check if popup navigated back to our origin
-                if (popup.location?.origin === window.location.origin) {
-                    const popupUrl = new URL(popup.location.href);
-                    const code = popupUrl.searchParams.get('code');
-                    popup.close();
-                    clearInterval(interval);
-
-                    if (code) {
-                        const { data: sessionData, error: exchangeError } =
-                            await supabase.auth.exchangeCodeForSession(code);
-                        if (exchangeError) {
-                            console.error('[Auth] Code exchange failed:', exchangeError);
-                            reject(exchangeError);
-                        } else {
-                            currentUser = sessionData.session?.user || null;
-                            console.log('[Auth] Popup sign-in succeeded:', currentUser?.email);
-                            notifyListeners(currentUser, 'SIGNED_IN');
-                            resolve();
-                        }
-                    } else {
-                        resolve(); // No code, user may have cancelled
-                    }
-                }
-            } catch (e) {
-                // Cross-origin — popup is still on the OAuth provider's page
-            }
-
-            if (popup.closed) {
-                clearInterval(interval);
-                // Popup closed — check if session was established
-                const { data: { session } } = await supabase.auth.getSession();
-                if (session?.user && session.user.id !== currentUser?.id) {
-                    currentUser = session.user;
-                    notifyListeners(currentUser, 'SIGNED_IN');
-                }
-                resolve();
-            }
-        }, 300);
-    });
+    // The popup will postMessage back with the code when it redirects.
+    // handleOAuthMessage() (registered in initAuth) handles the rest.
 }
 
 /**
