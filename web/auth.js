@@ -5,8 +5,8 @@
  * and auth state change notifications.
  *
  * Sign-in uses a popup window to avoid reloading the main page (and Pyodide).
- * The popup completes OAuth, posts the auth code back via postMessage,
- * and the opener exchanges it for a session.
+ * The popup completes OAuth, writes the auth code to localStorage,
+ * and the opener picks it up via the storage event and exchanges it.
  */
 
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js';
@@ -59,8 +59,8 @@ export async function initAuth() {
             currentUser = session?.user || null;
         }
 
-        // Listen for oauth-code messages from popup windows
-        window.addEventListener('message', handleOAuthMessage);
+        // Listen for oauth-code from popup via localStorage (storage event fires cross-window)
+        window.addEventListener('storage', handleOAuthStorage);
 
         notifyListeners(currentUser, 'INITIAL');
     } catch (error) {
@@ -69,14 +69,16 @@ export async function initAuth() {
 }
 
 /**
- * Handle postMessage from OAuth popup.
+ * Handle localStorage change from OAuth popup.
+ * The storage event fires in other windows when localStorage is modified.
  */
-async function handleOAuthMessage(event) {
-    if (event.origin !== window.location.origin) return;
-    if (event.data?.type !== 'oauth-code') return;
+async function handleOAuthStorage(event) {
+    if (event.key !== 'oauth-code' || !event.newValue) return;
 
-    const code = event.data.code;
-    if (!code || !supabase) return;
+    const code = event.newValue;
+    localStorage.removeItem('oauth-code');
+
+    if (!supabase) return;
 
     console.log('[Auth] Received oauth-code from popup, exchanging...');
     try {
@@ -120,6 +122,9 @@ export async function signInWithProvider(provider) {
     if (!data?.url) {
         throw new Error('No OAuth URL returned');
     }
+
+    // Clear any stale oauth code
+    localStorage.removeItem('oauth-code');
 
     // Open in a centered popup
     const width = 500, height = 650;
