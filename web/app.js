@@ -817,6 +817,7 @@ function showLoginModal() {
     showModal('Sign In', content);
 
     document.getElementById('login-google')?.addEventListener('click', async () => {
+        closeModal();
         try { await signInWithProvider('google'); } catch (e) { showErrorModal('Sign In Failed', e.message); }
     });
 }

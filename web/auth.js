@@ -14,6 +14,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js';
 let supabase = null;
 let authStateListeners = [];
 let currentUser = null;
+let exchangingCode = false;
 
 /**
  * Initialize the Supabase client and set up auth state listening.
@@ -71,16 +72,25 @@ export async function initAuth() {
 /**
  * Handle localStorage change from OAuth popup.
  * The storage event fires in other windows when localStorage is modified.
+ * This is a backup — signInWithProvider also polls localStorage directly.
  */
 async function handleOAuthStorage(event) {
     if (event.key !== 'oauth-code' || !event.newValue) return;
 
     const code = event.newValue;
     localStorage.removeItem('oauth-code');
+    await exchangeOAuthCode(code);
+}
 
-    if (!supabase) return;
+/**
+ * Exchange an OAuth authorization code for a session.
+ * Called by both the storage event handler and the polling fallback.
+ */
+async function exchangeOAuthCode(code) {
+    if (!supabase || exchangingCode) return;
+    exchangingCode = true;
 
-    console.log('[Auth] Received oauth-code from popup, exchanging...');
+    console.log('[Auth] Exchanging oauth code for session...');
     try {
         const { data: sessionData, error: exchangeError } =
             await supabase.auth.exchangeCodeForSession(code);
@@ -93,6 +103,8 @@ async function handleOAuthStorage(event) {
         }
     } catch (e) {
         console.error('[Auth] Code exchange error:', e);
+    } finally {
+        exchangingCode = false;
     }
 }
 
@@ -140,10 +152,22 @@ export async function signInWithProvider(provider) {
         // Popup blocked — fall back to full redirect
         console.warn('[Auth] Popup blocked, falling back to redirect');
         window.location.href = data.url;
+        return;
     }
 
-    // The popup redirects to oauth-callback.html, which writes the code
-    // to localStorage. The storage event handler picks it up from here.
+    // Poll localStorage as a fallback — the storage event can be unreliable
+    // when the popup closes immediately after writing.
+    const pollInterval = setInterval(async () => {
+        const code = localStorage.getItem('oauth-code');
+        if (code) {
+            clearInterval(pollInterval);
+            localStorage.removeItem('oauth-code');
+            await exchangeOAuthCode(code);
+        }
+    }, 300);
+
+    // Stop polling after 5 minutes
+    setTimeout(() => clearInterval(pollInterval), 5 * 60 * 1000);
 }
 
 /**
