@@ -337,9 +337,10 @@ async function generateNeck() {
         params._generator_url = window.location.href;
         const paramsJson = JSON.stringify(params);
 
+        state.pyodide.globals.set("_params_json", paramsJson);
         const resultJson = await state.pyodide.runPythonAsync(`
             from instrument_generator import generate_violin_neck
-            generate_violin_neck('${paramsJson.replace(/'/g, "\\'")}')
+            generate_violin_neck(_params_json)
         `);
         const result = JSON.parse(resultJson);
 
@@ -384,9 +385,10 @@ async function updateDerivedValues() {
         const paramsJson = JSON.stringify(params);
         const currentMode = params.instrument_family || 'VIOLIN';
 
+        state.pyodide.globals.set("_params_json", paramsJson);
         const resultJson = await state.pyodide.runPythonAsync(`
             from instrument_generator import get_derived_values
-            get_derived_values('${paramsJson.replace(/'/g, "\\'")}')
+            get_derived_values(_params_json)
         `);
         const result = JSON.parse(resultJson);
         const container = elements.calculatedFields;

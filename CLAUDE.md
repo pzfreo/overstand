@@ -60,6 +60,20 @@ See `src/complete_system_summary.md` for the "Adding New Parameters" guide.
 3. If you modify shared Python code, test both CLI and web
 4. Write tests for new functionality
 
+### Pyodide Security
+**Never interpolate user data into `runPythonAsync` strings.** This is a code injection vulnerability.
+
+```js
+// UNSAFE - never do this:
+pyodide.runPythonAsync(`func('${userInput.replace(/'/g, "\\'")}')`);
+
+// SAFE - always do this:
+pyodide.globals.set("_params_json", userInput);
+pyodide.runPythonAsync(`func(_params_json)`);
+```
+
+Regression tests in `web/pyodide-safety.test.js` scan `app.js` source to prevent reintroduction of this pattern. Run `npm test` to verify.
+
 ### Code Quality
 - Follow existing code patterns and style
 - Don't over-engineer - make minimal changes needed
