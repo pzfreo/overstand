@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html><head><title>Signing in...</title></head>
+<body>
+<div style="font-family:system-ui;padding:40px;text-align:center;color:#666;">
+  Signing in...
+</div>
+<script>
+(function() {
+    var code = new URLSearchParams(window.location.search).get('code');
+    if (code) {
+        try { localStorage.setItem('oauth-code', code); } catch(e) {}
+    }
+    // Close popup, or redirect to main page if not a popup
+    setTimeout(function() {
+        try { window.close(); } catch(e) {}
+        // If window.close() didn't work (not a popup), redirect to main page
+        setTimeout(function() { window.location.href = './'; }, 500);
+    }, 300);
+})();
+</script>
+</body>
+</html>
