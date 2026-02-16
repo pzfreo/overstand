@@ -979,6 +979,11 @@ function loadCloudPreset(preset) {
 // Share Profile Modal
 // ============================================================================
 
+function isMobileDevice() {
+    return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) &&
+        window.matchMedia('(pointer: coarse)').matches;
+}
+
 async function handleShareFromProfile(preset) {
     if (!preset || !preset.parameters) return;
 
@@ -986,8 +991,8 @@ async function handleShareFromProfile(preset) {
         ui.setStatus('loading', 'Creating share link...');
         const url = await createShareLink(preset.preset_name, preset.parameters);
 
-        // Try Web Share API first (works on mobile)
-        if (navigator.share) {
+        // Use Web Share API only on actual mobile devices (not Mac desktop)
+        if (navigator.share && isMobileDevice()) {
             try {
                 await navigator.share({
                     title: `Overstand: ${preset.preset_name}`,
@@ -997,7 +1002,6 @@ async function handleShareFromProfile(preset) {
                 ui.setStatus('ready', 'Shared successfully!');
                 return;
             } catch (e) {
-                // User cancelled or API not supported for this context — fall through to modal
                 if (e.name === 'AbortError') {
                     ui.setStatus('ready', 'Share cancelled');
                     return;
@@ -1005,7 +1009,7 @@ async function handleShareFromProfile(preset) {
             }
         }
 
-        // Fallback: show share modal
+        // Desktop or fallback: show share modal
         showShareModal(preset.preset_name, url);
         ui.setStatus('ready', 'Share link created');
     } catch (e) {
@@ -1118,8 +1122,8 @@ async function handleShare() {
         ui.setStatus('loading', 'Creating share link...');
         const url = await createShareLink(presetName, params);
 
-        // Try Web Share API first (works on mobile)
-        if (navigator.share) {
+        // Use Web Share API only on actual mobile devices
+        if (navigator.share && isMobileDevice()) {
             try {
                 await navigator.share({
                     title: `Overstand: ${presetName}`,
@@ -1136,7 +1140,7 @@ async function handleShare() {
             }
         }
 
-        // Fallback: show share modal
+        // Desktop or fallback: show share modal
         showShareModal(presetName, url);
         ui.setStatus('ready', 'Share link created');
     } catch (e) {
@@ -1222,6 +1226,12 @@ async function handleShareSave() {
 
 // Initialize on load
 document.addEventListener('DOMContentLoaded', () => {
+    // If we're an OAuth popup, skip full app initialization — the opener handles everything
+    if (window.opener && new URLSearchParams(window.location.search).has('code')) {
+        document.body.innerHTML = '<div style="font-family:system-ui;padding:40px;text-align:center;color:#666;">Signing in...</div>';
+        return;
+    }
+
     // Start engagement time tracking
     analytics.startEngagementTracking();
 
