@@ -626,7 +626,7 @@ function showKeyboardShortcuts() {
                     </div>
                 </li>
                 <li class="shortcut-item">
-                    <span class="shortcut-description">Import from JSON</span>
+                    <span class="shortcut-description">Load Profile / Import JSON</span>
                     <div class="shortcut-keys">
                         <span class="key">${mod}</span>
                         <span class="key-separator">+</span>
@@ -756,19 +756,25 @@ function updateAuthUI(user) {
     state.authUser = user;
     const signedOut = document.getElementById('menu-signed-out');
     const signedIn = document.getElementById('menu-signed-in');
-    const cloudSection = document.getElementById('cloud-preset-section');
-    const cloudPrompt = document.getElementById('cloud-signed-out-prompt');
     const shareSaveBtn = document.getElementById('share-save-btn');
     const menuSaveCloud = document.getElementById('menu-save-cloud');
+    const menuLoadProfile = document.getElementById('menu-load-profile');
 
     if (user) {
         // Logged in
         if (signedOut) signedOut.style.display = 'none';
         if (signedIn) signedIn.style.display = 'block';
-        if (cloudSection) cloudSection.style.display = 'block';
-        if (cloudPrompt) cloudPrompt.style.display = 'none';
         if (shareSaveBtn) shareSaveBtn.style.display = 'inline-block';
-        if (menuSaveCloud) menuSaveCloud.style.display = 'flex';
+
+        // Enable cloud menu items
+        if (menuSaveCloud) {
+            menuSaveCloud.classList.remove('menu-item-disabled');
+            menuSaveCloud.title = '';
+        }
+        if (menuLoadProfile) {
+            menuLoadProfile.classList.remove('menu-item-disabled');
+            menuLoadProfile.title = '';
+        }
 
         // Update user info
         const avatar = document.getElementById('menu-user-avatar');
@@ -785,10 +791,18 @@ function updateAuthUI(user) {
         // Logged out
         if (signedOut) signedOut.style.display = 'block';
         if (signedIn) signedIn.style.display = 'none';
-        if (cloudSection) cloudSection.style.display = 'none';
-        if (cloudPrompt) cloudPrompt.style.display = 'block';
         if (shareSaveBtn) shareSaveBtn.style.display = 'none';
-        if (menuSaveCloud) menuSaveCloud.style.display = 'none';
+
+        // Grey out cloud menu items
+        if (menuSaveCloud) {
+            menuSaveCloud.classList.add('menu-item-disabled');
+            menuSaveCloud.title = 'Sign in to use cloud profiles';
+        }
+        if (menuLoadProfile) {
+            menuLoadProfile.classList.add('menu-item-disabled');
+            menuLoadProfile.title = 'Sign in to use cloud profiles';
+        }
+
         state.cloudPresets = [];
     }
 }
@@ -817,45 +831,129 @@ async function refreshCloudPresets() {
         console.error('[Cloud] Failed to load presets:', e);
         state.cloudPresets = [];
     }
-    populateCloudPresetSelect();
 }
 
-function populateCloudPresetSelect() {
-    const select = document.getElementById('cloud-preset');
-    if (!select) return;
+// ============================================================================
+// Load Profile Modal
+// ============================================================================
 
-    const currentValue = select.value;
-    select.innerHTML = '<option value="">-- Select --</option>';
+function showLoadProfileModal() {
+    const overlay = document.getElementById('load-profile-overlay');
+    if (!overlay) return;
+
+    // Populate standard presets tab
+    populateStandardProfilesTab();
+    // Populate my profiles tab
+    populateMyProfilesTab();
+
+    // Reset to standard tab
+    switchProfileTab('standard');
+
+    overlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeLoadProfileModal() {
+    const overlay = document.getElementById('load-profile-overlay');
+    if (overlay) overlay.classList.remove('active');
+    document.body.style.overflow = '';
+}
+
+function switchProfileTab(tabName) {
+    // Update tab buttons
+    document.querySelectorAll('.profile-tab').forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.tab === tabName);
+    });
+
+    // Show/hide tab content
+    document.getElementById('standard-profiles-list').style.display = tabName === 'standard' ? '' : 'none';
+    document.getElementById('my-profiles-list').style.display = tabName === 'my-profiles' ? '' : 'none';
+    document.getElementById('community-profiles-list').style.display = tabName === 'community' ? '' : 'none';
+}
+
+function populateStandardProfilesTab() {
+    const list = document.getElementById('standard-profiles-list');
+    if (!list) return;
+    list.innerHTML = '';
+
+    const presetIds = Object.keys(state.presets || {});
+    if (presetIds.length === 0) {
+        list.innerHTML = '<div class="profile-empty-message">No standard presets found.</div>';
+        return;
+    }
+
+    for (const presetId of presetIds) {
+        const preset = state.presets[presetId];
+        const row = document.createElement('div');
+        row.className = 'profile-row';
+        row.innerHTML = `
+            <span class="profile-row-name">${escapeHtml(preset.name)}</span>
+            <div class="profile-row-actions">
+                <button class="profile-action-btn load-btn" data-preset-id="${escapeHtml(presetId)}">Load</button>
+            </div>
+        `;
+        row.querySelector('.load-btn').addEventListener('click', () => {
+            loadStandardPreset(presetId);
+        });
+        list.appendChild(row);
+    }
+}
+
+function populateMyProfilesTab() {
+    const list = document.getElementById('my-profiles-list');
+    if (!list) return;
+    list.innerHTML = '';
+
+    if (!isAuthenticated()) {
+        list.innerHTML = '<div class="profile-empty-message">Sign in to access your cloud profiles.</div>';
+        return;
+    }
+
+    if (state.cloudPresets.length === 0) {
+        list.innerHTML = '<div class="profile-empty-message">No saved profiles yet. Use Save Profile to create one.</div>';
+        return;
+    }
 
     for (const preset of state.cloudPresets) {
-        const option = document.createElement('option');
-        option.value = preset.id;
-        option.textContent = preset.preset_name;
-        option.title = preset.description || '';
-        select.appendChild(option);
+        const row = document.createElement('div');
+        row.className = 'profile-row';
+        row.innerHTML = `
+            <span class="profile-row-name">${escapeHtml(preset.preset_name)}</span>
+            <div class="profile-row-actions">
+                <button class="profile-action-btn load-btn">Load</button>
+                <button class="profile-action-btn share-btn">Share</button>
+                <button class="profile-action-btn delete-btn">Del</button>
+            </div>
+        `;
+        row.querySelector('.load-btn').addEventListener('click', () => {
+            loadCloudPreset(preset);
+        });
+        row.querySelector('.share-btn').addEventListener('click', () => {
+            handleShareFromProfile(preset);
+        });
+        row.querySelector('.delete-btn').addEventListener('click', async () => {
+            if (!confirm(`Delete profile "${preset.preset_name}"?`)) return;
+            try {
+                await deleteCloudPreset(preset.id);
+                await refreshCloudPresets();
+                populateMyProfilesTab();
+                ui.setStatus('ready', `Deleted "${preset.preset_name}"`);
+            } catch (e) {
+                showErrorModal('Delete Failed', e.message);
+            }
+        });
+        list.appendChild(row);
     }
-
-    // Restore selection if still present
-    if (currentValue && select.querySelector(`option[value="${currentValue}"]`)) {
-        select.value = currentValue;
-    }
-
-    // Enable/disable delete button
-    const deleteBtn = document.getElementById('cloud-delete-btn');
-    if (deleteBtn) deleteBtn.disabled = !select.value;
 }
 
-async function handleCloudPresetSelect() {
-    const select = document.getElementById('cloud-preset');
-    const deleteBtn = document.getElementById('cloud-delete-btn');
-    if (!select) return;
+async function loadStandardPreset(presetId) {
+    // Set the hidden select and use existing loadPreset logic
+    if (elements.presetSelect) elements.presetSelect.value = presetId;
+    closeLoadProfileModal();
+    await loadPreset();
+}
 
-    if (deleteBtn) deleteBtn.disabled = !select.value;
-
-    const presetId = select.value;
-    if (!presetId) return;
-
-    const preset = state.cloudPresets.find(p => p.id === presetId);
+function loadCloudPreset(preset) {
     if (!preset || !preset.parameters) return;
 
     // Apply parameters
@@ -876,6 +974,115 @@ async function handleCloudPresetSelect() {
     updateDerivedValues();
     debouncedGenerate();
     ui.setStatus('ready', `☁️ Loaded "${preset.preset_name}"`);
+
+    closeLoadProfileModal();
+}
+
+// ============================================================================
+// Share Profile Modal
+// ============================================================================
+
+async function handleShareFromProfile(preset) {
+    if (!preset || !preset.parameters) return;
+
+    try {
+        ui.setStatus('loading', 'Creating share link...');
+        const url = await createShareLink(preset.preset_name, preset.parameters);
+
+        // Try Web Share API first (works on mobile)
+        if (navigator.share) {
+            try {
+                await navigator.share({
+                    title: `Overstand: ${preset.preset_name}`,
+                    text: `Check out my instrument profile "${preset.preset_name}" on Overstand`,
+                    url: url
+                });
+                ui.setStatus('ready', 'Shared successfully!');
+                return;
+            } catch (e) {
+                // User cancelled or API not supported for this context — fall through to modal
+                if (e.name === 'AbortError') {
+                    ui.setStatus('ready', 'Share cancelled');
+                    return;
+                }
+            }
+        }
+
+        // Fallback: show share modal
+        showShareModal(preset.preset_name, url);
+        ui.setStatus('ready', 'Share link created');
+    } catch (e) {
+        console.error('[Share] Failed:', e);
+        showErrorModal('Share Failed', e.message);
+        ui.setStatus('error', 'Share link creation failed');
+    }
+}
+
+function showShareModal(profileName, shareUrl) {
+    const overlay = document.getElementById('share-profile-overlay');
+    if (!overlay) return;
+
+    document.getElementById('share-profile-name').textContent = `"${profileName}"`;
+    document.getElementById('share-url-input').value = shareUrl;
+
+    // Reset copy button
+    const copyBtn = document.getElementById('share-copy-btn');
+    copyBtn.textContent = '📋';
+    copyBtn.classList.remove('copied');
+
+    overlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeShareModal() {
+    const overlay = document.getElementById('share-profile-overlay');
+    if (overlay) overlay.classList.remove('active');
+    document.body.style.overflow = '';
+}
+
+async function handleShareCopy() {
+    const urlInput = document.getElementById('share-url-input');
+    const copyBtn = document.getElementById('share-copy-btn');
+    if (!urlInput) return;
+
+    const copied = await copyToClipboard(urlInput.value);
+    if (copied) {
+        copyBtn.textContent = 'Copied!';
+        copyBtn.classList.add('copied');
+        setTimeout(() => {
+            copyBtn.textContent = '📋';
+            copyBtn.classList.remove('copied');
+        }, 2000);
+    }
+}
+
+function shareViaEmail() {
+    const url = document.getElementById('share-url-input')?.value;
+    if (!url) return;
+    const name = document.getElementById('share-profile-name')?.textContent || 'an instrument profile';
+    const subject = encodeURIComponent(`Check out my Overstand instrument profile`);
+    const body = encodeURIComponent(`I created ${name} on Overstand. Take a look:\n\n${url}`);
+    window.open(`mailto:?subject=${subject}&body=${body}`, '_self');
+}
+
+function shareViaWhatsApp() {
+    const url = document.getElementById('share-url-input')?.value;
+    if (!url) return;
+    const name = document.getElementById('share-profile-name')?.textContent || 'an instrument profile';
+    const text = encodeURIComponent(`Check out my Overstand instrument profile ${name}: ${url}`);
+    window.open(`https://wa.me/?text=${text}`, '_blank');
+}
+
+function shareViaFacebook() {
+    const url = document.getElementById('share-url-input')?.value;
+    if (!url) return;
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
 async function handleCloudSave() {
@@ -904,25 +1111,6 @@ async function handleCloudSave() {
     }
 }
 
-async function handleCloudDelete() {
-    const select = document.getElementById('cloud-preset');
-    if (!select || !select.value) return;
-
-    const preset = state.cloudPresets.find(p => p.id === select.value);
-    if (!preset) return;
-
-    if (!confirm(`Delete profile "${preset.preset_name}"?`)) return;
-
-    try {
-        await deleteCloudPreset(preset.id);
-        await refreshCloudPresets();
-        ui.setStatus('ready', `Deleted "${preset.preset_name}"`);
-    } catch (e) {
-        console.error('[Cloud] Delete failed:', e);
-        showErrorModal('Delete Failed', e.message);
-    }
-}
-
 async function handleShare() {
     if (!isAuthenticated()) { showLoginModal(); return; }
 
@@ -932,15 +1120,28 @@ async function handleShare() {
     try {
         ui.setStatus('loading', 'Creating share link...');
         const url = await createShareLink(presetName, params);
-        const copied = await copyToClipboard(url);
 
-        if (copied) {
-            ui.setStatus('ready', 'Share link copied to clipboard!');
-        } else {
-            // Fallback: show the URL in a prompt
-            prompt('Share this link:', url);
-            ui.setStatus('ready', 'Share link created');
+        // Try Web Share API first (works on mobile)
+        if (navigator.share) {
+            try {
+                await navigator.share({
+                    title: `Overstand: ${presetName}`,
+                    text: `Check out my instrument profile "${presetName}" on Overstand`,
+                    url: url
+                });
+                ui.setStatus('ready', 'Shared successfully!');
+                return;
+            } catch (e) {
+                if (e.name === 'AbortError') {
+                    ui.setStatus('ready', 'Share cancelled');
+                    return;
+                }
+            }
         }
+
+        // Fallback: show share modal
+        showShareModal(presetName, url);
+        ui.setStatus('ready', 'Share link created');
     } catch (e) {
         console.error('[Share] Failed:', e);
         showErrorModal('Share Failed', e.message);
@@ -1195,27 +1396,31 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Menu items (menu open/close and clear cache already set up above)
+    const menuLoadProfile = document.getElementById('menu-load-profile');
     const menuSaveCloud = document.getElementById('menu-save-cloud');
     const menuExportParams = document.getElementById('menu-export-params');
     const menuImportParams = document.getElementById('menu-import-params');
     const menuKeyboardShortcuts = document.getElementById('menu-keyboard-shortcuts');
     const menuAbout = document.getElementById('menu-about');
 
-    if (menuSaveCloud) menuSaveCloud.addEventListener('click', () => { closeMenu(); handleCloudSave(); });
+    if (menuLoadProfile) menuLoadProfile.addEventListener('click', () => {
+        if (menuLoadProfile.classList.contains('menu-item-disabled')) return;
+        closeMenu();
+        showLoadProfileModal();
+    });
+    if (menuSaveCloud) menuSaveCloud.addEventListener('click', () => {
+        if (menuSaveCloud.classList.contains('menu-item-disabled')) return;
+        closeMenu();
+        handleCloudSave();
+    });
     if (menuExportParams) menuExportParams.addEventListener('click', () => { closeMenu(); saveParameters(); });
     if (menuImportParams) menuImportParams.addEventListener('click', () => { closeMenu(); elements.loadParamsInput.click(); });
     if (menuKeyboardShortcuts) menuKeyboardShortcuts.addEventListener('click', showKeyboardShortcuts);
     if (menuAbout) menuAbout.addEventListener('click', showAbout);
 
-    // Auth & Cloud Preset event listeners
+    // Auth event listeners
     const menuSignIn = document.getElementById('menu-sign-in');
     const menuSignOut = document.getElementById('menu-sign-out');
-    const menuMyPresets = document.getElementById('menu-my-presets');
-    const cloudSignInLink = document.getElementById('cloud-sign-in-link');
-    const cloudPresetSelect = document.getElementById('cloud-preset');
-    const cloudSaveBtn = document.getElementById('cloud-save-btn');
-    const cloudDeleteBtn = document.getElementById('cloud-delete-btn');
-    const cloudShareBtn = document.getElementById('cloud-share-btn');
     const shareDismissBtn = document.getElementById('share-dismiss-btn');
     const shareSaveBtn = document.getElementById('share-save-btn');
 
@@ -1224,23 +1429,47 @@ document.addEventListener('DOMContentLoaded', () => {
         closeMenu();
         try { await signOut(); } catch (e) { showErrorModal('Sign Out Failed', e.message); }
     });
-    if (menuMyPresets) menuMyPresets.addEventListener('click', () => {
-        closeMenu();
-        // Scroll to cloud preset section
-        const cloudSection = document.getElementById('cloud-preset-section');
-        if (cloudSection) cloudSection.scrollIntoView({ behavior: 'smooth' });
-    });
-    if (cloudSignInLink) cloudSignInLink.addEventListener('click', (e) => { e.preventDefault(); showLoginModal(); });
-    if (cloudPresetSelect) cloudPresetSelect.addEventListener('change', handleCloudPresetSelect);
-    if (cloudSaveBtn) cloudSaveBtn.addEventListener('click', handleCloudSave);
-    if (cloudDeleteBtn) cloudDeleteBtn.addEventListener('click', handleCloudDelete);
-    if (cloudShareBtn) cloudShareBtn.addEventListener('click', handleShare);
     if (shareDismissBtn) shareDismissBtn.addEventListener('click', () => {
         const banner = document.getElementById('share-banner');
         if (banner) banner.style.display = 'none';
         state.sharedPreset = null;
     });
     if (shareSaveBtn) shareSaveBtn.addEventListener('click', handleShareSave);
+
+    // Load Profile modal events
+    const loadProfileCloseBtn = document.getElementById('load-profile-close-btn');
+    const loadProfileCloseFooter = document.getElementById('load-profile-close-footer');
+    const loadProfileOverlay = document.getElementById('load-profile-overlay');
+
+    if (loadProfileCloseBtn) loadProfileCloseBtn.addEventListener('click', closeLoadProfileModal);
+    if (loadProfileCloseFooter) loadProfileCloseFooter.addEventListener('click', closeLoadProfileModal);
+    if (loadProfileOverlay) loadProfileOverlay.addEventListener('click', (e) => {
+        if (e.target === loadProfileOverlay) closeLoadProfileModal();
+    });
+
+    // Profile tab switching
+    document.querySelectorAll('.profile-tab').forEach(tab => {
+        tab.addEventListener('click', () => switchProfileTab(tab.dataset.tab));
+    });
+
+    // Share modal events
+    const shareProfileCloseBtn = document.getElementById('share-profile-close-btn');
+    const shareProfileCloseFooter = document.getElementById('share-profile-close-footer');
+    const shareProfileOverlay = document.getElementById('share-profile-overlay');
+    const shareCopyBtn = document.getElementById('share-copy-btn');
+    const shareViaEmailBtn = document.getElementById('share-via-email');
+    const shareViaWhatsAppBtn = document.getElementById('share-via-whatsapp');
+    const shareViaFacebookBtn = document.getElementById('share-via-facebook');
+
+    if (shareProfileCloseBtn) shareProfileCloseBtn.addEventListener('click', closeShareModal);
+    if (shareProfileCloseFooter) shareProfileCloseFooter.addEventListener('click', closeShareModal);
+    if (shareProfileOverlay) shareProfileOverlay.addEventListener('click', (e) => {
+        if (e.target === shareProfileOverlay) closeShareModal();
+    });
+    if (shareCopyBtn) shareCopyBtn.addEventListener('click', handleShareCopy);
+    if (shareViaEmailBtn) shareViaEmailBtn.addEventListener('click', shareViaEmail);
+    if (shareViaWhatsAppBtn) shareViaWhatsAppBtn.addEventListener('click', shareViaWhatsApp);
+    if (shareViaFacebookBtn) shareViaFacebookBtn.addEventListener('click', shareViaFacebook);
 
     // Initialize auth (non-blocking — cloud features activate when ready)
     onAuthStateChange(updateAuthUI);
@@ -1278,15 +1507,35 @@ document.addEventListener('keydown', (e) => {
         }
     }
 
-    // Load parameters: ⌘/Ctrl + O
+    // Load Profile: ⌘/Ctrl + O — open Load Profile modal if signed in, else file import
     if ((e.metaKey || e.ctrlKey) && e.key === 'o') {
         e.preventDefault();
-        elements.loadParamsInput.click();
+        if (isAuthenticated()) {
+            showLoadProfileModal();
+        } else {
+            elements.loadParamsInput.click();
+        }
     }
 
     // Close dialogs: Escape
     if (e.key === 'Escape') {
-        // Check if modal is open first (priority over menu)
+        // Check share modal first
+        const shareOverlay = document.getElementById('share-profile-overlay');
+        if (shareOverlay && shareOverlay.classList.contains('active')) {
+            e.preventDefault();
+            closeShareModal();
+            return;
+        }
+
+        // Check load profile modal
+        const loadOverlay = document.getElementById('load-profile-overlay');
+        if (loadOverlay && loadOverlay.classList.contains('active')) {
+            e.preventDefault();
+            closeLoadProfileModal();
+            return;
+        }
+
+        // Check generic modal
         const modalOverlay = document.getElementById('modal-overlay');
         if (modalOverlay && modalOverlay.classList.contains('active')) {
             e.preventDefault();

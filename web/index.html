@@ -154,29 +154,10 @@
                         <span class="generate-btn-shortcut" id="gen-btn-shortcut">⌘/Ctrl + Enter</span>
                     </button>
 
-                    <div class="preset-selector">
-                        <label for="preset">Standard Instruments:</label>
-                        <select id="preset">
-                            <option value="">-- Custom --</option>
-                        </select>
-                    </div>
-
-                    <!-- Cloud Presets (visible when logged in) -->
-                    <div id="cloud-preset-section" class="cloud-preset-section" style="display: none;">
-                        <label for="cloud-preset">My Profiles:</label>
-                        <div class="cloud-preset-controls">
-                            <select id="cloud-preset">
-                                <option value="">-- Select --</option>
-                            </select>
-                            <button class="cloud-btn" id="cloud-save-btn" title="Save current parameters as a profile">Save</button>
-                            <button class="cloud-btn cloud-btn-danger" id="cloud-delete-btn" title="Delete selected profile" disabled>Del</button>
-                            <button class="cloud-btn cloud-btn-share" id="cloud-share-btn" title="Share current parameters via link">Share</button>
-                        </div>
-                    </div>
-                    <!-- Signed-out prompt (visible when logged out) -->
-                    <div id="cloud-signed-out-prompt" class="cloud-signed-out-prompt">
-                        <a href="#" id="cloud-sign-in-link">Sign in</a> to save profiles to the cloud
-                    </div>
+                    <!-- Hidden preset select for programmatic use -->
+                    <select id="preset" style="display: none;">
+                        <option value="">-- Custom --</option>
+                    </select>
 
                     <input type="file" id="load-params-input" accept=".json" style="display: none;" />
 
@@ -278,11 +259,17 @@
 
                 <div class="menu-section">
                     <h3 class="menu-section-title">File</h3>
-                    <button class="menu-item" id="menu-save-cloud" style="display: none;">
+                    <button class="menu-item menu-item-disabled" id="menu-load-profile" title="Sign in to use cloud profiles">
+                        <span class="menu-item-icon">📂</span>
+                        <span class="menu-item-text">Load Profile...</span>
+                        <span class="menu-item-shortcut">⌘O</span>
+                    </button>
+                    <button class="menu-item menu-item-disabled" id="menu-save-cloud" title="Sign in to use cloud profiles">
                         <span class="menu-item-icon">💾</span>
                         <span class="menu-item-text">Save Profile</span>
                         <span class="menu-item-shortcut">⌘S</span>
                     </button>
+                    <div class="menu-divider"></div>
                     <button class="menu-item" id="menu-export-params">
                         <span class="menu-item-icon">📤</span>
                         <span class="menu-item-text">Export to JSON</span>
@@ -348,6 +335,67 @@
             </div>
             <div class="modal-content" id="modal-content">
                 <!-- Dynamic content goes here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Load Profile Modal -->
+    <div class="modal-overlay" id="load-profile-overlay">
+        <div class="modal-dialog load-profile-dialog">
+            <div class="modal-header">
+                <h2 class="modal-title">Load Profile</h2>
+                <button class="modal-close-btn" id="load-profile-close-btn" aria-label="Close dialog">✕</button>
+            </div>
+            <div class="profile-tabs">
+                <button class="profile-tab active" data-tab="standard">Standard</button>
+                <button class="profile-tab" data-tab="my-profiles">My Profiles</button>
+                <button class="profile-tab" data-tab="community">Community</button>
+            </div>
+            <div class="profile-tab-content" id="profile-tab-content">
+                <!-- Standard tab -->
+                <div class="profile-list" id="standard-profiles-list">
+                    <!-- Populated by JS -->
+                </div>
+                <!-- My Profiles tab -->
+                <div class="profile-list" id="my-profiles-list" style="display: none;">
+                    <!-- Populated by JS -->
+                </div>
+                <!-- Community tab -->
+                <div class="profile-list" id="community-profiles-list" style="display: none;">
+                    <div class="coming-soon-placeholder">
+                        <div class="coming-soon-title">Community Profiles — Coming Soon</div>
+                        <div class="coming-soon-text">Browse and share instrument profiles contributed by the Overstand community.</div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-footer-btn" id="load-profile-close-footer">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Share Profile Modal -->
+    <div class="modal-overlay" id="share-profile-overlay">
+        <div class="modal-dialog share-profile-dialog">
+            <div class="modal-header">
+                <h2 class="modal-title">Share Profile</h2>
+                <button class="modal-close-btn" id="share-profile-close-btn" aria-label="Close dialog">✕</button>
+            </div>
+            <div class="modal-content">
+                <div class="share-profile-name" id="share-profile-name"></div>
+                <div class="share-url-container">
+                    <input type="text" class="share-url-input" id="share-url-input" readonly />
+                    <button class="share-copy-btn" id="share-copy-btn" title="Copy to clipboard">📋</button>
+                </div>
+                <div class="share-via-label">Share via:</div>
+                <div class="share-buttons">
+                    <button class="share-btn share-btn-email" id="share-via-email">✉ Email</button>
+                    <button class="share-btn share-btn-whatsapp" id="share-via-whatsapp">💬 WhatsApp</button>
+                    <button class="share-btn share-btn-facebook" id="share-via-facebook">📘 Facebook</button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-footer-btn" id="share-profile-close-footer">Close</button>
             </div>
         </div>
     </div>
