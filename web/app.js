@@ -1069,7 +1069,7 @@ function shareViaEmail() {
     const name = document.getElementById('share-profile-name')?.textContent || 'an instrument profile';
     const subject = encodeURIComponent(`Check out my Overstand instrument profile`);
     const body = encodeURIComponent(`I created ${name} on Overstand. Take a look:\n\n${url}`);
-    window.open(`mailto:?subject=${subject}&body=${body}`, '_blank');
+    window.open(`mailto:?subject=${subject}&body=${body}`, '_self');
 }
 
 function shareViaWhatsApp() {
