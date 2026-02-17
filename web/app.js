@@ -288,6 +288,10 @@ async function loadPreset() {
     // Apply preset parameters
     applyParametersToForm(parameters);
 
+    // Clear description — standard presets don't have user notes
+    const descEl = document.getElementById('profile-description');
+    if (descEl) descEl.value = '';
+
     // Reset modified flag - we just loaded a preset
     state.parametersModified = false;
 
@@ -552,8 +556,9 @@ function downloadSVG() {
 }
 
 function saveParameters() {
+    const description = document.getElementById('profile-description')?.value || '';
     const saveData = {
-        metadata: { version: '1.0', timestamp: new Date().toISOString(), description: 'Overstand Parameters' },
+        metadata: { version: '1.0', timestamp: new Date().toISOString(), description: description || 'Overstand Parameters' },
         parameters: collectParameters()
     };
     const filename = `${getInstrumentFilename()}_params_${new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5)}.json`;
@@ -575,6 +580,13 @@ function handleLoadParameters(event) {
             if (!saveData.parameters) return;
             applyParametersToForm(saveData.parameters);
             elements.presetSelect.value = '';
+
+            // Restore description from file metadata
+            const descEl = document.getElementById('profile-description');
+            if (descEl) {
+                const desc = saveData.metadata?.description || '';
+                descEl.value = (desc === 'Overstand Parameters') ? '' : desc;
+            }
 
             // Reset modified flag - we just loaded a file
             state.parametersModified = false;
@@ -931,8 +943,12 @@ function populateMyProfilesTab() {
     for (const preset of state.cloudPresets) {
         const row = document.createElement('div');
         row.className = 'profile-row';
+        const descHtml = preset.description ? `<div class="profile-row-description">${escapeHtml(preset.description)}</div>` : '';
         row.innerHTML = `
-            <span class="profile-row-name">${escapeHtml(preset.preset_name)}</span>
+            <div class="profile-row-info">
+                <span class="profile-row-name">${escapeHtml(preset.preset_name)}</span>
+                ${descHtml}
+            </div>
             <div class="profile-row-actions">
                 <button class="profile-action-btn load-btn">Load</button>
                 <button class="profile-action-btn share-btn">Share</button>
@@ -972,6 +988,10 @@ function loadCloudPreset(preset) {
 
     // Apply parameters
     applyParametersToForm(preset.parameters);
+
+    // Restore description
+    const descEl = document.getElementById('profile-description');
+    if (descEl) descEl.value = preset.description || '';
 
     // Clear the standard preset selector
     if (elements.presetSelect) elements.presetSelect.value = '';
@@ -1102,7 +1122,8 @@ async function handleCloudSave() {
             if (!confirm(`A profile named "${presetName}" already exists. Overwrite it?`)) return;
         }
 
-        await saveToCloud(presetName, '', params);
+        const description = document.getElementById('profile-description')?.value || '';
+        await saveToCloud(presetName, description, params);
         await refreshCloudPresets();
         ui.setStatus('ready', `☁️ Saved "${presetName}" to cloud`);
         state.parametersModified = false;
@@ -1170,6 +1191,10 @@ async function handleShareURL() {
         // Apply parameters
         applyParametersToForm(shared.parameters);
 
+        // Restore description from shared preset
+        const descEl = document.getElementById('profile-description');
+        if (descEl) descEl.value = shared.description || '';
+
         // Show share banner
         const banner = document.getElementById('share-banner');
         const bannerText = document.getElementById('share-banner-text');
@@ -1202,7 +1227,8 @@ async function handleShareSave() {
     if (!presetName) return;
 
     try {
-        await saveToCloud(presetName, '', state.sharedPreset.parameters);
+        const description = document.getElementById('profile-description')?.value || '';
+        await saveToCloud(presetName, description, state.sharedPreset.parameters);
         await refreshCloudPresets();
         ui.setStatus('ready', `☁️ Saved "${presetName}" to cloud`);
 
@@ -1488,6 +1514,10 @@ document.addEventListener('DOMContentLoaded', () => {
         // Close modal when clicking the overlay background (not the dialog itself)
         if (e.target === modalOverlay) closeModal();
     });
+
+    // Mark parameters as modified when description changes
+    const profileDescription = document.getElementById('profile-description');
+    if (profileDescription) profileDescription.addEventListener('input', markParametersModified);
 
     registerServiceWorker();
     initInstallPrompt();
