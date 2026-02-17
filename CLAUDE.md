@@ -51,6 +51,7 @@ See `src/complete_system_summary.md` for the "Adding New Parameters" guide.
 - Create a feature branch for each change: `claude/descriptive-name-XXXXX`
 - Push changes and create a PR for review
 - Include a clear PR description with summary and test plan
+- **NEVER merge a PR without explicit user approval.** Always wait for the user to review and say "merge" before merging. Creating the PR and merging are two separate steps that require separate user consent.
 
 ### Testing Requirements
 
