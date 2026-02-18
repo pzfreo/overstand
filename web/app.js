@@ -7,7 +7,7 @@ import { DEBOUNCE_GENERATE, ZOOM_CONFIG } from './constants.js';
 import { markdownToHtml } from './markdown-parser.js';
 import * as analytics from './analytics.js';
 import { initAuth, signInWithProvider, signOut, isAuthenticated, getCurrentUser, onAuthStateChange } from './auth.js';
-import { saveToCloud, loadUserPresets, deleteCloudPreset, createShareLink, loadSharedPreset, copyToClipboard, cloudPresetExists, publishToCommunity, loadCommunityProfiles, unpublishFromCommunity, loadCommunityProfileParameters } from './cloud_presets.js';
+import { saveToCloud, loadUserPresets, deleteCloudPreset, createShareLink, loadSharedPreset, copyToClipboard, cloudPresetExists, publishToCommunity, loadCommunityProfiles, unpublishFromCommunity, loadCommunityProfileParameters, getUserBookmarks, toggleBookmark } from './cloud_presets.js';
 
 // Helper: Debounce
 function debounce(func, wait) {
@@ -806,6 +806,7 @@ function updateAuthUI(user) {
     const menuSaveCloud = document.getElementById('menu-save-cloud');
     const menuLoadProfile = document.getElementById('menu-load-profile');
     const menuShare = document.getElementById('menu-share');
+    const menuPublish = document.getElementById('menu-publish');
 
     if (user) {
         // Logged in
@@ -814,7 +815,7 @@ function updateAuthUI(user) {
         if (shareSaveBtn) shareSaveBtn.style.display = 'inline-block';
 
         // Enable cloud menu items (Load Profile is always enabled — it has standard presets)
-        for (const el of [menuSaveCloud, menuShare]) {
+        for (const el of [menuSaveCloud, menuShare, menuPublish]) {
             if (el) {
                 el.classList.remove('menu-item-disabled');
                 el.title = '';
@@ -843,7 +844,7 @@ function updateAuthUI(user) {
         if (shareSaveBtn) shareSaveBtn.style.display = 'none';
 
         // Grey out cloud menu items (Load Profile stays enabled — it has standard presets)
-        for (const el of [menuSaveCloud, menuShare]) {
+        for (const el of [menuSaveCloud, menuShare, menuPublish]) {
             if (el) {
                 el.classList.add('menu-item-disabled');
                 el.title = 'Sign in to use cloud profiles';
@@ -980,7 +981,6 @@ function populateMyProfilesTab() {
             <div class="profile-row-actions">
                 <button class="profile-action-btn load-btn">Load</button>
                 <button class="profile-action-btn share-btn">Share</button>
-                <button class="profile-action-btn publish-btn">Publish</button>
                 <button class="profile-action-btn delete-btn">Del</button>
             </div>
         `;
@@ -989,9 +989,6 @@ function populateMyProfilesTab() {
         });
         row.querySelector('.share-btn').addEventListener('click', () => {
             handleShareFromProfile(preset);
-        });
-        row.querySelector('.publish-btn').addEventListener('click', () => {
-            handlePublish(preset);
         });
         row.querySelector('.delete-btn').addEventListener('click', async () => {
             if (!confirm(`Delete profile "${preset.preset_name}"?`)) return;
@@ -1209,6 +1206,46 @@ async function handleShare() {
     }
 }
 
+async function handleMenuPublish() {
+    if (!isAuthenticated()) { showLoginModal(); return; }
+
+    const params = collectParameters();
+    const defaultName = state.currentProfileName || params.instrument_name || 'My Profile';
+
+    const presetName = prompt('Publish to community as:', defaultName);
+    if (!presetName) return;
+
+    try {
+        // Save to cloud first (upserts if name exists)
+        const exists = await cloudPresetExists(presetName);
+        if (exists) {
+            if (!confirm(`A profile named "${presetName}" already exists. Overwrite and publish?`)) return;
+        }
+
+        ui.setStatus('loading', 'Saving and publishing...');
+
+        const description = document.getElementById('profile-description')?.value || '';
+        await saveToCloud(presetName, description, params);
+        await refreshCloudPresets();
+
+        // Now publish
+        const user = getCurrentUser();
+        const authorName = user.user_metadata?.full_name || user.email || 'Anonymous';
+        const instrumentFamily = params.instrument_family || '';
+
+        await publishToCommunity(presetName, description, params, authorName, instrumentFamily);
+
+        state.parametersModified = false;
+        state.currentProfileName = presetName;
+        updateSaveIndicator();
+        ui.setStatus('ready', `📢 Published "${presetName}" to community`);
+    } catch (e) {
+        console.error('[Publish] Failed:', e);
+        showErrorModal('Publish Failed', e.message);
+        ui.setStatus('error', 'Publish failed');
+    }
+}
+
 async function handleShareURL() {
     const urlParams = new URLSearchParams(window.location.search);
     const shareToken = urlParams.get('share');
@@ -1354,8 +1391,14 @@ async function populateCommunityTab() {
     loadingMsg.textContent = 'Loading community profiles...';
     list.appendChild(loadingMsg);
 
+    const isLoggedIn = isAuthenticated();
+
     try {
-        const profiles = await loadCommunityProfiles(searchQuery, instrumentFamily);
+        // Fetch profiles and user bookmarks in parallel
+        const [profiles, bookmarkedIds] = await Promise.all([
+            loadCommunityProfiles(searchQuery, instrumentFamily),
+            isLoggedIn ? getUserBookmarks() : Promise.resolve([])
+        ]);
         list.removeChild(loadingMsg);
 
         if (profiles.length === 0) {
@@ -1368,7 +1411,16 @@ async function populateCommunityTab() {
             return;
         }
 
+        const userBookmarks = new Set(bookmarkedIds);
         const currentUserId = getCurrentUser()?.id;
+
+        // Sort: user's bookmarks first, then by bookmark_count (DB already orders by bookmark_count, created_at)
+        profiles.sort((a, b) => {
+            const aBookmarked = userBookmarks.has(a.id) ? 1 : 0;
+            const bBookmarked = userBookmarks.has(b.id) ? 1 : 0;
+            if (bBookmarked !== aBookmarked) return bBookmarked - aBookmarked;
+            return 0; // preserve DB ordering for the rest
+        });
 
         for (const profile of profiles) {
             const row = document.createElement('div');
@@ -1378,11 +1430,17 @@ async function populateCommunityTab() {
             const descHtml = profile.description
                 ? `<div class="profile-row-description">${escapeHtml(profile.description)}</div>`
                 : '';
-            const metaHtml = `<div class="profile-row-meta">${escapeHtml(profile.author_name || 'Anonymous')}${familyDisplay ? ' · ' + escapeHtml(familyDisplay) : ''}${profile.view_count ? ' · ' + profile.view_count + ' views' : ''}</div>`;
+            const bookmarkInfo = profile.bookmark_count ? ` · ${profile.bookmark_count} bookmarks` : '';
+            const metaHtml = `<div class="profile-row-meta">${escapeHtml(profile.author_name || 'Anonymous')}${familyDisplay ? ' · ' + escapeHtml(familyDisplay) : ''}${profile.view_count ? ' · ' + profile.view_count + ' views' : ''}${bookmarkInfo}</div>`;
 
             const isOwner = currentUserId && profile.owner_id === currentUserId;
             const unpublishBtn = isOwner
                 ? `<button class="profile-action-btn unpublish-btn">Unpublish</button>`
+                : '';
+
+            const isBookmarked = userBookmarks.has(profile.id);
+            const starBtn = isLoggedIn
+                ? `<button class="profile-action-btn star-btn${isBookmarked ? ' bookmarked' : ''}" title="${isBookmarked ? 'Remove bookmark' : 'Bookmark this profile'}">${isBookmarked ? '★' : '☆'}</button>`
                 : '';
 
             row.innerHTML = `
@@ -1392,6 +1450,7 @@ async function populateCommunityTab() {
                     ${metaHtml}
                 </div>
                 <div class="profile-row-actions">
+                    ${starBtn}
                     <button class="profile-action-btn load-btn">Load</button>
                     ${unpublishBtn}
                 </div>
@@ -1400,6 +1459,29 @@ async function populateCommunityTab() {
             row.querySelector('.load-btn').addEventListener('click', () => {
                 loadCommunityPreset(profile);
             });
+
+            const starEl = row.querySelector('.star-btn');
+            if (starEl) {
+                starEl.addEventListener('click', async () => {
+                    const wasBookmarked = userBookmarks.has(profile.id);
+                    try {
+                        const nowBookmarked = await toggleBookmark(profile.id, wasBookmarked);
+                        if (nowBookmarked) {
+                            userBookmarks.add(profile.id);
+                            starEl.textContent = '★';
+                            starEl.classList.add('bookmarked');
+                            starEl.title = 'Remove bookmark';
+                        } else {
+                            userBookmarks.delete(profile.id);
+                            starEl.textContent = '☆';
+                            starEl.classList.remove('bookmarked');
+                            starEl.title = 'Bookmark this profile';
+                        }
+                    } catch (e) {
+                        console.error('[Bookmark] Toggle failed:', e);
+                    }
+                });
+            }
 
             const unpublishEl = row.querySelector('.unpublish-btn');
             if (unpublishEl) {
@@ -1696,6 +1778,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (menuShareBtn.classList.contains('menu-item-disabled')) return;
         closeMenu();
         handleShare();
+    });
+    const menuPublishBtn = document.getElementById('menu-publish');
+    if (menuPublishBtn) menuPublishBtn.addEventListener('click', () => {
+        if (menuPublishBtn.classList.contains('menu-item-disabled')) return;
+        closeMenu();
+        handleMenuPublish();
     });
     if (menuExportParams) menuExportParams.addEventListener('click', () => { closeMenu(); saveParameters(); });
     if (menuImportParams) menuImportParams.addEventListener('click', () => { closeMenu(); elements.loadParamsInput.click(); });
