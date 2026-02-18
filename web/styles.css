@@ -505,6 +505,47 @@ header {
     }
 }
 
+/* Profile description textarea */
+.profile-description-section {
+    margin-bottom: var(--spacing-md);
+}
+
+.profile-description {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--color-gray-300);
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: 0.85rem;
+    color: var(--color-gray-700);
+    background: white;
+    resize: vertical;
+    min-height: 2.5rem;
+    line-height: 1.4;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.profile-description:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px var(--color-blue-light);
+}
+
+.profile-description::placeholder {
+    color: var(--color-gray-400);
+    font-style: italic;
+}
+
+.profile-row-description {
+    font-size: 0.75rem;
+    color: var(--color-gray-500);
+    margin-top: 2px;
+    line-height: 1.3;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 .preset-selector {
     margin-top: 1rem;
     display: flex;
@@ -2158,12 +2199,15 @@ input[type="checkbox"] {
     box-shadow: var(--shadow-sm);
 }
 
+.profile-row-info {
+    flex: 1;
+    min-width: 0;
+}
+
 .profile-row-name {
     font-weight: 500;
     font-size: 0.9rem;
     color: var(--color-gray-800);
-    flex: 1;
-    min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
