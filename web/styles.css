@@ -2347,6 +2347,33 @@ input[type="checkbox"] {
     color: var(--color-warning-dark);
 }
 
+.profile-action-btn.star-btn {
+    font-size: 1rem;
+    padding: 4px 8px;
+    color: var(--color-gray-400);
+    border-color: transparent;
+    background: transparent;
+    line-height: 1;
+}
+
+.profile-action-btn.star-btn:hover {
+    color: var(--color-warning-dark);
+    border-color: var(--color-warning);
+    background: var(--color-gray-50);
+}
+
+.profile-action-btn.star-btn.bookmarked {
+    color: var(--color-warning-dark);
+    border-color: transparent;
+    background: transparent;
+}
+
+.profile-action-btn.star-btn.bookmarked:hover {
+    color: var(--color-gray-400);
+    border-color: var(--color-gray-300);
+    background: var(--color-gray-50);
+}
+
 @media (max-width: 480px) {
     .community-controls {
         flex-direction: column;

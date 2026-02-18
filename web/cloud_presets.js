@@ -141,7 +141,7 @@ export async function loadSharedPreset(shareToken) {
     if (error || !data) return null;
 
     // Increment view count (fire and forget, no need to await)
-    supabase.rpc('increment_view_count', { token: shareToken }).catch(() => {});
+    supabase.rpc('increment_view_count', { token: shareToken }).then(() => {}, () => {});
 
     return data;
 }
@@ -265,8 +265,9 @@ export async function loadCommunityProfiles(searchQuery, instrumentFamily) {
 
     let query = supabase
         .from('shared_presets')
-        .select('id, preset_name, description, author_name, instrument_family, view_count, created_at, owner_id')
+        .select('id, preset_name, description, author_name, instrument_family, view_count, bookmark_count, created_at, owner_id')
         .eq('is_published', true)
+        .order('bookmark_count', { ascending: false })
         .order('created_at', { ascending: false })
         .limit(100);
 
@@ -321,7 +322,57 @@ export async function loadCommunityProfileParameters(presetId) {
     if (error || !data) return null;
 
     // Increment view count (fire and forget)
-    supabase.rpc('increment_view_count_by_id', { preset_id: presetId }).catch(() => {});
+    supabase.rpc('increment_view_count_by_id', { preset_id: presetId }).then(() => {}, () => {});
 
     return data;
+}
+
+// ============================================================================
+// Bookmarks
+// ============================================================================
+
+/**
+ * Fetch all preset IDs bookmarked by the current user.
+ * @returns {string[]} Array of preset UUIDs
+ */
+export async function getUserBookmarks() {
+    const supabase = getSupabaseClient();
+    const user = getCurrentUser();
+    if (!supabase || !user) return [];
+
+    const { data, error } = await supabase
+        .from('bookmarks')
+        .select('preset_id')
+        .eq('user_id', user.id);
+
+    if (error) throw error;
+    return (data || []).map(row => row.preset_id);
+}
+
+/**
+ * Toggle a bookmark on/off for the current user.
+ * @param {string} presetId - UUID of the shared_presets row
+ * @param {boolean} currentlyBookmarked - Current state (to decide insert vs delete)
+ * @returns {boolean} New bookmarked state
+ */
+export async function toggleBookmark(presetId, currentlyBookmarked) {
+    const supabase = getSupabaseClient();
+    const user = getCurrentUser();
+    if (!supabase || !user) throw new Error('Not authenticated');
+
+    if (currentlyBookmarked) {
+        const { error } = await supabase
+            .from('bookmarks')
+            .delete()
+            .eq('user_id', user.id)
+            .eq('preset_id', presetId);
+        if (error) throw error;
+        return false;
+    } else {
+        const { error } = await supabase
+            .from('bookmarks')
+            .insert({ user_id: user.id, preset_id: presetId });
+        if (error) throw error;
+        return true;
+    }
 }
