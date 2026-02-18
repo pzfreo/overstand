@@ -194,3 +194,134 @@ export async function cloudPresetExists(presetName) {
     if (error) return false;
     return data !== null;
 }
+
+// ============================================================================
+// Community Profiles
+// ============================================================================
+
+/**
+ * Publish a profile to the community.
+ * Creates a new shared_presets row with is_published=true.
+ *
+ * @param {string} presetName
+ * @param {string} description
+ * @param {Object} parameters
+ * @param {string} authorName - Display name for the author
+ * @param {string} instrumentFamily - e.g. 'VIOLIN', 'VIOL', 'GUITAR_MANDOLIN'
+ * @returns {Object} The published row
+ */
+export async function publishToCommunity(presetName, description, parameters, authorName, instrumentFamily) {
+    const supabase = getSupabaseClient();
+    const user = getCurrentUser();
+    if (!supabase || !user) throw new Error('Not authenticated');
+
+    // Generate a share token (required column)
+    const { data: tokenData, error: tokenError } = await supabase
+        .rpc('generate_share_token');
+    if (tokenError) throw tokenError;
+
+    const metadata = {
+        version: '1.0',
+        timestamp: new Date().toISOString(),
+        published_by: user.email || user.id
+    };
+
+    const { data, error } = await supabase
+        .from('shared_presets')
+        .insert({
+            share_token: tokenData,
+            owner_id: user.id,
+            preset_name: presetName,
+            description: description || '',
+            metadata,
+            parameters,
+            is_published: true,
+            author_name: authorName,
+            instrument_family: instrumentFamily
+        })
+        .select()
+        .single();
+
+    if (error) {
+        // Unique constraint violation — user already published this name
+        if (error.code === '23505') {
+            throw new Error(`You already have a published profile named "${presetName}". Unpublish it first to re-publish.`);
+        }
+        throw error;
+    }
+    return data;
+}
+
+/**
+ * Load community profiles (lightweight — no parameters column).
+ *
+ * @param {string} [searchQuery] - Optional name search (case-insensitive)
+ * @param {string} [instrumentFamily] - Optional instrument family filter
+ * @returns {Array} Array of community profile metadata
+ */
+export async function loadCommunityProfiles(searchQuery, instrumentFamily) {
+    const supabase = getSupabaseClient();
+    if (!supabase) return [];
+
+    let query = supabase
+        .from('shared_presets')
+        .select('id, preset_name, description, author_name, instrument_family, view_count, created_at, owner_id')
+        .eq('is_published', true)
+        .order('created_at', { ascending: false })
+        .limit(100);
+
+    if (searchQuery) {
+        query = query.ilike('preset_name', `%${searchQuery}%`);
+    }
+    if (instrumentFamily) {
+        query = query.eq('instrument_family', instrumentFamily);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+    return data || [];
+}
+
+/**
+ * Remove a published profile from the community.
+ *
+ * @param {string} publishedPresetId - UUID of the published preset
+ */
+export async function unpublishFromCommunity(publishedPresetId) {
+    const supabase = getSupabaseClient();
+    if (!supabase) throw new Error('Not authenticated');
+
+    const { error } = await supabase
+        .from('shared_presets')
+        .delete()
+        .eq('id', publishedPresetId)
+        .eq('is_published', true);
+
+    if (error) throw error;
+}
+
+/**
+ * Load full parameters for a single community profile (on Load click).
+ * Also increments the view count.
+ *
+ * @param {string} presetId - UUID of the community profile
+ * @returns {Object|null} The full preset row, or null if not found
+ */
+export async function loadCommunityProfileParameters(presetId) {
+    const supabase = getSupabaseClient();
+    if (!supabase) return null;
+
+    const { data, error } = await supabase
+        .from('shared_presets')
+        .select('*')
+        .eq('id', presetId)
+        .eq('is_published', true)
+        .single();
+
+    if (error || !data) return null;
+
+    // Increment view count (fire and forget)
+    supabase.rpc('increment_view_count_by_id', { preset_id: presetId }).catch(() => {});
+
+    return data;
+}

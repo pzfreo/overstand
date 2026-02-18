@@ -42,6 +42,10 @@ describe('state', () => {
     test('parametersModified is initially false', () => {
       expect(state.parametersModified).toBe(false);
     });
+
+    test('currentProfileName is initially null', () => {
+      expect(state.currentProfileName).toBeNull();
+    });
   });
 
   describe('state properties', () => {
@@ -58,7 +62,8 @@ describe('state', () => {
         'derivedValues',
         'derivedMetadata',
         'derivedFormatted',
-        'parametersModified'
+        'parametersModified',
+        'currentProfileName'
       ];
 
       expectedProps.forEach(prop => {
