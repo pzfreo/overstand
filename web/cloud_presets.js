@@ -141,7 +141,7 @@ export async function loadSharedPreset(shareToken) {
     if (error || !data) return null;
 
     // Increment view count (fire and forget, no need to await)
-    supabase.rpc('increment_view_count', { token: shareToken }).catch(() => {});
+    supabase.rpc('increment_view_count', { token: shareToken }).then(() => {}, () => {});
 
     return data;
 }
@@ -322,7 +322,7 @@ export async function loadCommunityProfileParameters(presetId) {
     if (error || !data) return null;
 
     // Increment view count (fire and forget)
-    supabase.rpc('increment_view_count_by_id', { preset_id: presetId }).catch(() => {});
+    supabase.rpc('increment_view_count_by_id', { preset_id: presetId }).then(() => {}, () => {});
 
     return data;
 }
