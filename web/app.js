@@ -7,7 +7,7 @@ import { DEBOUNCE_GENERATE, ZOOM_CONFIG } from './constants.js';
 import { markdownToHtml } from './markdown-parser.js';
 import * as analytics from './analytics.js';
 import { initAuth, signInWithProvider, signOut, isAuthenticated, getCurrentUser, onAuthStateChange } from './auth.js';
-import { saveToCloud, loadUserPresets, deleteCloudPreset, createShareLink, loadSharedPreset, copyToClipboard, cloudPresetExists } from './cloud_presets.js';
+import { saveToCloud, loadUserPresets, deleteCloudPreset, createShareLink, loadSharedPreset, copyToClipboard, cloudPresetExists, publishToCommunity, loadCommunityProfiles, unpublishFromCommunity, loadCommunityProfileParameters } from './cloud_presets.js';
 
 // Helper: Debounce
 function debounce(func, wait) {
@@ -873,6 +873,8 @@ function showLoadProfileModal() {
     populateStandardProfilesTab();
     // Populate my profiles tab
     populateMyProfilesTab();
+    // Populate community tab
+    populateCommunityTab();
 
     // Reset to standard tab
     switchProfileTab('standard');
@@ -952,6 +954,7 @@ function populateMyProfilesTab() {
             <div class="profile-row-actions">
                 <button class="profile-action-btn load-btn">Load</button>
                 <button class="profile-action-btn share-btn">Share</button>
+                <button class="profile-action-btn publish-btn">Publish</button>
                 <button class="profile-action-btn delete-btn">Del</button>
             </div>
         `;
@@ -960,6 +963,9 @@ function populateMyProfilesTab() {
         });
         row.querySelector('.share-btn').addEventListener('click', () => {
             handleShareFromProfile(preset);
+        });
+        row.querySelector('.publish-btn').addEventListener('click', () => {
+            handlePublish(preset);
         });
         row.querySelector('.delete-btn').addEventListener('click', async () => {
             if (!confirm(`Delete profile "${preset.preset_name}"?`)) return;
@@ -1238,6 +1244,215 @@ async function handleShareSave() {
         state.sharedPreset = null;
     } catch (e) {
         showErrorModal('Save Failed', e.message);
+    }
+}
+
+// ============================================================================
+// Community Profiles
+// ============================================================================
+
+const INSTRUMENT_FAMILY_DISPLAY = {
+    'VIOLIN': 'Violin',
+    'VIOLA': 'Viola',
+    'CELLO': 'Cello',
+    'VIOL': 'Viol',
+    'GUITAR_MANDOLIN': 'Guitar/Mandolin'
+};
+
+function buildCommunityControls() {
+    const controls = document.createElement('div');
+    controls.className = 'community-controls';
+
+    const searchInput = document.createElement('input');
+    searchInput.type = 'text';
+    searchInput.className = 'community-search-input';
+    searchInput.placeholder = 'Search profiles...';
+    searchInput.id = 'community-search';
+
+    const filterSelect = document.createElement('select');
+    filterSelect.className = 'community-filter-select';
+    filterSelect.id = 'community-filter';
+
+    const allOption = document.createElement('option');
+    allOption.value = '';
+    allOption.textContent = 'All Instruments';
+    filterSelect.appendChild(allOption);
+
+    for (const [value, label] of Object.entries(INSTRUMENT_FAMILY_DISPLAY)) {
+        const option = document.createElement('option');
+        option.value = value;
+        option.textContent = label;
+        filterSelect.appendChild(option);
+    }
+
+    const debouncedSearch = debounce(() => populateCommunityTab(), 300);
+    searchInput.addEventListener('input', debouncedSearch);
+    filterSelect.addEventListener('change', () => populateCommunityTab());
+
+    controls.appendChild(searchInput);
+    controls.appendChild(filterSelect);
+    return controls;
+}
+
+async function populateCommunityTab() {
+    const list = document.getElementById('community-profiles-list');
+    if (!list) return;
+
+    // Preserve or create controls
+    let controls = list.querySelector('.community-controls');
+    if (!controls) {
+        list.innerHTML = '';
+        controls = buildCommunityControls();
+        list.appendChild(controls);
+    }
+
+    // Remove old results (everything after controls)
+    while (controls.nextSibling) {
+        list.removeChild(controls.nextSibling);
+    }
+
+    const searchQuery = document.getElementById('community-search')?.value || '';
+    const instrumentFamily = document.getElementById('community-filter')?.value || '';
+
+    // Show loading
+    const loadingMsg = document.createElement('div');
+    loadingMsg.className = 'profile-empty-message';
+    loadingMsg.textContent = 'Loading community profiles...';
+    list.appendChild(loadingMsg);
+
+    try {
+        const profiles = await loadCommunityProfiles(searchQuery, instrumentFamily);
+        list.removeChild(loadingMsg);
+
+        if (profiles.length === 0) {
+            const empty = document.createElement('div');
+            empty.className = 'profile-empty-message';
+            empty.textContent = searchQuery || instrumentFamily
+                ? 'No profiles match your search.'
+                : 'No community profiles yet. Be the first to publish!';
+            list.appendChild(empty);
+            return;
+        }
+
+        const currentUserId = getCurrentUser()?.id;
+
+        for (const profile of profiles) {
+            const row = document.createElement('div');
+            row.className = 'profile-row';
+
+            const familyDisplay = INSTRUMENT_FAMILY_DISPLAY[profile.instrument_family] || profile.instrument_family || '';
+            const descHtml = profile.description
+                ? `<div class="profile-row-description">${escapeHtml(profile.description)}</div>`
+                : '';
+            const metaHtml = `<div class="profile-row-meta">${escapeHtml(profile.author_name || 'Anonymous')}${familyDisplay ? ' · ' + escapeHtml(familyDisplay) : ''}${profile.view_count ? ' · ' + profile.view_count + ' views' : ''}</div>`;
+
+            const isOwner = currentUserId && profile.owner_id === currentUserId;
+            const unpublishBtn = isOwner
+                ? `<button class="profile-action-btn unpublish-btn">Unpublish</button>`
+                : '';
+
+            row.innerHTML = `
+                <div class="profile-row-info">
+                    <span class="profile-row-name">${escapeHtml(profile.preset_name)}</span>
+                    ${descHtml}
+                    ${metaHtml}
+                </div>
+                <div class="profile-row-actions">
+                    <button class="profile-action-btn load-btn">Load</button>
+                    ${unpublishBtn}
+                </div>
+            `;
+
+            row.querySelector('.load-btn').addEventListener('click', () => {
+                loadCommunityPreset(profile);
+            });
+
+            const unpublishEl = row.querySelector('.unpublish-btn');
+            if (unpublishEl) {
+                unpublishEl.addEventListener('click', async () => {
+                    if (!confirm(`Remove "${profile.preset_name}" from community profiles?`)) return;
+                    try {
+                        await unpublishFromCommunity(profile.id);
+                        populateCommunityTab();
+                        ui.setStatus('ready', `Unpublished "${profile.preset_name}"`);
+                    } catch (e) {
+                        showErrorModal('Unpublish Failed', e.message);
+                    }
+                });
+            }
+
+            list.appendChild(row);
+        }
+    } catch (e) {
+        list.removeChild(loadingMsg);
+        const errMsg = document.createElement('div');
+        errMsg.className = 'profile-empty-message';
+        errMsg.textContent = 'Failed to load community profiles.';
+        list.appendChild(errMsg);
+        console.error('[Community] Load failed:', e);
+    }
+}
+
+async function loadCommunityPreset(profile) {
+    try {
+        ui.setStatus('loading', 'Loading community profile...');
+        const full = await loadCommunityProfileParameters(profile.id);
+        if (!full || !full.parameters) {
+            showErrorModal('Load Failed', 'Could not load profile parameters.');
+            ui.setStatus('error', 'Failed to load community profile');
+            return;
+        }
+
+        applyParametersToForm(full.parameters);
+
+        // Restore description
+        const descEl = document.getElementById('profile-description');
+        if (descEl) descEl.value = full.description || '';
+
+        // Clear standard preset selector
+        if (elements.presetSelect) elements.presetSelect.value = '';
+        state.parametersModified = false;
+
+        refreshAfterParameterLoad();
+        ui.setStatus('ready', `Loaded "${full.preset_name}" by ${full.author_name || 'Anonymous'}`);
+        closeLoadProfileModal();
+    } catch (e) {
+        console.error('[Community] Load preset failed:', e);
+        showErrorModal('Load Failed', e.message);
+        ui.setStatus('error', 'Failed to load community profile');
+    }
+}
+
+async function handlePublish(preset) {
+    if (!preset || !preset.parameters) return;
+
+    const user = getCurrentUser();
+    if (!user) { showLoginModal(); return; }
+
+    const authorName = user.user_metadata?.full_name || user.email || 'Anonymous';
+    const instrumentFamily = preset.parameters.instrument_family || '';
+
+    const confirmed = confirm(
+        `Publish "${preset.preset_name}" to the community?\n\n` +
+        `Author: ${authorName}\n` +
+        `This will be visible to all Overstand users.`
+    );
+    if (!confirmed) return;
+
+    try {
+        ui.setStatus('loading', 'Publishing to community...');
+        await publishToCommunity(
+            preset.preset_name,
+            preset.description || '',
+            preset.parameters,
+            authorName,
+            instrumentFamily
+        );
+        ui.setStatus('ready', `Published "${preset.preset_name}" to community`);
+    } catch (e) {
+        console.error('[Community] Publish failed:', e);
+        showErrorModal('Publish Failed', e.message);
+        ui.setStatus('error', 'Publish failed');
     }
 }
 
