@@ -29,6 +29,11 @@
         } catch(e) {}
     }
 
+    // Strip tokens from URL before any redirect (prevents analytics from capturing them)
+    if (window.location.hash) {
+        history.replaceState(null, '', window.location.pathname);
+    }
+
     // Close popup, or redirect to main page if not a popup
     setTimeout(function() {
         try { window.close(); } catch(e) {}
