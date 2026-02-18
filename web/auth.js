@@ -1,8 +1,8 @@
 /**
  * Authentication Module
  *
- * Handles Supabase auth: OAuth sign-in (Google/GitHub), session management,
- * and auth state change notifications.
+ * Handles Supabase auth: OAuth sign-in (Google/GitHub), email OTP (6-digit code),
+ * session management, and auth state change notifications.
  *
  * Sign-in uses a popup window to avoid reloading the main page (and Pyodide).
  * The popup completes OAuth, writes tokens (implicit) or code (PKCE) to localStorage,
@@ -37,10 +37,10 @@ export async function initAuth() {
             notifyListeners(user, event);
         });
 
-        // Handle OAuth redirect (only when popup was blocked and we got a full redirect)
+        // Handle auth redirect (OAuth popup fallback or magic link from email)
         const params = new URLSearchParams(window.location.search);
         if (params.has('code') && !window.opener) {
-            console.log('[Auth] OAuth code detected (redirect fallback), exchanging...');
+            console.log('[Auth] Auth code detected (redirect/magic link), exchanging...');
             const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(params.get('code'));
             if (exchangeError) {
                 console.error('[Auth] Code exchange failed:', exchangeError);
@@ -186,6 +186,49 @@ export async function signInWithProvider(provider) {
 
     // Stop polling after 5 minutes
     setTimeout(() => clearInterval(pollInterval), 5 * 60 * 1000);
+}
+
+/**
+ * Send a 6-digit sign-in code to the user's email.
+ * The user enters this code in the app to complete sign-in without leaving the page.
+ * @param {string} email
+ */
+export async function sendSignInCode(email) {
+    if (!supabase) throw new Error('Auth not initialized');
+
+    const { error } = await supabase.auth.signInWithOtp({ email });
+
+    if (error) {
+        console.error('[Auth] Send sign-in code failed:', error);
+        throw error;
+    }
+
+    console.log(`[Auth] Sign-in code sent to ${email}`);
+}
+
+/**
+ * Verify the 6-digit code the user received by email.
+ * On success, establishes a session and the onAuthStateChange listener fires.
+ * @param {string} email
+ * @param {string} token - The 6-digit code
+ */
+export async function verifySignInCode(email, token) {
+    if (!supabase) throw new Error('Auth not initialized');
+
+    const { data, error } = await supabase.auth.verifyOtp({
+        email,
+        token,
+        type: 'email'
+    });
+
+    if (error) {
+        console.error('[Auth] Code verification failed:', error);
+        throw error;
+    }
+
+    currentUser = data.session?.user || null;
+    console.log('[Auth] Code verification succeeded:', currentUser?.email);
+    notifyListeners(currentUser, 'SIGNED_IN');
 }
 
 /**
