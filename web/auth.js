@@ -1,8 +1,8 @@
 /**
  * Authentication Module
  *
- * Handles Supabase auth: OAuth sign-in (Google/GitHub), session management,
- * and auth state change notifications.
+ * Handles Supabase auth: OAuth sign-in (Google/GitHub), magic link (email OTP),
+ * session management, and auth state change notifications.
  *
  * Sign-in uses a popup window to avoid reloading the main page (and Pyodide).
  * The popup completes OAuth, writes tokens (implicit) or code (PKCE) to localStorage,
@@ -37,10 +37,10 @@ export async function initAuth() {
             notifyListeners(user, event);
         });
 
-        // Handle OAuth redirect (only when popup was blocked and we got a full redirect)
+        // Handle auth redirect (OAuth popup fallback or magic link from email)
         const params = new URLSearchParams(window.location.search);
         if (params.has('code') && !window.opener) {
-            console.log('[Auth] OAuth code detected (redirect fallback), exchanging...');
+            console.log('[Auth] Auth code detected (redirect/magic link), exchanging...');
             const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(params.get('code'));
             if (exchangeError) {
                 console.error('[Auth] Code exchange failed:', exchangeError);
@@ -186,6 +186,30 @@ export async function signInWithProvider(provider) {
 
     // Stop polling after 5 minutes
     setTimeout(() => clearInterval(pollInterval), 5 * 60 * 1000);
+}
+
+/**
+ * Sign in with a magic link sent to the user's email.
+ * Supabase sends an email with a login link; clicking it redirects back
+ * to the app and establishes a session automatically.
+ * @param {string} email
+ */
+export async function signInWithMagicLink(email) {
+    if (!supabase) throw new Error('Auth not initialized');
+
+    const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+            emailRedirectTo: window.location.origin + window.location.pathname.replace(/[^/]*$/, '')
+        }
+    });
+
+    if (error) {
+        console.error('[Auth] Magic link failed:', error);
+        throw error;
+    }
+
+    console.log(`[Auth] Magic link sent to ${email}`);
 }
 
 /**

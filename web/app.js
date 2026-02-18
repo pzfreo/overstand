@@ -6,7 +6,7 @@ import { showModal, closeModal, showErrorModal, escapeHtml } from './modal.js';
 import { DEBOUNCE_GENERATE, ZOOM_CONFIG } from './constants.js';
 import { markdownToHtml } from './markdown-parser.js';
 import * as analytics from './analytics.js';
-import { initAuth, signInWithProvider, signOut, isAuthenticated, getCurrentUser, onAuthStateChange } from './auth.js';
+import { initAuth, signInWithProvider, signInWithMagicLink, signOut, isAuthenticated, getCurrentUser, onAuthStateChange } from './auth.js';
 import { saveToCloud, loadUserPresets, deleteCloudPreset, createShareLink, loadSharedPreset, copyToClipboard, cloudPresetExists, publishToCommunity, loadCommunityProfiles, unpublishFromCommunity, loadCommunityProfileParameters, getUserBookmarks, toggleBookmark } from './cloud_presets.js';
 
 // Helper: Debounce
@@ -869,6 +869,15 @@ function showLoginModal() {
                 <span class="login-btn-icon">G</span>
                 Sign in / Sign up with Google
             </button>
+            <div class="login-divider"><span>or</span></div>
+            <form id="magic-link-form" class="magic-link-form">
+                <input type="email" id="magic-link-email" class="magic-link-input" placeholder="Enter your email" required />
+                <button type="submit" class="login-btn magic-link-btn">
+                    <span class="login-btn-icon">&#9993;</span>
+                    Send magic link
+                </button>
+            </form>
+            <p id="magic-link-status" class="magic-link-status" style="display:none;"></p>
         </div>
     `;
     showModal('Sign In / Sign Up', content);
@@ -876,6 +885,32 @@ function showLoginModal() {
     document.getElementById('login-google')?.addEventListener('click', async () => {
         closeModal();
         try { await signInWithProvider('google'); } catch (e) { showErrorModal('Sign In Failed', e.message); }
+    });
+
+    document.getElementById('magic-link-form')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const emailInput = document.getElementById('magic-link-email');
+        const statusEl = document.getElementById('magic-link-status');
+        const email = emailInput.value.trim();
+        if (!email) return;
+
+        // Disable form while sending
+        emailInput.disabled = true;
+        e.target.querySelector('button').disabled = true;
+        statusEl.style.display = 'none';
+
+        try {
+            await signInWithMagicLink(email);
+            statusEl.textContent = 'Check your email for the login link!';
+            statusEl.className = 'magic-link-status magic-link-success';
+            statusEl.style.display = 'block';
+        } catch (err) {
+            statusEl.textContent = err.message || 'Failed to send magic link. Please try again.';
+            statusEl.className = 'magic-link-status magic-link-error';
+            statusEl.style.display = 'block';
+            emailInput.disabled = false;
+            e.target.querySelector('button').disabled = false;
+        }
     });
 }
 

@@ -2116,6 +2116,71 @@ input[type="checkbox"] {
     font-size: 1.2rem;
 }
 
+.login-divider {
+    display: flex;
+    align-items: center;
+    margin: 0.75rem 0;
+    color: var(--color-gray-400);
+    font-size: 0.85rem;
+}
+
+.login-divider::before,
+.login-divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid var(--color-gray-200);
+}
+
+.login-divider span {
+    padding: 0 0.75rem;
+}
+
+.magic-link-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.magic-link-input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--color-gray-300);
+    border-radius: var(--radius-md);
+    font-size: 0.95rem;
+    color: var(--color-gray-800);
+    background: var(--color-surface);
+    box-sizing: border-box;
+}
+
+.magic-link-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb), 0.15);
+}
+
+.magic-link-input:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.magic-link-btn {
+    margin-bottom: 0;
+}
+
+.magic-link-status {
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+.magic-link-success {
+    color: var(--color-success-dark);
+}
+
+.magic-link-error {
+    color: var(--color-error);
+}
+
 /* ============================================
    MENU ITEM STATES
    ============================================ */
