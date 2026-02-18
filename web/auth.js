@@ -1,7 +1,7 @@
 /**
  * Authentication Module
  *
- * Handles Supabase auth: OAuth sign-in (Google/GitHub), magic link (email OTP),
+ * Handles Supabase auth: OAuth sign-in (Google/GitHub), email OTP (6-digit code),
  * session management, and auth state change notifications.
  *
  * Sign-in uses a popup window to avoid reloading the main page (and Pyodide).
@@ -189,27 +189,46 @@ export async function signInWithProvider(provider) {
 }
 
 /**
- * Sign in with a magic link sent to the user's email.
- * Supabase sends an email with a login link; clicking it redirects back
- * to the app and establishes a session automatically.
+ * Send a 6-digit sign-in code to the user's email.
+ * The user enters this code in the app to complete sign-in without leaving the page.
  * @param {string} email
  */
-export async function signInWithMagicLink(email) {
+export async function sendSignInCode(email) {
     if (!supabase) throw new Error('Auth not initialized');
 
-    const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-            emailRedirectTo: window.location.origin + window.location.pathname.replace(/[^/]*$/, '')
-        }
-    });
+    const { error } = await supabase.auth.signInWithOtp({ email });
 
     if (error) {
-        console.error('[Auth] Magic link failed:', error);
+        console.error('[Auth] Send sign-in code failed:', error);
         throw error;
     }
 
-    console.log(`[Auth] Magic link sent to ${email}`);
+    console.log(`[Auth] Sign-in code sent to ${email}`);
+}
+
+/**
+ * Verify the 6-digit code the user received by email.
+ * On success, establishes a session and the onAuthStateChange listener fires.
+ * @param {string} email
+ * @param {string} token - The 6-digit code
+ */
+export async function verifySignInCode(email, token) {
+    if (!supabase) throw new Error('Auth not initialized');
+
+    const { data, error } = await supabase.auth.verifyOtp({
+        email,
+        token,
+        type: 'email'
+    });
+
+    if (error) {
+        console.error('[Auth] Code verification failed:', error);
+        throw error;
+    }
+
+    currentUser = data.session?.user || null;
+    console.log('[Auth] Code verification succeeded:', currentUser?.email);
+    notifyListeners(currentUser, 'SIGNED_IN');
 }
 
 /**

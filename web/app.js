@@ -6,7 +6,7 @@ import { showModal, closeModal, showErrorModal, escapeHtml } from './modal.js';
 import { DEBOUNCE_GENERATE, ZOOM_CONFIG } from './constants.js';
 import { markdownToHtml } from './markdown-parser.js';
 import * as analytics from './analytics.js';
-import { initAuth, signInWithProvider, signInWithMagicLink, signOut, isAuthenticated, getCurrentUser, onAuthStateChange } from './auth.js';
+import { initAuth, signInWithProvider, sendSignInCode, verifySignInCode, signOut, isAuthenticated, getCurrentUser, onAuthStateChange } from './auth.js';
 import { saveToCloud, loadUserPresets, deleteCloudPreset, createShareLink, loadSharedPreset, copyToClipboard, cloudPresetExists, publishToCommunity, loadCommunityProfiles, unpublishFromCommunity, loadCommunityProfileParameters, getUserBookmarks, toggleBookmark } from './cloud_presets.js';
 
 // Helper: Debounce
@@ -870,46 +870,102 @@ function showLoginModal() {
                 Sign in / Sign up with Google
             </button>
             <div class="login-divider"><span>or</span></div>
-            <form id="magic-link-form" class="magic-link-form">
-                <input type="email" id="magic-link-email" class="magic-link-input" placeholder="Enter your email" required />
-                <button type="submit" class="login-btn magic-link-btn">
-                    <span class="login-btn-icon">&#9993;</span>
-                    Send magic link
-                </button>
-            </form>
+            <div id="email-step">
+                <form id="email-form" class="magic-link-form">
+                    <input type="email" id="magic-link-email" class="magic-link-input" placeholder="Enter your email" required />
+                    <button type="submit" class="login-btn magic-link-btn">
+                        <span class="login-btn-icon">&#9993;</span>
+                        Send sign-in code
+                    </button>
+                </form>
+            </div>
+            <div id="code-step" style="display:none;">
+                <p class="magic-link-status magic-link-success">Code sent! Check your email.</p>
+                <form id="code-form" class="magic-link-form">
+                    <input type="text" id="otp-code" class="magic-link-input otp-input" placeholder="Enter 6-digit code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" required />
+                    <button type="submit" class="login-btn magic-link-btn">Verify code</button>
+                </form>
+                <button id="otp-resend" class="otp-resend-btn">Resend code</button>
+            </div>
             <p id="magic-link-status" class="magic-link-status" style="display:none;"></p>
         </div>
     `;
     showModal('Sign In / Sign Up', content);
+
+    let pendingEmail = '';
 
     document.getElementById('login-google')?.addEventListener('click', async () => {
         closeModal();
         try { await signInWithProvider('google'); } catch (e) { showErrorModal('Sign In Failed', e.message); }
     });
 
-    document.getElementById('magic-link-form')?.addEventListener('submit', async (e) => {
+    document.getElementById('email-form')?.addEventListener('submit', async (e) => {
         e.preventDefault();
         const emailInput = document.getElementById('magic-link-email');
         const statusEl = document.getElementById('magic-link-status');
         const email = emailInput.value.trim();
         if (!email) return;
 
-        // Disable form while sending
         emailInput.disabled = true;
         e.target.querySelector('button').disabled = true;
         statusEl.style.display = 'none';
 
         try {
-            await signInWithMagicLink(email);
-            statusEl.textContent = 'Check your email for the login link!';
-            statusEl.className = 'magic-link-status magic-link-success';
-            statusEl.style.display = 'block';
+            await sendSignInCode(email);
+            pendingEmail = email;
+            document.getElementById('email-step').style.display = 'none';
+            document.getElementById('code-step').style.display = 'block';
+            document.getElementById('otp-code')?.focus();
         } catch (err) {
-            statusEl.textContent = err.message || 'Failed to send magic link. Please try again.';
+            statusEl.textContent = err.message || 'Failed to send code. Please try again.';
             statusEl.className = 'magic-link-status magic-link-error';
             statusEl.style.display = 'block';
             emailInput.disabled = false;
             e.target.querySelector('button').disabled = false;
+        }
+    });
+
+    document.getElementById('code-form')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const codeInput = document.getElementById('otp-code');
+        const statusEl = document.getElementById('magic-link-status');
+        const code = codeInput.value.trim();
+        if (!code || !pendingEmail) return;
+
+        codeInput.disabled = true;
+        e.target.querySelector('button').disabled = true;
+        statusEl.style.display = 'none';
+
+        try {
+            await verifySignInCode(pendingEmail, code);
+            closeModal();
+        } catch (err) {
+            statusEl.textContent = err.message || 'Invalid or expired code. Please try again.';
+            statusEl.className = 'magic-link-status magic-link-error';
+            statusEl.style.display = 'block';
+            codeInput.disabled = false;
+            codeInput.value = '';
+            codeInput.focus();
+            e.target.querySelector('button').disabled = false;
+        }
+    });
+
+    document.getElementById('otp-resend')?.addEventListener('click', async () => {
+        const statusEl = document.getElementById('magic-link-status');
+        const resendBtn = document.getElementById('otp-resend');
+        resendBtn.disabled = true;
+
+        try {
+            await sendSignInCode(pendingEmail);
+            statusEl.textContent = 'New code sent!';
+            statusEl.className = 'magic-link-status magic-link-success';
+            statusEl.style.display = 'block';
+        } catch (err) {
+            statusEl.textContent = err.message || 'Failed to resend code.';
+            statusEl.className = 'magic-link-status magic-link-error';
+            statusEl.style.display = 'block';
+        } finally {
+            resendBtn.disabled = false;
         }
     });
 }

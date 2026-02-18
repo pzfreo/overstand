@@ -2167,6 +2167,33 @@ input[type="checkbox"] {
     margin-bottom: 0;
 }
 
+.otp-input {
+    text-align: center;
+    font-size: 1.5rem;
+    letter-spacing: 0.5rem;
+    font-family: monospace;
+}
+
+.otp-resend-btn {
+    display: block;
+    margin: 0.5rem auto 0;
+    padding: 0.25rem 0.5rem;
+    background: none;
+    border: none;
+    color: var(--color-primary);
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+.otp-resend-btn:hover {
+    text-decoration: underline;
+}
+
+.otp-resend-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 .magic-link-status {
     margin-top: 0.5rem;
     font-size: 0.9rem;
