@@ -55,6 +55,29 @@ function closeOverlay(overlayId) {
 
 function markParametersModified() {
     state.parametersModified = true;
+    updateSaveIndicator();
+}
+
+function updateSaveIndicator() {
+    const el = document.getElementById('save-indicator');
+    if (!el) return;
+    if (!state.currentProfileName) {
+        el.textContent = '';
+        el.className = 'save-indicator';
+        return;
+    }
+    if (state.parametersModified) {
+        el.textContent = `— ${state.currentProfileName} (unsaved)`;
+        el.className = 'save-indicator unsaved';
+    } else {
+        el.textContent = `— ${state.currentProfileName}`;
+        el.className = 'save-indicator';
+    }
+}
+
+function confirmDiscardChanges(actionDescription) {
+    if (!state.parametersModified) return true;
+    return confirm(`You have unsaved changes. ${actionDescription}\n\nDo you want to continue?`);
 }
 
 // Handle parameter changes - update derived values immediately, debounce generation
@@ -218,6 +241,7 @@ async function initializePython() {
 
         // Parameters start unmodified (we just loaded a preset)
         state.parametersModified = false;
+        updateSaveIndicator();
 
         elements.genBtn.disabled = false;
     } catch (error) {
@@ -232,21 +256,12 @@ async function loadPreset() {
     if (!presetId) return;
 
     // Warn user if they have unsaved changes
-    if (state.parametersModified) {
-        const presetName = state.uiMetadata?.presets?.[presetId]?.display_name || presetId;
-        const message = `You have unsaved changes. Loading "${presetName}" will overwrite your current parameter values.\n\nDo you want to continue?`;
-
-        if (!confirm(message)) {
-            // User cancelled - revert the dropdown selection
-            // Find the current instrument_family to restore dropdown
-            const currentFamily = document.getElementById('instrument_family')?.value;
-            if (currentFamily && elements.presetSelect) {
-                // Don't trigger another change event
-                const previousValue = elements.presetSelect.dataset.previousValue || '';
-                elements.presetSelect.value = previousValue;
-            }
-            return;
-        }
+    const presetDisplayName = state.uiMetadata?.presets?.[presetId]?.display_name || state.presets?.[presetId]?.name || presetId;
+    if (!confirmDiscardChanges(`Loading "${presetDisplayName}" will overwrite your current parameter values.`)) {
+        // User cancelled - revert the dropdown selection
+        const previousValue = elements.presetSelect?.dataset.previousValue || '';
+        if (elements.presetSelect) elements.presetSelect.value = previousValue;
+        return;
     }
 
     let parameters = null;
@@ -292,8 +307,10 @@ async function loadPreset() {
     const descEl = document.getElementById('profile-description');
     if (descEl) descEl.value = '';
 
-    // Reset modified flag - we just loaded a preset
+    // Reset modified flag and track profile name
     state.parametersModified = false;
+    state.currentProfileName = state.uiMetadata?.presets?.[presetId]?.display_name || state.presets?.[presetId]?.name || presetId;
+    updateSaveIndicator();
 
     // Store current preset selection for cancellation
     if (elements.presetSelect) {
@@ -566,6 +583,7 @@ function saveParameters() {
 
     // Reset modified flag - we just saved
     state.parametersModified = false;
+    updateSaveIndicator();
 
     analytics.trackParametersSaved();
 }
@@ -573,6 +591,12 @@ function saveParameters() {
 function handleLoadParameters(event) {
     const file = event.target.files[0];
     if (!file) return;
+
+    if (!confirmDiscardChanges(`Importing "${file.name}" will overwrite your current parameter values.`)) {
+        event.target.value = '';
+        return;
+    }
+
     const reader = new FileReader();
     reader.onload = (e) => {
         try {
@@ -590,6 +614,8 @@ function handleLoadParameters(event) {
 
             // Reset modified flag - we just loaded a file
             state.parametersModified = false;
+            state.currentProfileName = file.name.replace(/\.json$/i, '');
+            updateSaveIndicator();
 
             refreshAfterParameterLoad();
             ui.setStatus('ready', '✅ Parameters loaded');
@@ -992,6 +1018,8 @@ async function loadStandardPreset(presetId) {
 function loadCloudPreset(preset) {
     if (!preset || !preset.parameters) return;
 
+    if (!confirmDiscardChanges(`Loading "${preset.preset_name}" will overwrite your current parameter values.`)) return;
+
     // Apply parameters
     applyParametersToForm(preset.parameters);
 
@@ -1002,6 +1030,8 @@ function loadCloudPreset(preset) {
     // Clear the standard preset selector
     if (elements.presetSelect) elements.presetSelect.value = '';
     state.parametersModified = false;
+    state.currentProfileName = preset.preset_name;
+    updateSaveIndicator();
 
     refreshAfterParameterLoad();
     ui.setStatus('ready', `☁️ Loaded "${preset.preset_name}"`);
@@ -1133,6 +1163,8 @@ async function handleCloudSave() {
         await refreshCloudPresets();
         ui.setStatus('ready', `☁️ Saved "${presetName}" to cloud`);
         state.parametersModified = false;
+        state.currentProfileName = presetName;
+        updateSaveIndicator();
     } catch (e) {
         console.error('[Cloud] Save failed:', e);
         showErrorModal('Save Failed', e.message);
@@ -1212,6 +1244,8 @@ async function handleShareURL() {
         // Clear standard preset selector
         if (elements.presetSelect) elements.presetSelect.value = '';
         state.parametersModified = false;
+        state.currentProfileName = shared.preset_name;
+        updateSaveIndicator();
 
         // Clean up URL
         window.history.replaceState({}, document.title,
@@ -1394,6 +1428,8 @@ async function populateCommunityTab() {
 }
 
 async function loadCommunityPreset(profile) {
+    if (!confirmDiscardChanges(`Loading "${profile.preset_name}" will overwrite your current parameter values.`)) return;
+
     try {
         ui.setStatus('loading', 'Loading community profile...');
         const full = await loadCommunityProfileParameters(profile.id);
@@ -1412,6 +1448,8 @@ async function loadCommunityPreset(profile) {
         // Clear standard preset selector
         if (elements.presetSelect) elements.presetSelect.value = '';
         state.parametersModified = false;
+        state.currentProfileName = full.preset_name;
+        updateSaveIndicator();
 
         refreshAfterParameterLoad();
         ui.setStatus('ready', `Loaded "${full.preset_name}" by ${full.author_name || 'Anonymous'}`);
@@ -1455,6 +1493,14 @@ async function handlePublish(preset) {
         ui.setStatus('error', 'Publish failed');
     }
 }
+
+// Warn before closing tab with unsaved changes
+window.addEventListener('beforeunload', (e) => {
+    if (state.parametersModified) {
+        e.preventDefault();
+        e.returnValue = '';
+    }
+});
 
 // Initialize on load
 document.addEventListener('DOMContentLoaded', () => {

@@ -12,6 +12,7 @@ export const state = {
     derivedMetadata: null,    // Stores metadata for derived values
     derivedFormatted: null,   // Stores formatted derived values from backend
     parametersModified: false, // Tracks if parameters have been changed since load/save
+    currentProfileName: null,  // Name of the currently loaded profile (for save indicator)
 
     // Auth & cloud state
     authUser: null,           // Current Supabase user object (or null)

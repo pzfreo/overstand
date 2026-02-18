@@ -179,6 +179,19 @@ header {
     border-left: 4px solid var(--color-primary);
 }
 
+.save-indicator {
+    font-size: 0.8rem;
+    color: var(--color-gray-400);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 250px;
+}
+
+.save-indicator.unsaved {
+    color: var(--color-warning-dark);
+}
+
 .version-info {
     margin-left: auto;
     font-size: 0.75rem;
