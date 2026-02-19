@@ -215,6 +215,52 @@ test.describe('Zoom and Download Controls', () => {
   });
 });
 
+test.describe('Layout Constraints', () => {
+  test('preview panel height fits within viewport', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto('/');
+    const box = await page.locator('.preview-panel').boundingBox();
+    // Preview must fit within viewport (800px minus toolbar ~52px, status ~24px)
+    expect(box.height).toBeLessThan(750);
+    expect(box.height).toBeGreaterThan(200);
+  });
+
+  test('controls panel has scrollable params area', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto('/');
+    const overflow = await page.locator('.scrollable-params').evaluate(
+      el => getComputedStyle(el).overflowY
+    );
+    expect(overflow).toBe('auto');
+  });
+
+  test('body overflow is hidden (no page scroll)', async ({ page }) => {
+    await page.goto('/');
+    const overflow = await page.locator('body').evaluate(
+      el => getComputedStyle(el).overflow
+    );
+    expect(overflow).toBe('hidden');
+  });
+
+  test('main container grid row fills available height', async ({ page }) => {
+    await page.goto('/');
+    const rows = await page.locator('.main-container').evaluate(
+      el => getComputedStyle(el).gridTemplateRows
+    );
+    // 1fr resolves to an actual pixel value, so just check it's not 'auto' or 'none'
+    expect(rows).not.toBe('auto');
+    expect(rows).not.toBe('none');
+  });
+
+  test('preview panel height is independent of params content', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 600 });
+    await page.goto('/');
+    const previewBox = await page.locator('.preview-panel').boundingBox();
+    // Preview shouldn't be taller than the viewport
+    expect(previewBox.height).toBeLessThan(580);
+  });
+});
+
 test.describe('Params Panel', () => {
   test.beforeEach(async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
