@@ -91,14 +91,12 @@ test.describe('Menu System', () => {
 
     const sectionTitles = page.locator('.menu-section-title');
     const titles = await sectionTitles.allTextContents();
-    expect(titles).toEqual(['Account', 'File', 'Help', 'Troubleshooting', 'Links']);
+    expect(titles).toEqual(['Account', 'Help', 'Troubleshooting', 'Links']);
   });
 
-  test('uses "Export to File" / "Import from File" terminology', async ({ page }) => {
-    await page.locator('#toolbar-menu').click();
-
-    await expect(page.locator('#menu-export-params .menu-item-text')).toHaveText('Export to File');
-    await expect(page.locator('#menu-import-params .menu-item-text')).toHaveText('Import from File');
+  test('toolbar uses "Import" / "Export" terminology', async ({ page }) => {
+    await expect(page.locator('#toolbar-import')).toHaveAttribute('title', 'Import from File');
+    await expect(page.locator('#toolbar-export')).toHaveAttribute('title', 'Export to File');
   });
 
   test('close button closes menu', async ({ page }) => {

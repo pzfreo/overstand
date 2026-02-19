@@ -1947,13 +1947,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Menu items (menu open/close and clear cache already set up above)
-    const menuExportParams = document.getElementById('menu-export-params');
-    const menuImportParams = document.getElementById('menu-import-params');
     const menuKeyboardShortcuts = document.getElementById('menu-keyboard-shortcuts');
     const menuAbout = document.getElementById('menu-about');
-
-    if (menuExportParams) menuExportParams.addEventListener('click', () => { closeMenu(); saveParameters(); });
-    if (menuImportParams) menuImportParams.addEventListener('click', () => { closeMenu(); elements.loadParamsInput.click(); });
     if (menuKeyboardShortcuts) menuKeyboardShortcuts.addEventListener('click', showKeyboardShortcuts);
     if (menuAbout) menuAbout.addEventListener('click', showAbout);
 
