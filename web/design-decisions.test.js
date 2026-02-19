@@ -51,20 +51,6 @@ describe('Design decisions: no alert() dialogs', () => {
 });
 
 describe('Design decisions: CSS invariants', () => {
-    test('sidebar overlay does not use backdrop-filter (breaks Firefox/Android)', () => {
-        // Extract the .sidebar-overlay rule block
-        const overlayMatch = stylesSource.match(/\.sidebar-overlay\s*\{[^}]+\}/);
-        expect(overlayMatch).not.toBeNull();
-
-        const overlayCSS = overlayMatch[0];
-        // Should not have an active (uncommented) backdrop-filter
-        const lines = overlayCSS.split('\n');
-        const activeBackdropFilter = lines.some(line =>
-            /backdrop-filter/.test(line) && !/\/\*/.test(line)
-        );
-        expect(activeBackdropFilter).toBe(false);
-    });
-
     test('modal z-index (2000) exceeds panel z-index values', () => {
         // Find the modal overlay z-index
         const modalZMatch = stylesSource.match(/z-index:\s*2000/);

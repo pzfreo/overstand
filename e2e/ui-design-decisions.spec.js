@@ -67,8 +67,8 @@ test.describe('View Tabs', () => {
 });
 
 test.describe('Menu System', () => {
-  // The toolbar has a Menu button that opens the slide-in menu panel.
-  // Menu panel uses 'open' class, not 'active'.
+  // The toolbar has a Menu button that opens a dropdown overlay.
+  // Menu overlay uses 'open' class.
 
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
@@ -78,20 +78,22 @@ test.describe('Menu System', () => {
     await expect(page.locator('#toolbar-menu')).toBeVisible();
   });
 
-  test('clicking menu button opens menu panel', async ({ page }) => {
-    const menuPanel = page.locator('#menu-panel');
-    await expect(menuPanel).not.toHaveClass(/open/);
+  test('clicking menu button opens menu dropdown', async ({ page }) => {
+    const menuOverlay = page.locator('#app-menu-overlay');
+    await expect(menuOverlay).not.toHaveClass(/open/);
 
     await page.locator('#toolbar-menu').click();
-    await expect(menuPanel).toHaveClass(/open/);
+    await expect(menuOverlay).toHaveClass(/open/);
   });
 
-  test('menu has correct sections', async ({ page }) => {
+  test('menu has key items', async ({ page }) => {
     await page.locator('#toolbar-menu').click();
 
-    const sectionTitles = page.locator('.menu-section-title');
-    const titles = await sectionTitles.allTextContents();
-    expect(titles).toEqual(['Account', 'Help', 'Troubleshooting', 'Links']);
+    await expect(page.locator('#mm-load')).toBeAttached();
+    await expect(page.locator('#mm-shortcuts')).toBeAttached();
+    await expect(page.locator('#mm-about')).toBeAttached();
+    await expect(page.locator('#mm-cache')).toBeAttached();
+    await expect(page.locator('#mm-auth')).toBeAttached();
   });
 
   test('toolbar uses "Import" / "Export" terminology', async ({ page }) => {
@@ -99,20 +101,21 @@ test.describe('Menu System', () => {
     await expect(page.locator('#toolbar-export')).toHaveAttribute('title', 'Export to File');
   });
 
-  test('close button closes menu', async ({ page }) => {
+  test('click outside closes menu', async ({ page }) => {
     await page.locator('#toolbar-menu').click();
-    await expect(page.locator('#menu-panel')).toHaveClass(/open/);
+    await expect(page.locator('#app-menu-overlay')).toHaveClass(/open/);
 
-    await page.locator('#menu-close-btn').click();
-    await expect(page.locator('#menu-panel')).not.toHaveClass(/open/);
+    // Click the overlay background (outside the menu)
+    await page.locator('#app-menu-overlay').click({ position: { x: 10, y: 400 } });
+    await expect(page.locator('#app-menu-overlay')).not.toHaveClass(/open/);
   });
 
   test('Escape key closes menu', async ({ page }) => {
     await page.locator('#toolbar-menu').click();
-    await expect(page.locator('#menu-panel')).toHaveClass(/open/);
+    await expect(page.locator('#app-menu-overlay')).toHaveClass(/open/);
 
     await page.keyboard.press('Escape');
-    await expect(page.locator('#menu-panel')).not.toHaveClass(/open/);
+    await expect(page.locator('#app-menu-overlay')).not.toHaveClass(/open/);
   });
 });
 
@@ -193,13 +196,6 @@ test.describe('CSS Design Decisions', () => {
     expect(hasCustomProps).toBe(true);
   });
 
-  test('sidebar overlay has no backdrop-filter', async ({ page }) => {
-    // Design decision: no backdrop-filter on sidebar overlay (breaks Firefox/Android)
-    const backdropFilter = await page.locator('.sidebar-overlay').evaluate(
-      el => getComputedStyle(el).backdropFilter
-    );
-    expect(backdropFilter === 'none' || backdropFilter === '').toBe(true);
-  });
 });
 
 test.describe('Zoom and Download Controls', () => {

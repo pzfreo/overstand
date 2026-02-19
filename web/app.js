@@ -630,24 +630,15 @@ function handleLoadParameters(event) {
     event.target.value = '';
 }
 
-// Menu system functions
+// Menu system functions (unified dropdown)
 function openMenu() {
-    const menuPanel = document.getElementById('menu-panel');
-    const menuOverlay = document.getElementById('menu-overlay');
-    const sidebarOverlay = document.getElementById('sidebar-overlay');
-    menuPanel.classList.add('open');
-    menuOverlay.classList.add('active');
-    if (sidebarOverlay) sidebarOverlay.classList.add('active');
-    document.body.style.overflow = 'hidden';
+    const overlay = document.getElementById('app-menu-overlay');
+    if (overlay) overlay.classList.add('open');
 }
 
 function closeMenu() {
-    const menuPanel = document.getElementById('menu-panel');
-    if (menuPanel) menuPanel.classList.remove('open');
-    closeOverlay('menu-overlay');
-    const sidebarOverlay = document.getElementById('sidebar-overlay');
-    if (sidebarOverlay) sidebarOverlay.classList.remove('active');
-    document.body.style.overflow = '';
+    const overlay = document.getElementById('app-menu-overlay');
+    if (overlay) overlay.classList.remove('open');
 }
 
 // Modal Dialog Functions - imported from modal.js
@@ -725,7 +716,6 @@ function showKeyboardShortcuts() {
     `;
 
     showModal('Keyboard Shortcuts', content);
-    closeMenu();
 }
 
 async function showAbout() {
@@ -746,18 +736,14 @@ async function showAbout() {
         const title = titleMatch ? titleMatch[1] : 'About';
 
         showModal(title, content);
-        closeMenu();
     } catch (error) {
         console.error('Error loading about:', error);
         // Fallback content
         showModal('About', '<p class="about-text">Unable to load about information.</p>');
-        closeMenu();
     }
 }
 
 async function clearCacheAndReload() {
-    closeMenu();
-
     const confirmed = confirm(
         'This will clear all cached data and reload the app.\n\n' +
         'Use this if you\'re experiencing issues with outdated code or data.\n\n' +
@@ -805,81 +791,53 @@ async function clearCacheAndReload() {
 
 function updateAuthUI(user) {
     state.authUser = user;
-    const signedOut = document.getElementById('menu-signed-out');
-    const signedIn = document.getElementById('menu-signed-in');
     const shareSaveBtn = document.getElementById('share-save-btn');
-    // Toolbar buttons
     const toolbarSave = document.getElementById('toolbar-save');
     const toolbarShare = document.getElementById('toolbar-share');
     const toolbarAuth = document.getElementById('toolbar-auth');
-    // Mobile menu buttons
     const mmSave = document.getElementById('mm-save');
     const mmShare = document.getElementById('mm-share');
     const mmAuth = document.getElementById('mm-auth');
+    const mmUserEmail = document.getElementById('mm-user-email');
 
     if (user) {
-        // Logged in
-        if (signedOut) signedOut.style.display = 'none';
-        if (signedIn) signedIn.style.display = 'block';
         if (shareSaveBtn) shareSaveBtn.style.display = 'inline-block';
-
-        // Enable toolbar cloud buttons
         if (toolbarSave) toolbarSave.disabled = false;
         if (toolbarShare) toolbarShare.disabled = false;
         if (mmSave) mmSave.disabled = false;
         if (mmShare) mmShare.disabled = false;
 
-        // Update toolbar auth button to Sign Out
         if (toolbarAuth) {
             toolbarAuth.textContent = 'Sign Out';
             toolbarAuth.classList.remove('btn-primary');
             toolbarAuth.title = user.email || 'Sign Out';
         }
-        if (mmAuth) {
-            mmAuth.innerHTML = '<span class="icon">👤</span> Sign Out';
+        if (mmAuth) mmAuth.innerHTML = '<span class="icon">👤</span> Sign Out';
+        if (mmUserEmail) {
+            mmUserEmail.textContent = user.email || '';
+            mmUserEmail.style.display = user.email ? '' : 'none';
         }
 
-        // Update user info
-        const avatar = document.getElementById('menu-user-avatar');
-        const email = document.getElementById('menu-user-email');
-        if (avatar) {
-            avatar.src = user.user_metadata?.avatar_url || '';
-            avatar.style.display = user.user_metadata?.avatar_url ? 'block' : 'none';
-        }
-        if (email) email.textContent = user.email || 'Signed in';
-
-        // Show signed-in email in status bar
         const authStatus = document.getElementById('auth-status');
         if (authStatus) authStatus.textContent = user.email;
-
-        // Load cloud presets
         refreshCloudPresets();
     } else {
-        // Logged out
-        if (signedOut) signedOut.style.display = 'block';
-        if (signedIn) signedIn.style.display = 'none';
         if (shareSaveBtn) shareSaveBtn.style.display = 'none';
-
-        // Disable toolbar cloud buttons
         if (toolbarSave) toolbarSave.disabled = true;
         if (toolbarShare) toolbarShare.disabled = true;
         if (mmSave) mmSave.disabled = true;
         if (mmShare) mmShare.disabled = true;
 
-        // Reset toolbar auth button
         if (toolbarAuth) {
             toolbarAuth.textContent = 'Sign In';
             toolbarAuth.classList.add('btn-primary');
             toolbarAuth.title = 'Sign In';
         }
-        if (mmAuth) {
-            mmAuth.innerHTML = '<span class="icon">👤</span> Sign In';
-        }
+        if (mmAuth) mmAuth.innerHTML = '<span class="icon">👤</span> Sign In';
+        if (mmUserEmail) mmUserEmail.style.display = 'none';
 
-        // Clear status bar auth info
         const authStatus = document.getElementById('auth-status');
         if (authStatus) authStatus.textContent = '';
-
         state.cloudPresets = [];
     }
 }
@@ -1705,17 +1663,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // CRITICAL: Set up Clear Cache FIRST so it always works, even if everything else fails
     try {
-        const menuCloseBtn = document.getElementById('menu-close-btn');
-        const menuOverlay = document.getElementById('menu-overlay');
-        const menuClearCache = document.getElementById('menu-clear-cache');
-
-        // Basic menu close handlers
-        if (menuCloseBtn) menuCloseBtn.addEventListener('click', closeMenu);
-        if (menuOverlay) menuOverlay.addEventListener('click', closeMenu);
-
-        // Clear cache - MUST work even if app is broken
-        if (menuClearCache) menuClearCache.addEventListener('click', clearCacheAndReload);
-
+        const mmCache = document.getElementById('mm-cache');
+        if (mmCache) mmCache.addEventListener('click', () => { closeMenu(); clearCacheAndReload(); });
         console.log('[Init] Menu setup complete');
     } catch (e) {
         console.error('[Init] Menu setup failed:', e);
@@ -1747,10 +1696,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // ========================================================================
     // Toolbar button handlers
     // ========================================================================
-    const menuPanel = document.getElementById('menu-panel');
     const controlsPanel = document.getElementById('controls-panel');
     const mainContainer = document.querySelector('.main-container');
-    const sidebarOverlay = document.getElementById('sidebar-overlay');
     const isMobile = () => window.innerWidth <= 767;
 
     // Toolbar: Load Profile
@@ -1866,29 +1813,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ========================================================================
-    // Hamburger menu (mobile) — opens mobile-menu-overlay dropdown
+    // Hamburger + toolbar menu — opens unified dropdown
     // ========================================================================
     const toolbarHamburger = document.getElementById('toolbar-hamburger');
-    const mobileMenuOverlay = document.getElementById('mobile-menu-overlay');
+    const appMenuOverlay = document.getElementById('app-menu-overlay');
 
-    function openMobileMenu() {
-        if (mobileMenuOverlay) mobileMenuOverlay.classList.add('open');
-    }
+    if (toolbarHamburger) toolbarHamburger.addEventListener('click', openMenu);
 
-    function closeMobileMenu() {
-        if (mobileMenuOverlay) mobileMenuOverlay.classList.remove('open');
-    }
-
-    if (toolbarHamburger) toolbarHamburger.addEventListener('click', openMobileMenu);
-
-    // Close mobile menu when clicking overlay background
-    if (mobileMenuOverlay) {
-        mobileMenuOverlay.addEventListener('click', (e) => {
-            if (e.target === mobileMenuOverlay) closeMobileMenu();
+    // Close menu when clicking overlay background
+    if (appMenuOverlay) {
+        appMenuOverlay.addEventListener('click', (e) => {
+            if (e.target === appMenuOverlay) closeMenu();
         });
     }
 
-    // Mobile menu item handlers
+    // Menu item handlers
     const mmLoad = document.getElementById('mm-load');
     const mmSave = document.getElementById('mm-save');
     const mmImport = document.getElementById('mm-import');
@@ -1898,35 +1837,29 @@ document.addEventListener('DOMContentLoaded', () => {
     const mmShare = document.getElementById('mm-share');
     const mmParams = document.getElementById('mm-params');
     const mmTheme = document.getElementById('mm-theme');
-    const mmMenu = document.getElementById('mm-menu');
+    const mmShortcuts = document.getElementById('mm-shortcuts');
+    const mmAbout = document.getElementById('mm-about');
     const mmAuth = document.getElementById('mm-auth');
 
-    if (mmLoad) mmLoad.addEventListener('click', () => { closeMobileMenu(); showLoadProfileModal(); });
-    if (mmSave) mmSave.addEventListener('click', () => { closeMobileMenu(); handleCloudSave(); });
-    if (mmImport) mmImport.addEventListener('click', () => { closeMobileMenu(); elements.loadParamsInput.click(); });
-    if (mmExport) mmExport.addEventListener('click', () => { closeMobileMenu(); saveParameters(); });
-    if (mmDlSvg) mmDlSvg.addEventListener('click', () => { closeMobileMenu(); downloadSVG(); });
-    if (mmDlPdf) mmDlPdf.addEventListener('click', () => { closeMobileMenu(); downloadPDF(collectParameters, sanitizeFilename); });
-    if (mmShare) mmShare.addEventListener('click', () => { closeMobileMenu(); handleShare(); });
-    if (mmParams) mmParams.addEventListener('click', () => { closeMobileMenu(); openMobileParams(); });
-    if (mmTheme) mmTheme.addEventListener('click', () => { closeMobileMenu(); toggleTheme(); });
-    if (mmMenu) mmMenu.addEventListener('click', () => { closeMobileMenu(); openMenu(); });
+    if (mmLoad) mmLoad.addEventListener('click', () => { closeMenu(); showLoadProfileModal(); });
+    if (mmSave) mmSave.addEventListener('click', () => { closeMenu(); handleCloudSave(); });
+    if (mmImport) mmImport.addEventListener('click', () => { closeMenu(); elements.loadParamsInput.click(); });
+    if (mmExport) mmExport.addEventListener('click', () => { closeMenu(); saveParameters(); });
+    if (mmDlSvg) mmDlSvg.addEventListener('click', () => { closeMenu(); downloadSVG(); });
+    if (mmDlPdf) mmDlPdf.addEventListener('click', () => { closeMenu(); downloadPDF(collectParameters, sanitizeFilename); });
+    if (mmShare) mmShare.addEventListener('click', () => { closeMenu(); handleShare(); });
+    if (mmParams) mmParams.addEventListener('click', () => { closeMenu(); openMobileParams(); });
+    if (mmTheme) mmTheme.addEventListener('click', () => { closeMenu(); toggleTheme(); });
+    if (mmShortcuts) mmShortcuts.addEventListener('click', () => { closeMenu(); showKeyboardShortcuts(); });
+    if (mmAbout) mmAbout.addEventListener('click', () => { closeMenu(); showAbout(); });
     if (mmAuth) mmAuth.addEventListener('click', () => {
-        closeMobileMenu();
+        closeMenu();
         if (isAuthenticated()) {
             signOut().catch(e => showErrorModal('Sign Out Failed', e.message));
         } else {
             showLoginModal();
         }
     });
-
-    // Sidebar overlay click-to-close (for menu panel on desktop)
-    if (sidebarOverlay) {
-        sidebarOverlay.addEventListener('click', () => {
-            closeMenu();
-            sidebarOverlay.classList.remove('active');
-        });
-    }
 
     // ========================================================================
     // Zoom keyboard shortcuts (+, -, 0)
@@ -1946,23 +1879,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Menu items (menu open/close and clear cache already set up above)
-    const menuKeyboardShortcuts = document.getElementById('menu-keyboard-shortcuts');
-    const menuAbout = document.getElementById('menu-about');
-    if (menuKeyboardShortcuts) menuKeyboardShortcuts.addEventListener('click', showKeyboardShortcuts);
-    if (menuAbout) menuAbout.addEventListener('click', showAbout);
 
-    // Auth event listeners
-    const menuSignIn = document.getElementById('menu-sign-in');
-    const menuSignOut = document.getElementById('menu-sign-out');
+    // Share banner event listeners
     const shareDismissBtn = document.getElementById('share-dismiss-btn');
     const shareSaveBtn = document.getElementById('share-save-btn');
 
-    if (menuSignIn) menuSignIn.addEventListener('click', () => { closeMenu(); showLoginModal(); });
-    if (menuSignOut) menuSignOut.addEventListener('click', async () => {
-        closeMenu();
-        try { await signOut(); } catch (e) { showErrorModal('Sign Out Failed', e.message); }
-    });
     if (shareDismissBtn) shareDismissBtn.addEventListener('click', () => {
         const banner = document.getElementById('share-banner');
         if (banner) banner.style.display = 'none';
@@ -2081,11 +2002,11 @@ document.addEventListener('keydown', (e) => {
             return;
         }
 
-        // Check mobile menu overlay
-        const mobileMenuOverlay = document.getElementById('mobile-menu-overlay');
-        if (mobileMenuOverlay && mobileMenuOverlay.classList.contains('open')) {
+        // Check app menu overlay
+        const appMenuOverlay = document.getElementById('app-menu-overlay');
+        if (appMenuOverlay && appMenuOverlay.classList.contains('open')) {
             e.preventDefault();
-            mobileMenuOverlay.classList.remove('open');
+            closeMenu();
             return;
         }
 
@@ -2097,14 +2018,6 @@ document.addEventListener('keydown', (e) => {
             controlsPanel.classList.remove('mobile-open');
             if (paramsDrawerOverlay) paramsDrawerOverlay.classList.remove('open');
             document.body.style.overflow = '';
-            return;
-        }
-
-        // Then check if menu is open
-        const menuPanel = document.getElementById('menu-panel');
-        if (menuPanel && menuPanel.classList.contains('open')) {
-            e.preventDefault();
-            closeMenu();
         }
     }
 });

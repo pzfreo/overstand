@@ -174,9 +174,6 @@
         <span id="auth-status" class="auth-status"></span>
     </div>
 
-    <!-- Sidebar overlay (for menu panel click-to-close) -->
-    <div class="sidebar-overlay" id="sidebar-overlay"></div>
-
     <div class="app-container">
 
         <!-- Share banner (shown when viewing a shared preset) -->
@@ -276,76 +273,6 @@
             </div>
         </div>
 
-        <!-- Menu Panel -->
-        <div class="menu-panel" id="menu-panel">
-            <div class="menu-header">
-                <h2>Menu</h2>
-                <button class="menu-close-btn" id="menu-close-btn">✕</button>
-            </div>
-
-            <div class="menu-content">
-                <div class="menu-section" id="menu-account-section">
-                    <h3 class="menu-section-title">Account</h3>
-                    <!-- Shown when logged out -->
-                    <div id="menu-signed-out">
-                        <button class="menu-item" id="menu-sign-in">
-                            <span class="menu-item-icon">🔑</span>
-                            <span class="menu-item-text">Sign In / Sign Up</span>
-                        </button>
-                    </div>
-                    <!-- Shown when logged in -->
-                    <div id="menu-signed-in" style="display: none;">
-                        <div class="menu-user-info" id="menu-user-info">
-                            <img id="menu-user-avatar" class="menu-user-avatar" src="" alt="" />
-                            <span id="menu-user-email" class="menu-user-email"></span>
-                        </div>
-                        <button class="menu-item" id="menu-sign-out">
-                            <span class="menu-item-icon">🚪</span>
-                            <span class="menu-item-text">Sign Out</span>
-                        </button>
-                    </div>
-                </div>
-
-
-                <div class="menu-section">
-                    <h3 class="menu-section-title">Help</h3>
-                    <button class="menu-item" id="menu-keyboard-shortcuts">
-                        <span class="menu-item-icon">⌨️</span>
-                        <span class="menu-item-text">Keyboard Shortcuts</span>
-                    </button>
-                    <button class="menu-item" id="menu-about">
-                        <span class="menu-item-icon">ℹ️</span>
-                        <span class="menu-item-text">About</span>
-                    </button>
-                </div>
-
-                <div class="menu-section">
-                    <h3 class="menu-section-title">Troubleshooting</h3>
-                    <button class="menu-item" id="menu-clear-cache">
-                        <span class="menu-item-icon">🗑️</span>
-                        <span class="menu-item-text">Clear Cache & Reload</span>
-                    </button>
-                </div>
-
-                <div class="menu-section">
-                    <h3 class="menu-section-title">Links</h3>
-                    <a href="https://github.com/pzfreo/overstand" target="_blank" class="menu-item">
-                        <span class="menu-item-icon">🔗</span>
-                        <span class="menu-item-text">GitHub Repository</span>
-                        <span class="menu-item-icon">↗</span>
-                    </a>
-                    <a href="https://github.com/pzfreo/overstand/issues" target="_blank" class="menu-item">
-                        <span class="menu-item-icon">🐛</span>
-                        <span class="menu-item-text">Report Issue</span>
-                        <span class="menu-item-icon">↗</span>
-                    </a>
-                </div>
-            </div>
-        </div>
-
-        <!-- Menu Overlay -->
-        <div class="menu-overlay" id="menu-overlay"></div>
-
         <footer class="app-footer">
             <a href="privacy.html" target="_blank">Privacy Policy</a>
             <span class="footer-sep">&middot;</span>
@@ -427,24 +354,32 @@
         </div>
     </div>
 
-    <!-- Mobile Menu Overlay (hamburger dropdown) -->
-    <div class="mobile-menu-overlay" id="mobile-menu-overlay">
-        <div class="mobile-menu" id="mobile-menu">
-            <button class="mobile-menu-item" id="mm-load"><span class="icon">📂</span> Load Profile</button>
-            <button class="mobile-menu-item" id="mm-save" disabled><span class="icon">💾</span> Save Profile</button>
-            <div class="mobile-menu-sep"></div>
-            <button class="mobile-menu-item" id="mm-import"><span class="icon">📥</span> Import from File</button>
-            <button class="mobile-menu-item" id="mm-export"><span class="icon">📤</span> Export to File</button>
-            <div class="mobile-menu-sep"></div>
-            <button class="mobile-menu-item" id="mm-dl-svg" disabled><span class="icon">⬇️</span> Download SVG</button>
-            <button class="mobile-menu-item" id="mm-dl-pdf" disabled><span class="icon">📄</span> Download PDF</button>
-            <button class="mobile-menu-item" id="mm-share" disabled><span class="icon">🔗</span> Share</button>
-            <div class="mobile-menu-sep"></div>
-            <button class="mobile-menu-item" id="mm-params"><span class="icon">⚙️</span> Parameters</button>
-            <button class="mobile-menu-item" id="mm-theme"><span class="icon">☀️</span> Toggle Theme</button>
-            <button class="mobile-menu-item" id="mm-menu"><span class="icon">☰</span> Menu</button>
-            <div class="mobile-menu-sep"></div>
-            <button class="mobile-menu-item" id="mm-auth"><span class="icon">👤</span> Sign In</button>
+    <!-- App Menu Overlay (unified dropdown for desktop + mobile) -->
+    <div class="app-menu-overlay" id="app-menu-overlay">
+        <div class="app-menu" id="app-menu">
+            <button class="app-menu-item" id="mm-load"><span class="icon">📂</span> Load Profile</button>
+            <button class="app-menu-item" id="mm-save" disabled><span class="icon">💾</span> Save Profile</button>
+            <div class="app-menu-sep"></div>
+            <button class="app-menu-item" id="mm-import"><span class="icon">📥</span> Import from File</button>
+            <button class="app-menu-item" id="mm-export"><span class="icon">📤</span> Export to File</button>
+            <div class="app-menu-sep"></div>
+            <button class="app-menu-item" id="mm-dl-svg" disabled><span class="icon">⬇️</span> Download SVG</button>
+            <button class="app-menu-item" id="mm-dl-pdf" disabled><span class="icon">📄</span> Download PDF</button>
+            <button class="app-menu-item" id="mm-share" disabled><span class="icon">🔗</span> Share</button>
+            <div class="app-menu-sep"></div>
+            <button class="app-menu-item" id="mm-params"><span class="icon">⚙️</span> Parameters</button>
+            <button class="app-menu-item" id="mm-theme"><span class="icon">☀️</span> Toggle Theme</button>
+            <div class="app-menu-sep"></div>
+            <button class="app-menu-item" id="mm-shortcuts"><span class="icon">⌨️</span> Keyboard Shortcuts</button>
+            <button class="app-menu-item" id="mm-about"><span class="icon">ℹ️</span> About</button>
+            <div class="app-menu-sep"></div>
+            <button class="app-menu-item" id="mm-cache"><span class="icon">🗑️</span> Clear Cache & Reload</button>
+            <div class="app-menu-sep"></div>
+            <a href="https://github.com/pzfreo/overstand" target="_blank" class="app-menu-item"><span class="icon">🔗</span> GitHub Repository <span class="icon-right">↗</span></a>
+            <a href="https://github.com/pzfreo/overstand/issues" target="_blank" class="app-menu-item"><span class="icon">🐛</span> Report Issue <span class="icon-right">↗</span></a>
+            <div class="app-menu-sep"></div>
+            <div class="app-menu-item app-menu-email" id="mm-user-email" style="display: none;"></div>
+            <button class="app-menu-item" id="mm-auth"><span class="icon">👤</span> Sign In</button>
         </div>
     </div>
 

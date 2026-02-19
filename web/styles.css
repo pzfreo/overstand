@@ -249,23 +249,6 @@ h1 {
     grid-template-columns: 0px 1fr;
 }
 
-/* Overlay for sidebar/menu click-to-close */
-.sidebar-overlay {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: transparent;
-    z-index: 1001;
-    transition: opacity 0.3s ease, visibility 0.3s ease;
-}
-
-.sidebar-overlay.active {
-    display: block;
-    pointer-events: auto;
-}
 
 @media (max-width: 1024px) {
     .app-container {
@@ -315,27 +298,6 @@ h1 {
     }
 
     .controls-panel.mobile-open {
-        transform: translateX(0) !important;
-    }
-
-    /* Menu panel slides from left on mobile */
-    .menu-panel {
-        position: fixed !important;
-        top: 0 !important;
-        left: 0 !important;
-        bottom: 0 !important;
-        width: min(85vw, 320px) !important;
-        max-width: 320px !important;
-        height: auto !important;
-        transform: translateX(-100%) !important;
-        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-        z-index: 1003 !important;
-        box-shadow: var(--shadow-xl) !important;
-        border-radius: 0 var(--radius-xl) var(--radius-xl) 0 !important;
-        background: var(--color-surface) !important;
-    }
-
-    .menu-panel.open {
         transform: translateX(0) !important;
     }
 
@@ -1449,159 +1411,6 @@ input[type="checkbox"] {
    MENU SYSTEM
    ============================================ */
 
-/* Menu button is no longer in header — menu is triggered from toolbar */
-
-/* Menu Panel - Desktop and Mobile: slides from left */
-.menu-panel {
-    position: fixed;
-    top: 0;
-    background: var(--color-surface);
-    display: flex;
-    flex-direction: column;
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Desktop menu panel (slides from left) */
-@media (min-width: 768px) {
-    .menu-panel {
-        left: 0;
-        width: 320px;
-        height: 100vh;
-        box-shadow: var(--shadow-xl);
-        z-index: 1003;
-        transform: translateX(-100%);
-        border-radius: 0 var(--radius-xl) var(--radius-xl) 0;
-    }
-
-    .menu-panel.open {
-        transform: translateX(0);
-    }
-}
-
-.menu-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 1.25rem 1.5rem;
-    border-bottom: 1px solid var(--color-gray-200);
-    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
-    color: white;
-}
-
-.menu-header h2 {
-    margin: 0;
-    font-size: 1.25rem;
-    font-weight: 600;
-}
-
-.menu-close-btn {
-    background: rgba(255, 255, 255, 0.15);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    color: white;
-    width: 32px;
-    height: 32px;
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    font-size: 1.25rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s ease;
-}
-
-.menu-close-btn:hover {
-    background: rgba(255, 255, 255, 0.25);
-}
-
-.menu-content {
-    flex: 1;
-    overflow-y: auto;
-    padding: 1rem 0;
-}
-
-.menu-section {
-    padding: 0.5rem 0;
-    border-bottom: 1px solid var(--color-gray-100);
-}
-
-.menu-section:last-child {
-    border-bottom: none;
-}
-
-.menu-section-title {
-    font-size: 0.75rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--color-gray-500);
-    margin: 0 0 0.5rem 0;
-    padding: 0 1.5rem;
-}
-
-.menu-item {
-    width: 100%;
-    background: transparent;
-    border: none;
-    padding: 0.75rem 1.5rem;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    cursor: pointer;
-    transition: background 0.15s ease;
-    font-size: 0.95rem;
-    color: var(--color-gray-800);
-    text-decoration: none;
-}
-
-.menu-item:hover {
-    background: var(--color-gray-50);
-}
-
-.menu-item-icon {
-    font-size: 1.1rem;
-    line-height: 1;
-    flex-shrink: 0;
-}
-
-.menu-item-text {
-    flex: 1;
-    text-align: left;
-    font-weight: 500;
-}
-
-.menu-item-shortcut {
-    font-size: 0.75rem;
-    color: var(--color-gray-500);
-    background: var(--color-gray-100);
-    padding: 0.2rem 0.5rem;
-    border-radius: var(--radius-sm);
-    font-family: 'SF Mono', 'Monaco', monospace;
-}
-
-/* Menu Overlay */
-.menu-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: transparent;
-    z-index: 1002;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s ease;
-}
-
-.menu-overlay.active {
-    opacity: 1;
-    pointer-events: all;
-}
-
-@media (max-width: 768px) {
-    .menu-panel {
-        width: 280px;
-    }
-}
 
 /* ============================
    MODAL DIALOG
@@ -1907,31 +1716,6 @@ input[type="checkbox"] {
    AUTH & CLOUD PRESETS
    ============================================================================ */
 
-/* Menu account section */
-.menu-user-info {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 0.75rem;
-    margin-bottom: 0.25rem;
-}
-
-.menu-user-avatar {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    object-fit: cover;
-    background: var(--color-gray-200);
-}
-
-.menu-user-email {
-    font-size: 0.8rem;
-    color: var(--color-gray-600);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    max-width: 180px;
-}
 
 /* Login modal */
 .login-modal-content {
@@ -2063,24 +1847,6 @@ input[type="checkbox"] {
     color: var(--color-error);
 }
 
-/* ============================================
-   MENU ITEM STATES
-   ============================================ */
-
-.menu-item-disabled {
-    opacity: 0.45;
-    cursor: not-allowed !important;
-}
-
-.menu-item-disabled:hover {
-    background: transparent !important;
-}
-
-.menu-divider {
-    height: 1px;
-    background: var(--color-gray-200);
-    margin: 0.25rem 1.5rem;
-}
 
 /* ============================================
    LOAD PROFILE MODAL
@@ -2807,7 +2573,7 @@ input[type="checkbox"] {
    MOBILE MENU OVERLAY (hamburger menu)
    ============================================ */
 
-.mobile-menu-overlay {
+.app-menu-overlay {
     display: none;
     position: fixed;
     inset: 0;
@@ -2815,15 +2581,17 @@ input[type="checkbox"] {
     background: rgba(0, 0, 0, 0.4);
 }
 
-.mobile-menu-overlay.open {
+.app-menu-overlay.open {
     display: block;
 }
 
-.mobile-menu {
+.app-menu {
     position: absolute;
     top: 52px;
     right: 0;
-    width: 260px;
+    width: 280px;
+    max-height: calc(100vh - 60px);
+    overflow-y: auto;
     background: var(--color-surface);
     border: 1px solid var(--color-gray-200);
     border-radius: 0 0 0 var(--radius-lg);
@@ -2831,7 +2599,7 @@ input[type="checkbox"] {
     padding: 0.5rem 0;
 }
 
-.mobile-menu-item {
+.app-menu-item {
     display: flex;
     align-items: center;
     gap: 0.6rem;
@@ -2847,29 +2615,49 @@ input[type="checkbox"] {
     text-align: left;
 }
 
-.mobile-menu-item:hover {
+.app-menu-item:hover {
     background: var(--color-gray-100);
 }
 
-.mobile-menu-item:disabled {
+.app-menu-item:disabled {
     opacity: 0.45;
     cursor: not-allowed;
 }
 
-.mobile-menu-item:disabled:hover {
+.app-menu-item:disabled:hover {
     background: none;
 }
 
-.mobile-menu-item .icon {
+.app-menu-item .icon {
     font-size: 1.1rem;
     width: 1.4rem;
     text-align: center;
 }
 
-.mobile-menu-sep {
+.app-menu-sep {
     height: 1px;
     background: var(--color-gray-200);
     margin: 0.5rem 0;
+}
+
+a.app-menu-item {
+    text-decoration: none;
+}
+
+a.app-menu-item .icon-right {
+    margin-left: auto;
+    font-size: 0.85rem;
+    color: var(--color-gray-400);
+}
+
+.app-menu-email {
+    font-size: 0.8rem;
+    color: var(--color-gray-500);
+    cursor: default;
+    padding: 0.4rem 1rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 /* ============================================
