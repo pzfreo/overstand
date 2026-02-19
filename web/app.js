@@ -528,8 +528,8 @@ function updateCoreMetricsPanel(values, metadata, params) {
             valueSpan.appendChild(unit);
         }
 
-        item.appendChild(label);
         item.appendChild(valueSpan);
+        item.appendChild(label);
         panel.appendChild(item);
     }
 }

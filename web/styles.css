@@ -1360,8 +1360,8 @@ input[type="checkbox"] {
    ============================================ */
 
 .core-metrics-panel {
-    background: var(--color-gray-50);
-    padding: 0.3rem 0.5rem;
+    background: linear-gradient(135deg, var(--color-primary-dark, #4338ca), var(--color-primary, #4F46E5));
+    padding: 0.4rem 0.5rem;
     border-bottom: 1px solid var(--color-gray-200);
 }
 
@@ -1370,45 +1370,47 @@ input[type="checkbox"] {
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    color: var(--color-gray-500);
+    color: rgba(255, 255, 255, 0.7);
     margin-bottom: 0.3rem;
 }
 
 .core-metrics-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0.2rem 0.5rem;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.4rem;
 }
 
 .core-metric-item {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 0.3rem;
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: var(--radius-sm);
+    padding: 0.3rem 0.4rem;
+    text-align: center;
 }
 
 .core-metric-item.primary .core-metric-value {
-    color: var(--color-primary);
+    color: white;
     font-weight: 700;
 }
 
 .core-metric-label {
-    font-size: 0.65rem;
+    font-size: 0.6rem;
     font-weight: 500;
-    color: var(--color-gray-500);
+    color: rgba(255, 255, 255, 0.7);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
 }
 
 .core-metric-value {
     font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
-    font-size: 0.8rem;
+    font-size: 0.9rem;
     font-weight: 700;
-    color: var(--color-gray-800);
+    color: white;
 }
 
 .core-metric-unit {
-    font-size: 0.6rem;
+    font-size: 0.55rem;
     font-weight: 400;
-    color: var(--color-gray-400);
+    color: rgba(255, 255, 255, 0.5);
 }
 
 /* ============================================
@@ -2545,9 +2547,7 @@ input[type="checkbox"] {
     border-bottom-color: var(--color-gray-200);
 }
 
-[data-theme="dark"] .core-metrics-panel {
-    background: var(--color-surface-alt, var(--color-gray-50));
-}
+
 
 [data-theme="dark"] .menu-header {
     background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
