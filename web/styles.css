@@ -554,6 +554,10 @@ h1 {
     min-height: 26px;
 }
 
+.param-group:nth-child(even) {
+    background: rgba(0, 0, 0, 0.025);
+}
+
 .param-group:last-child {
     border-bottom: none;
 }
@@ -2549,6 +2553,10 @@ input[type="checkbox"] {
 
 [data-theme="dark"] .accordion-header {
     background: var(--color-surface-alt, var(--color-gray-50));
+}
+
+[data-theme="dark"] .param-group:nth-child(even) {
+    background: rgba(255, 255, 255, 0.03);
 }
 
 [data-theme="dark"] .category-section {
