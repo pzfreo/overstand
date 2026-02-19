@@ -2664,6 +2664,11 @@ a.app-menu-item .icon-right {
     white-space: nowrap;
 }
 
+/* Menu items that duplicate toolbar buttons — hidden on desktop */
+.app-menu .mobile-only {
+    display: none;
+}
+
 /* ============================================
    PARAMS DRAWER OVERLAY (mobile)
    ============================================ */
@@ -2717,5 +2722,13 @@ a.app-menu-item .icon-right {
 
     .expand-params-btn {
         display: none !important;
+    }
+
+    /* Show toolbar-duplicate menu items when toolbar is hidden */
+    .app-menu .mobile-only {
+        display: flex;
+    }
+    .app-menu .mobile-only.app-menu-sep {
+        display: block;
     }
 }

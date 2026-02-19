@@ -86,14 +86,17 @@ test.describe('Menu System', () => {
     await expect(menuOverlay).toHaveClass(/open/);
   });
 
-  test('menu has key items', async ({ page }) => {
+  test('menu has key items visible on desktop', async ({ page }) => {
     await page.locator('#toolbar-menu').click();
 
+    // Menu-only items always visible
+    await expect(page.locator('#mm-shortcuts')).toBeVisible();
+    await expect(page.locator('#mm-about')).toBeVisible();
+    await expect(page.locator('#mm-cache')).toBeVisible();
+
+    // Toolbar duplicates hidden on desktop (present in DOM but not visible)
     await expect(page.locator('#mm-load')).toBeAttached();
-    await expect(page.locator('#mm-shortcuts')).toBeAttached();
-    await expect(page.locator('#mm-about')).toBeAttached();
-    await expect(page.locator('#mm-cache')).toBeAttached();
-    await expect(page.locator('#mm-auth')).toBeAttached();
+    await expect(page.locator('#mm-load')).not.toBeVisible();
   });
 
   test('toolbar uses "Import" / "Export" terminology', async ({ page }) => {
