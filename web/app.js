@@ -1751,7 +1751,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try { localStorage.setItem('overstand-theme', newTheme); } catch(e) {}
 
         // Update icon in toolbar and mobile menu
-        const icon = isDark ? '☀️' : '🌙';
+        const icon = isDark ? '🌙' : '☀️';
         const toolbarThemeIcon = document.querySelector('#toolbar-theme .icon');
         if (toolbarThemeIcon) toolbarThemeIcon.textContent = icon;
         const mmThemeIcon = document.querySelector('#mm-theme .icon');
