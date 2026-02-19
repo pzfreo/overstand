@@ -1,0 +1,215 @@
+// @ts-check
+import { test, expect } from '@playwright/test';
+
+// These tests validate UI design decisions documented in docs/UI_DESIGN_DECISIONS.md.
+// They test the static HTML/CSS structure and interactivity without requiring Pyodide.
+// The app.js module loads and initializes (menu setup, auth UI) but Pyodide loading
+// happens asynchronously and is not needed for these structural tests.
+
+test.describe('Page Structure', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/');
+  });
+
+  test('title is "Overstand"', async ({ page }) => {
+    await expect(page).toHaveTitle('Overstand');
+  });
+
+  test('header with app title is visible', async ({ page }) => {
+    const h1 = page.locator('header h1');
+    await expect(h1).toBeVisible();
+    await expect(h1).toContainText('Overstand');
+  });
+
+  test('status bar has "Sign in / Sign up" link', async ({ page }) => {
+    // JS rewrites the auth area via updateAuthUI — use class selector, not id
+    const authLink = page.locator('#auth-status .auth-login-link');
+    await expect(authLink).toBeVisible();
+    await expect(authLink).toHaveText('Sign in / Sign up');
+  });
+
+  test('controls panel and preview panel exist', async ({ page }) => {
+    await expect(page.locator('.controls-panel')).toBeAttached();
+    await expect(page.locator('.preview-panel')).toBeAttached();
+  });
+
+  test('footer has Privacy Policy and Terms links', async ({ page }) => {
+    const footer = page.locator('footer.app-footer');
+    await expect(footer.locator('a[href="privacy.html"]')).toHaveText('Privacy Policy');
+    await expect(footer.locator('a[href="terms.html"]')).toHaveText('Terms of Service');
+  });
+});
+
+test.describe('View Tabs', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/');
+  });
+
+  test('Side View tab is active by default', async ({ page }) => {
+    const sideTab = page.locator('.view-tab[data-view="side"]');
+    await expect(sideTab).toHaveClass(/active/);
+  });
+
+  test('all 6 view tabs are present', async ({ page }) => {
+    const tabs = page.locator('.view-tab');
+    await expect(tabs).toHaveCount(6);
+
+    const expectedViews = ['side', 'top', 'cross_section', 'dimensions', 'fret_positions', 'radius_template'];
+    for (const view of expectedViews) {
+      await expect(page.locator(`.view-tab[data-view="${view}"]`)).toBeAttached();
+    }
+  });
+
+  test('Top View tab is disabled with "Coming Soon"', async ({ page }) => {
+    const topTab = page.locator('.view-tab[data-view="top"]');
+    await expect(topTab).toBeDisabled();
+    await expect(topTab).toContainText('Coming Soon');
+  });
+});
+
+test.describe('Menu System', () => {
+  // The UI uses a universal icon bar (#mobile-icon-bar) for menu access.
+  // The old header #menu-btn is hidden (display: none !important).
+  // Menu panel uses 'open' class, not 'active'.
+
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/');
+  });
+
+  test('icon bar menu button is visible', async ({ page }) => {
+    await expect(page.locator('#mobile-menu-toggle')).toBeVisible();
+  });
+
+  test('clicking menu toggle opens menu panel', async ({ page }) => {
+    const menuPanel = page.locator('#menu-panel');
+    await expect(menuPanel).not.toHaveClass(/open/);
+
+    await page.locator('#mobile-menu-toggle').click();
+    await expect(menuPanel).toHaveClass(/open/);
+  });
+
+  test('menu has correct sections', async ({ page }) => {
+    await page.locator('#mobile-menu-toggle').click();
+
+    const sectionTitles = page.locator('.menu-section-title');
+    const titles = await sectionTitles.allTextContents();
+    expect(titles).toEqual(['Account', 'File', 'Help', 'Troubleshooting', 'Links']);
+  });
+
+  test('uses "Export to File" / "Import from File" terminology', async ({ page }) => {
+    await page.locator('#mobile-menu-toggle').click();
+
+    await expect(page.locator('#menu-export-params .menu-item-text')).toHaveText('Export to File');
+    await expect(page.locator('#menu-import-params .menu-item-text')).toHaveText('Import from File');
+  });
+
+  test('close button closes menu', async ({ page }) => {
+    await page.locator('#mobile-menu-toggle').click();
+    await expect(page.locator('#menu-panel')).toHaveClass(/open/);
+
+    await page.locator('#menu-close-btn').click();
+    await expect(page.locator('#menu-panel')).not.toHaveClass(/open/);
+  });
+
+  test('Escape key closes menu', async ({ page }) => {
+    await page.locator('#mobile-menu-toggle').click();
+    await expect(page.locator('#menu-panel')).toHaveClass(/open/);
+
+    await page.keyboard.press('Escape');
+    await expect(page.locator('#menu-panel')).not.toHaveClass(/open/);
+  });
+});
+
+test.describe('Modal System', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/');
+  });
+
+  test('modal overlay is hidden by default', async ({ page }) => {
+    const modal = page.locator('#modal-overlay');
+    await expect(modal).not.toHaveClass(/active/);
+  });
+
+  test('modal z-index is 2000', async ({ page }) => {
+    const zIndex = await page.locator('#modal-overlay').evaluate(
+      el => getComputedStyle(el).zIndex
+    );
+    expect(zIndex).toBe('2000');
+  });
+
+  test('modal is outside .app-container', async ({ page }) => {
+    const isInsideAppContainer = await page.locator('#modal-overlay').evaluate(
+      el => !!el.closest('.app-container')
+    );
+    expect(isInsideAppContainer).toBe(false);
+  });
+});
+
+test.describe('Icon Bar Responsiveness', () => {
+  // The icon bar is now universal (always visible on desktop and mobile).
+  // The CSS comment confirms: "Always visible on desktop and mobile".
+
+  test('icon bar visible at mobile width (375px)', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 667 });
+    await page.goto('/');
+    await expect(page.locator('#mobile-icon-bar')).toBeVisible();
+  });
+
+  test('icon bar visible at desktop width (1280px)', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto('/');
+    await expect(page.locator('#mobile-icon-bar')).toBeVisible();
+  });
+
+  test('icon bar has menu and params buttons', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.locator('#mobile-menu-toggle')).toBeVisible();
+    await expect(page.locator('#mobile-params-toggle')).toBeVisible();
+  });
+});
+
+test.describe('CSS Design Decisions', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/');
+  });
+
+  test('indigo brand color #4F46E5 in theme-color meta tag', async ({ page }) => {
+    const themeColor = await page.locator('meta[name="theme-color"]').getAttribute('content');
+    expect(themeColor).toBe('#4F46E5');
+  });
+
+  test('CSS custom properties defined in :root', async ({ page }) => {
+    const hasCustomProps = await page.evaluate(() => {
+      const styles = getComputedStyle(document.documentElement);
+      // Check that key CSS custom properties resolve to non-empty values
+      const primary = styles.getPropertyValue('--color-primary');
+      return primary.trim().length > 0;
+    });
+    expect(hasCustomProps).toBe(true);
+  });
+
+  test('sidebar overlay has no backdrop-filter', async ({ page }) => {
+    // Design decision: no backdrop-filter on sidebar overlay (breaks Firefox/Android)
+    const backdropFilter = await page.locator('.sidebar-overlay').evaluate(
+      el => getComputedStyle(el).backdropFilter
+    );
+    expect(backdropFilter === 'none' || backdropFilter === '').toBe(true);
+  });
+});
+
+test.describe('Zoom and Download Controls', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/');
+  });
+
+  test('zoom in/out/reset buttons present', async ({ page }) => {
+    await expect(page.locator('#zoom-in')).toBeAttached();
+    await expect(page.locator('#zoom-out')).toBeAttached();
+    await expect(page.locator('#zoom-reset')).toBeAttached();
+  });
+
+  test('download buttons (SVG, PDF) present', async ({ page }) => {
+    await expect(page.locator('#dl-svg')).toBeAttached();
+    await expect(page.locator('#dl-pdf')).toBeAttached();
+  });
+});
