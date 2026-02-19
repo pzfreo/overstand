@@ -237,6 +237,7 @@ h1 {
     box-shadow: var(--shadow-xl);
     display: grid;
     grid-template-columns: 400px 1fr;
+    grid-template-rows: 1fr;
     gap: 0;
     overflow: hidden;
     flex: 1;
