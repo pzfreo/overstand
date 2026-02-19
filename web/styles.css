@@ -354,20 +354,21 @@ h1 {
 }
 
 .scrollable-params {
-    padding: 0.75rem;
+    padding: 0;
     flex: 1;
     overflow-y: auto;
 }
 
 @media (max-width: 1024px) {
     .scrollable-params {
-        padding: 0.5rem;
+        padding: 0;
     }
 }
 
 /* Profile description textarea */
 .profile-description-section {
-    margin-bottom: var(--spacing-md);
+    margin-bottom: 0.5rem;
+    padding: 0.5rem 0.75rem 0;
 }
 
 .profile-description {
@@ -545,8 +546,10 @@ h1 {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0.4rem 0.75rem;
+    flex-wrap: wrap;
+    padding: 0.35rem 0.75rem;
     border-bottom: 1px solid var(--color-gray-100);
+    gap: 0.2rem;
 }
 
 .param-group:last-child {
@@ -556,8 +559,7 @@ h1 {
 .param-label {
     display: flex;
     align-items: baseline;
-    gap: 0.4rem;
-    flex: 1;
+    gap: 0.3rem;
     min-width: 0;
 }
 
@@ -565,20 +567,20 @@ h1 {
     font-weight: 500;
     color: var(--color-gray-700);
     font-size: 0.8rem;
+    white-space: nowrap;
 }
 
 .param-unit {
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     color: var(--color-gray-400);
-    font-weight: 500;
 }
 
 .param-description {
-    font-size: 0.7rem;
-    color: var(--color-gray-500);
-    margin-top: 0.2rem;
+    width: 100%;
+    font-size: 0.65rem;
+    color: var(--color-gray-400);
     line-height: 1.3;
-    grid-column: 1 / -1;
+    display: none;
 }
 
 input[type="number"],
@@ -1216,41 +1218,28 @@ input[type="checkbox"] {
 
 .accordion-section {
     background: var(--color-surface);
-    border-radius: var(--radius-lg);
-    margin-bottom: var(--spacing-md);
-    box-shadow: var(--shadow-sm);
-    border: 1px solid var(--color-gray-200);
     overflow: hidden;
-    transition: box-shadow 0.2s ease;
-}
-
-.accordion-section:hover {
-    box-shadow: var(--shadow-md);
 }
 
 .accordion-header {
     display: flex;
     align-items: center;
-    gap: var(--spacing-sm);
-    padding: 0.6rem 0.75rem;
+    gap: 0.4rem;
+    padding: 0.5rem 0.75rem;
     background: var(--color-gray-50);
     cursor: pointer;
     user-select: none;
-    transition: background 0.2s ease;
+    transition: background 0.15s ease;
     border-bottom: 1px solid var(--color-gray-200);
+    border-top: 1px solid var(--color-gray-200);
 }
 
-.accordion-header::before {
-    content: '';
-    width: 3px;
-    height: 14px;
-    background: var(--color-primary);
-    border-radius: 2px;
-    flex-shrink: 0;
+.accordion-section:first-child .accordion-header {
+    border-top: none;
 }
 
 .accordion-header:hover {
-    background: linear-gradient(to right, var(--color-gray-100), var(--color-gray-50));
+    background: var(--color-gray-100);
 }
 
 .accordion-header:focus {
@@ -1259,7 +1248,7 @@ input[type="checkbox"] {
 }
 
 .accordion-icon {
-    font-size: 1.25rem;
+    font-size: 0.85rem;
     line-height: 1;
     flex-shrink: 0;
 }
@@ -1267,15 +1256,15 @@ input[type="checkbox"] {
 .accordion-title {
     flex: 1;
     font-weight: 600;
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    color: var(--color-primary);
+    color: var(--color-gray-600);
 }
 
 .accordion-chevron {
-    font-size: 0.875rem;
-    color: var(--color-gray-500);
+    font-size: 0.7rem;
+    color: var(--color-gray-400);
     flex-shrink: 0;
     transition: transform 0.2s ease;
 }
@@ -1286,12 +1275,7 @@ input[type="checkbox"] {
 }
 
 .section-description {
-    font-size: 0.8rem;
-    color: var(--color-gray-600);
-    padding: 0.5rem 0.75rem;
-    background: var(--color-blue-light);
-    border-left: 3px solid var(--color-blue);
-    line-height: 1.4;
+    display: none;
 }
 
 /* Output Section Styles */
@@ -1354,11 +1338,9 @@ input[type="checkbox"] {
 
 .core-metrics-panel {
     background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
-    border-radius: var(--radius-md);
-    padding: 0.5rem 0.75rem;
-    margin-bottom: var(--spacing-md);
-    box-shadow: var(--shadow-sm);
+    padding: 0.4rem 0.75rem;
     color: white;
+    border-bottom: 1px solid var(--color-gray-200);
 }
 
 .core-metrics-header {
@@ -2577,7 +2559,7 @@ input[type="checkbox"] {
 }
 
 [data-theme="dark"] .accordion-header {
-    background: var(--color-gray-50);
+    background: var(--color-surface-alt, var(--color-gray-50));
 }
 
 [data-theme="dark"] .category-section {
