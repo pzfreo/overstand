@@ -6,12 +6,27 @@ Comprehensive record of deliberate UI/UX decisions made throughout the project's
 
 ## Layout & Panels
 
-- **Desktop params panel 500px wide**; collapsing expands preview to full width (no overlay on desktop) — `08306c2`
+- **Top toolbar** with brand, action buttons, theme toggle, menu, and auth — replaces old icon bar — PR `#90`
+- **Desktop params panel 400px wide** (CSS grid `400px 1fr`); collapsing expands preview to full width — PR `#90`
 - **Mobile params**: slides from left, 85% width / 380px max, with dim overlay — `11e717b`, `08306c2`
+- **Viewport-constrained layout**: `overflow: hidden` on `.app-container` prevents page from expanding beyond viewport height — PR `#90`
 - **Modals must live outside main container** for z-index to work (currently outside `.app-container`) — `82aa63b`
 - **Mobile breakpoint is 1024px** (single canonical value in `constants.js`) — `08306c2`
 - Secondary breakpoints at 768px (tabs wrap, compact modals) and 480px (single column)
-- Z-index stacking: icon-bar 1004, panels 1003, overlay 1002, modals 2000
+- Z-index stacking: toolbar 100, params drawer 160, app-menu 200, modals 2000
+- **CaneCalc density reference**: CaneCalc (bamboo rod taper tool) uses ~40px toolbar, no accordion overhead, continuous flowing params. Overstand targets similar density. — PR `#90`
+
+## Toolbar & Menu
+
+- **Single unified dropdown menu** (`#app-menu-overlay`) — replaces two separate systems (slide-in panel + mobile dropdown) — PR `#90`
+- Menu dropdown anchored top-right below toolbar, 280px wide, `max-height: calc(100vh - 60px)` with scroll — PR `#90`
+- **Menu items not duplicated in toolbar**: toolbar has Load, Save, Import, Export, SVG, PDF, Share; menu has additional items (Shortcuts, About, Cache, GitHub, etc.) — PR `#90`
+- Both toolbar Menu button and hamburger open the same dropdown
+- Close via: click outside, Escape key, or clicking a menu item
+- **Auth button in toolbar**: shows "Sign In" when logged out (primary button style), "Sign Out" when logged in — PR `#90`
+- User email shown as info row in menu when signed in — PR `#90`
+- Hamburger visible on mobile only; toolbar actions visible on desktop only — PR `#90`
+- **Toolbar height 44px** (reduced from 52px for CaneCalc-level density), brand SVG 24px, button padding `0.3rem 0.6rem` — PR `#90`
 
 ## Auto-Generate (no Generate button)
 
@@ -22,13 +37,20 @@ Comprehensive record of deliberate UI/UX decisions made throughout the project's
 
 ## Parameter Organization
 
+- **Horizontal row layout**: label on left, input on right — compact, standard for parameter panels — PR `#90`
 - **Sections 1–3 expanded by default** (Identity, Body & Bridge, String Action) — everything needed for a side view — `b5a297a`
 - **Sections 4–9 collapsed** (Viol, Fingerboard, Cross-Section, Frets, Advanced, Display)
+- **Section headers**: uppercase title with indigo accent bar (`::before` pseudo-element), indigo text — PR `#90`
 - **Accordion state persisted in localStorage** across sessions — `b22df07`
 - **Accordion is keyboard-accessible**: Enter/Space toggle, ARIA attributes (`role="button"`, `aria-expanded`) — `b22df07`
 - `fret_join` lives in Body & Bridge (not buried in Frets) — same conceptual role as `body_stop` — `b5a297a`
 - All params created in DOM even when hidden (visibility toggled dynamically) — `d6a7463`
 - `"(calculated)"` label dynamically appended to output-only fields
+- **Output params** styled with left indigo border and subtle background tint — PR `#90`
+- **Input widths**: number/text inputs 100px, selects 140px, right-aligned — PR `#90`
+- **Notes textarea inside Instrument Identity accordion** (not standalone) — collapsed with the section, saves ~35px when Identity is collapsed — PR `#90`
+- **Compact accordion headers**: `padding: 0.3rem 0.75rem`, no border-top (bottom border of previous section suffices) — PR `#90`
+- **Tight param row spacing**: `min-height: 26px`, `padding: 0.15rem 0.5rem` — CaneCalc-inspired density — PR `#90`
 
 ## Core Metrics Panel
 
@@ -52,7 +74,7 @@ Comprehensive record of deliberate UI/UX decisions made throughout the project's
 | "cloud presets" | **"profiles"** | `ee6c5de` |
 | "Export to JSON" | **"Export to File"** | `c3a414f` |
 | "Import from JSON" | **"Import from File"** | `c3a414f` |
-| "Sign in" | **"Sign in / Sign up"** | `eaa8a40` |
+| "Sign in / Sign up" | **"Sign In"** (toolbar button) | PR `#90` |
 | built-in presets | **"Standard Instruments"** | `08306c2` |
 | "Generating..." | **"Updating preview..."** | `ccf1aca` |
 
@@ -66,7 +88,7 @@ Rationale: instrument makers don't know what JSON is. "Profiles" better describe
 - Main page polls localStorage (storage events unreliable when popup closes fast) — `7e736df`
 - Supabase uses **implicit flow** (tokens in URL hash `#access_token=...`), not PKCE — `ad1d06a`
 - OAuth tokens stripped from URL hash before analytics can see them — `93d557b`
-- `#auth-status` in status bar at far right — persistent across status text changes — `aac8478`
+- Auth button in toolbar (Sign In / Sign Out); email shown in menu dropdown when signed in — PR `#90`
 
 ## Save / Load / Export Flow
 
@@ -86,9 +108,8 @@ Rationale: instrument makers don't know what JSON is. "Profiles" better describe
 ## Status Bar
 
 - **Left side**: transient status messages (Ready, Updating preview...)
-- **Right side**: persistent auth status (email or "Sign in / Sign up" link) — `bc7917b`
 - Version info + small "reset" link for cache clearing — `efd2bb1`, `8cb50e5`
-- Event delegation on `#auth-status` because child element gets recreated on auth state change — `d3b2f3e`
+- Auth moved from status bar to toolbar button — PR `#90`
 
 ## Error Handling
 
@@ -103,7 +124,6 @@ Rationale: instrument makers don't know what JSON is. "Profiles" better describe
 - **Web Share API only on `pointer: coarse` devices** (Mac desktop `navigator.share` triggers annoying native dialog, so desktop always gets share modal) — `3ed4e1b`
 - Email share opens `_blank` (don't navigate away from app) — `1f6341c`
 - Overlay opacity very low / transparent — `08306c2`
-- Safety check removes stuck mobile menu CSS classes on load — `cf173b8`
 - Reduced mobile preview padding (1rem not 2rem), compact tabs, smaller zoom buttons — ~30% more SVG space — `09409f0`
 
 ## Download & Filenames

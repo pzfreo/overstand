@@ -96,6 +96,7 @@ export class ParameterSection {
         const currentMode = currentParams.instrument_family || 'VIOLIN';
 
         // Update visibility for each parameter in this section
+        let anyVisible = false;
         for (const paramName of this.sectionDef.parameter_names) {
             const param = this.parameters[paramName];
             if (!param) continue;
@@ -108,6 +109,7 @@ export class ParameterSection {
             // Check visibility
             const isVisible = checkParameterVisibility(param, currentParams);
             group.style.display = isVisible ? '' : 'none';
+            if (isVisible) anyVisible = true;
 
             // Update output status if visible
             if (isVisible) {
@@ -120,6 +122,9 @@ export class ParameterSection {
                 }
             }
         }
+
+        // Hide entire section if no parameters are visible
+        this.getElement().style.display = anyVisible ? '' : 'none';
     }
 
     /**

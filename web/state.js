@@ -35,8 +35,8 @@ export function initElements() {
     elements.presetSelect = document.getElementById('preset');
     elements.viewTabs = document.getElementById('view-tabs');
     elements.zoomControls = document.getElementById('zoom-controls');
-    elements.dlSvg = document.getElementById('dl-svg');
-    elements.dlPdf = document.getElementById('dl-pdf');
+    elements.dlSvg = document.getElementById('toolbar-dl-svg');
+    elements.dlPdf = document.getElementById('toolbar-dl-pdf');
     elements.calculatedFields = document.getElementById('calculated-fields');
     elements.saveParamsBtn = document.getElementById('save-params-btn');
     elements.loadParamsBtn = document.getElementById('load-params-btn');

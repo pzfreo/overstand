@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 
 <head>
     <meta charset="UTF-8">
@@ -65,6 +65,16 @@
 })();
     </script>
 
+    <!-- Apply saved theme before first paint to avoid flash -->
+    <script>
+    (function() {
+        try {
+            var t = localStorage.getItem('overstand-theme');
+            if (t !== 'light') document.documentElement.setAttribute('data-theme', 'dark');
+        } catch(e) {}
+    })();
+    </script>
+
     <!-- PWA Meta Tags -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -103,42 +113,68 @@
 </head>
 
 <body>
-    <!-- Mobile left icon bar (visible only on mobile) -->
-    <div class="mobile-icon-bar" id="mobile-icon-bar">
-        <button class="mobile-icon-btn" id="mobile-menu-toggle" aria-label="Open menu" title="Menu">
-            <span class="icon-menu">☰</span>
-        </button>
-        <button class="mobile-icon-btn" id="mobile-params-toggle" aria-label="Open parameters" title="Parameters">
-            <span class="icon-edit">✎</span>
-        </button>
+    <!-- Top Toolbar -->
+    <nav class="toolbar" id="toolbar">
+        <div class="toolbar-brand">
+            <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+                <rect width="32" height="32" rx="6" fill="#4F46E5"/>
+                <text x="16" y="16" font-family="Arial Black, Helvetica Bold, sans-serif" font-weight="900" font-size="17" fill="white" text-anchor="middle" dominant-baseline="central">OS</text>
+            </svg>
+            Overstand
+        </div>
+
+        <div class="toolbar-actions" id="toolbar-actions">
+            <button class="toolbar-btn" id="toolbar-load" title="Load Profile">
+                <span class="icon">📂</span><span class="label">Load</span>
+            </button>
+            <button class="toolbar-btn" id="toolbar-save" title="Save Profile" disabled>
+                <span class="icon">💾</span><span class="label">Save</span>
+            </button>
+            <div class="toolbar-divider"></div>
+            <button class="toolbar-btn" id="toolbar-import" title="Import from File">
+                <span class="icon">📥</span><span class="label">Import</span>
+            </button>
+            <button class="toolbar-btn" id="toolbar-export" title="Export to File">
+                <span class="icon">📤</span><span class="label">Export</span>
+            </button>
+            <div class="toolbar-divider"></div>
+            <button class="toolbar-btn" id="toolbar-dl-svg" title="Download SVG" disabled>
+                <span class="icon">⬇️</span><span class="label">SVG</span>
+            </button>
+            <button class="toolbar-btn" id="toolbar-dl-pdf" title="Download PDF" disabled>
+                <span class="icon">📄</span><span class="label">PDF</span>
+            </button>
+            <div class="toolbar-divider"></div>
+            <button class="toolbar-btn" id="toolbar-share" title="Share" disabled>
+                <span class="icon">🔗</span><span class="label">Share</span>
+            </button>
+            <div class="toolbar-spacer"></div>
+            <button class="toolbar-btn" id="toolbar-theme" title="Toggle dark/light theme">
+                <span class="icon">☀️</span>
+            </button>
+            <div class="toolbar-divider"></div>
+            <button class="toolbar-btn" id="toolbar-menu" title="Menu">
+                <span class="icon">☰</span><span class="label">Menu</span>
+            </button>
+            <button class="toolbar-btn btn-primary" id="toolbar-auth" title="Sign In">
+                Sign In
+            </button>
+        </div>
+
+        <button class="toolbar-hamburger" id="toolbar-hamburger" title="Menu">☰</button>
+    </nav>
+
+    <!-- Status Bar (outside app-container) -->
+    <div id="status" class="status-bar loading">
+        <div class="spinner"></div>
+        <span id="status-text">Initializing Python environment...</span>
+        <span id="save-indicator" class="save-indicator"></span>
+        <span id="version-info" class="version-info"></span>
+        <a href="?reset" class="reset-link" title="Clear cache and reload">reset</a>
+        <span id="auth-status" class="auth-status"></span>
     </div>
 
-    <!-- Mobile sidebar overlay -->
-    <div class="sidebar-overlay" id="sidebar-overlay"></div>
-
     <div class="app-container">
-        <header>
-            <div class="header-content">
-                <div class="header-text">
-                    <h1>Overstand: arched instrument neck geometry tool</h1>
-                    <p class="subtitle">Parametric CAD for Lutherie - Design precise neck templates based on historical and
-                        modern measurements</p>
-                </div>
-                <button class="menu-btn" id="menu-btn" title="Menu">
-                    <span class="menu-icon">☰</span>
-                    <span class="menu-label">Menu</span>
-                </button>
-            </div>
-        </header>
-
-        <div id="status" class="status-bar loading">
-            <div class="spinner"></div>
-            <span id="status-text">Initializing Python environment...</span>
-            <span id="save-indicator" class="save-indicator"></span>
-            <span id="version-info" class="version-info"></span>
-            <a href="?reset" class="reset-link" title="Clear cache and reload">reset</a>
-            <span id="auth-status" class="auth-status"><a href="#" id="auth-login-link" class="auth-login-link">Sign in / Sign up</a></span>
-        </div>
 
         <!-- Share banner (shown when viewing a shared preset) -->
         <div id="share-banner" class="share-banner" style="display: none;">
@@ -151,6 +187,10 @@
 
         <div class="main-container">
             <div class="controls-panel" id="controls-panel">
+                <div class="params-header">
+                    <h2>Parameters</h2>
+                    <button class="params-collapse-btn" id="params-collapse-btn" title="Collapse parameters">◀</button>
+                </div>
                 <div class="sticky-generate-section">
                     <button class="generate-btn" id="gen-btn" disabled>
                         <span>Generate Template</span>
@@ -167,12 +207,6 @@
                 </div>
 
                 <div class="scrollable-params">
-                    <div class="profile-description-section">
-                        <textarea id="profile-description" class="profile-description"
-                            placeholder="Add notes about this profile (optional)"
-                            rows="2"></textarea>
-                    </div>
-
                     <!-- Core calculated metrics - always visible -->
                     <div id="core-metrics-panel" class="core-metrics-panel">
                         <div class="core-metrics-header">Key Measurements</div>
@@ -190,7 +224,8 @@
                 </div>
             </div>
 
-            <div class="preview-panel">
+            <div class="preview-panel" style="position: relative;">
+                <button class="expand-params-btn" id="expand-params-btn" title="Show parameters">▶</button>
                 <div class="view-controls-header">
                     <div id="view-tabs" class="view-tabs">
                         <button class="view-tab active" data-view="side">Side View</button>
@@ -208,10 +243,6 @@
                         <button class="zoom-btn" id="zoom-reset" title="Reset View">⟲</button>
                     </div>
 
-                    <div id="download-buttons" class="download-buttons">
-                        <button class="btn-svg" id="dl-svg" disabled>⬇️ SVG</button>
-                        <button class="btn-pdf" id="dl-pdf" disabled>📄 PDF</button>
-                    </div>
                 </div>
 
                 <div id="preview-container">
@@ -235,106 +266,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Menu Panel -->
-        <div class="menu-panel" id="menu-panel">
-            <div class="menu-header">
-                <h2>Menu</h2>
-                <button class="menu-close-btn" id="menu-close-btn">✕</button>
-            </div>
-
-            <div class="menu-content">
-                <div class="menu-section" id="menu-account-section">
-                    <h3 class="menu-section-title">Account</h3>
-                    <!-- Shown when logged out -->
-                    <div id="menu-signed-out">
-                        <button class="menu-item" id="menu-sign-in">
-                            <span class="menu-item-icon">🔑</span>
-                            <span class="menu-item-text">Sign In / Sign Up</span>
-                        </button>
-                    </div>
-                    <!-- Shown when logged in -->
-                    <div id="menu-signed-in" style="display: none;">
-                        <div class="menu-user-info" id="menu-user-info">
-                            <img id="menu-user-avatar" class="menu-user-avatar" src="" alt="" />
-                            <span id="menu-user-email" class="menu-user-email"></span>
-                        </div>
-                        <button class="menu-item" id="menu-sign-out">
-                            <span class="menu-item-icon">🚪</span>
-                            <span class="menu-item-text">Sign Out</span>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="menu-section">
-                    <h3 class="menu-section-title">File</h3>
-                    <button class="menu-item" id="menu-load-profile">
-                        <span class="menu-item-icon">📂</span>
-                        <span class="menu-item-text">Load Profile...</span>
-                        <span class="menu-item-shortcut">⌘O</span>
-                    </button>
-                    <button class="menu-item menu-item-disabled" id="menu-save-cloud" title="Sign in to use cloud profiles">
-                        <span class="menu-item-icon">💾</span>
-                        <span class="menu-item-text">Save Profile</span>
-                        <span class="menu-item-shortcut">⌘S</span>
-                    </button>
-                    <button class="menu-item menu-item-disabled" id="menu-share" title="Sign in to share profiles">
-                        <span class="menu-item-icon">🔗</span>
-                        <span class="menu-item-text">Share...</span>
-                    </button>
-                    <button class="menu-item menu-item-disabled" id="menu-publish" title="Sign in to publish profiles">
-                        <span class="menu-item-icon">📢</span>
-                        <span class="menu-item-text">Publish to Community...</span>
-                    </button>
-                    <div class="menu-divider"></div>
-                    <button class="menu-item" id="menu-export-params">
-                        <span class="menu-item-icon">📤</span>
-                        <span class="menu-item-text">Export to File</span>
-                    </button>
-                    <button class="menu-item" id="menu-import-params">
-                        <span class="menu-item-icon">📥</span>
-                        <span class="menu-item-text">Import from File</span>
-                    </button>
-                </div>
-
-                <div class="menu-section">
-                    <h3 class="menu-section-title">Help</h3>
-                    <button class="menu-item" id="menu-keyboard-shortcuts">
-                        <span class="menu-item-icon">⌨️</span>
-                        <span class="menu-item-text">Keyboard Shortcuts</span>
-                    </button>
-                    <button class="menu-item" id="menu-about">
-                        <span class="menu-item-icon">ℹ️</span>
-                        <span class="menu-item-text">About</span>
-                    </button>
-                </div>
-
-                <div class="menu-section">
-                    <h3 class="menu-section-title">Troubleshooting</h3>
-                    <button class="menu-item" id="menu-clear-cache">
-                        <span class="menu-item-icon">🗑️</span>
-                        <span class="menu-item-text">Clear Cache & Reload</span>
-                    </button>
-                </div>
-
-                <div class="menu-section">
-                    <h3 class="menu-section-title">Links</h3>
-                    <a href="https://github.com/pzfreo/overstand" target="_blank" class="menu-item">
-                        <span class="menu-item-icon">🔗</span>
-                        <span class="menu-item-text">GitHub Repository</span>
-                        <span class="menu-item-icon">↗</span>
-                    </a>
-                    <a href="https://github.com/pzfreo/overstand/issues" target="_blank" class="menu-item">
-                        <span class="menu-item-icon">🐛</span>
-                        <span class="menu-item-text">Report Issue</span>
-                        <span class="menu-item-icon">↗</span>
-                    </a>
-                </div>
-            </div>
-        </div>
-
-        <!-- Menu Overlay -->
-        <div class="menu-overlay" id="menu-overlay"></div>
 
         <footer class="app-footer">
             <a href="privacy.html" target="_blank">Privacy Policy</a>
@@ -416,6 +347,40 @@
             </div>
         </div>
     </div>
+
+    <!-- App Menu Overlay (unified dropdown for desktop + mobile) -->
+    <div class="app-menu-overlay" id="app-menu-overlay">
+        <div class="app-menu" id="app-menu">
+            <!-- Mobile-only: these duplicate toolbar buttons, hidden on desktop -->
+            <button class="app-menu-item mobile-only" id="mm-load"><span class="icon">📂</span> Load Profile</button>
+            <button class="app-menu-item mobile-only" id="mm-save" disabled><span class="icon">💾</span> Save Profile</button>
+            <div class="app-menu-sep mobile-only"></div>
+            <button class="app-menu-item mobile-only" id="mm-import"><span class="icon">📥</span> Import from File</button>
+            <button class="app-menu-item mobile-only" id="mm-export"><span class="icon">📤</span> Export to File</button>
+            <div class="app-menu-sep mobile-only"></div>
+            <button class="app-menu-item mobile-only" id="mm-dl-svg" disabled><span class="icon">⬇️</span> Download SVG</button>
+            <button class="app-menu-item mobile-only" id="mm-dl-pdf" disabled><span class="icon">📄</span> Download PDF</button>
+            <button class="app-menu-item mobile-only" id="mm-share" disabled><span class="icon">🔗</span> Share</button>
+            <div class="app-menu-sep mobile-only"></div>
+            <button class="app-menu-item mobile-only" id="mm-params"><span class="icon">⚙️</span> Parameters</button>
+            <button class="app-menu-item mobile-only" id="mm-theme"><span class="icon">☀️</span> Toggle Theme</button>
+            <div class="app-menu-sep mobile-only"></div>
+            <!-- Always visible: menu-only items -->
+            <button class="app-menu-item" id="mm-shortcuts"><span class="icon">⌨️</span> Keyboard Shortcuts</button>
+            <button class="app-menu-item" id="mm-about"><span class="icon">ℹ️</span> About</button>
+            <div class="app-menu-sep"></div>
+            <button class="app-menu-item" id="mm-cache"><span class="icon">🗑️</span> Clear Cache & Reload</button>
+            <div class="app-menu-sep"></div>
+            <a href="https://github.com/pzfreo/overstand" target="_blank" class="app-menu-item"><span class="icon">🔗</span> GitHub Repository <span class="icon-right">↗</span></a>
+            <a href="https://github.com/pzfreo/overstand/issues" target="_blank" class="app-menu-item"><span class="icon">🐛</span> Report Issue <span class="icon-right">↗</span></a>
+            <div class="app-menu-sep mobile-only"></div>
+            <div class="app-menu-item app-menu-email" id="mm-user-email" style="display: none;"></div>
+            <button class="app-menu-item mobile-only" id="mm-auth"><span class="icon">👤</span> Sign In</button>
+        </div>
+    </div>
+
+    <!-- Params Drawer Overlay (mobile) -->
+    <div class="params-drawer-overlay" id="params-drawer-overlay"></div>
 
     <!-- PDF libs (jsPDF 2.5.2, svg2pdf 2.7.0, autotable 5.0.7) -->
     <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>

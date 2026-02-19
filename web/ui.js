@@ -118,6 +118,17 @@ function generateComponentBasedUI(callbacks, currentParams) {
             currentParams: currentParams
         });
 
+        // Inject notes textarea into the Identity section
+        if (sectionDef.id === 'identity') {
+            const notesGroup = document.createElement('div');
+            notesGroup.className = 'param-group notes-group';
+            notesGroup.innerHTML = `
+                <textarea id="profile-description" class="profile-description"
+                    placeholder="Notes (optional)"
+                    rows="1"></textarea>`;
+            section.getAccordion().appendChild(notesGroup);
+        }
+
         container.appendChild(section.getElement());
         state.uiSections.input.push(section);
     }
@@ -323,12 +334,9 @@ export function createParameterControl(name, param, isOutput, callbacks) {
         group.dataset.paramName = name;
     }
 
-    // Add description if present (common to all types)
+    // Add description as tooltip (common to all types)
     if (param.description) {
-        const desc = document.createElement('div');
-        desc.className = 'param-description';
-        desc.textContent = param.description;
-        group.appendChild(desc);
+        group.title = param.description;
     }
 
     return group;
@@ -443,10 +451,12 @@ export function displayCurrentView() {
 
     if (state.currentView === 'dimensions') {
         setZoomButtonsState(false);
+        elements.preview.style.overflow = 'auto';
         elements.preview.innerHTML = state.views[state.currentView];
     } else if (state.currentView === 'fret_positions') {
         // Disable zoom controls for fret positions view
         setZoomButtonsState(false);
+        elements.preview.style.overflow = 'auto';
 
         const fretData = state.views.fret_positions;
         if (fretData && fretData.available) {
@@ -456,6 +466,7 @@ export function displayCurrentView() {
         }
     } else {
         setZoomButtonsState(true);
+        elements.preview.style.overflow = 'hidden';
 
         state.svgCanvas = SVG().addTo('#preview-container');
         state.svgCanvas.svg(state.views[state.currentView]);
@@ -480,34 +491,24 @@ export function displayCurrentView() {
         tab.classList.toggle('active', tab.dataset.view === state.currentView);
     });
 
-    // Manage download button visibility based on view
-    const svgBtn = document.getElementById('dl-svg');
-    const pdfBtn = document.getElementById('dl-pdf');
+    // Manage download button state based on view
+    const svgBtn = document.getElementById('toolbar-dl-svg');
+    const pdfBtn = document.getElementById('toolbar-dl-pdf');
+    const mmSvgBtn = document.getElementById('mm-dl-svg');
+    const mmPdfBtn = document.getElementById('mm-dl-pdf');
 
     if (state.currentView === 'dimensions' || state.currentView === 'fret_positions') {
         // For table views, disable SVG but enable PDF
-        if (svgBtn) {
-            svgBtn.style.display = 'block';
-            svgBtn.disabled = true;
-            svgBtn.style.opacity = '0.3';
-        }
-        if (pdfBtn) {
-            pdfBtn.style.display = 'block';
-            pdfBtn.disabled = false;
-            pdfBtn.style.opacity = '1';
-        }
+        if (svgBtn) { svgBtn.disabled = true; }
+        if (pdfBtn) { pdfBtn.disabled = false; }
+        if (mmSvgBtn) { mmSvgBtn.disabled = true; }
+        if (mmPdfBtn) { mmPdfBtn.disabled = false; }
     } else {
-        // For all SVG views (including radius_template), show both buttons enabled
-        if (svgBtn) {
-            svgBtn.style.display = 'block';
-            svgBtn.disabled = false;
-            svgBtn.style.opacity = '1';
-        }
-        if (pdfBtn) {
-            pdfBtn.style.display = 'block';
-            pdfBtn.disabled = false;
-            pdfBtn.style.opacity = '1';
-        }
+        // For all SVG views (including radius_template), enable both
+        if (svgBtn) { svgBtn.disabled = false; }
+        if (pdfBtn) { pdfBtn.disabled = false; }
+        if (mmSvgBtn) { mmSvgBtn.disabled = false; }
+        if (mmPdfBtn) { mmPdfBtn.disabled = false; }
     }
 }
 

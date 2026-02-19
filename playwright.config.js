@@ -9,7 +9,7 @@ export default defineConfig({
     headless: true,
   },
   webServer: {
-    command: 'npx serve web/ -l 3456 --no-clipboard',
+    command: 'bash scripts/build.sh && npx serve public/ -l 3456 --no-clipboard',
     port: 3456,
     reuseExistingServer: !process.env.CI,
   },

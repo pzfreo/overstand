@@ -15,17 +15,16 @@ test.describe('Page Structure', () => {
     await expect(page).toHaveTitle('Overstand');
   });
 
-  test('header with app title is visible', async ({ page }) => {
-    const h1 = page.locator('header h1');
-    await expect(h1).toBeVisible();
-    await expect(h1).toContainText('Overstand');
+  test('toolbar with brand is visible', async ({ page }) => {
+    const toolbar = page.locator('.toolbar');
+    await expect(toolbar).toBeVisible();
+    await expect(toolbar.locator('.toolbar-brand')).toContainText('Overstand');
   });
 
-  test('status bar has "Sign in / Sign up" link', async ({ page }) => {
-    // JS rewrites the auth area via updateAuthUI — use class selector, not id
-    const authLink = page.locator('#auth-status .auth-login-link');
-    await expect(authLink).toBeVisible();
-    await expect(authLink).toHaveText('Sign in / Sign up');
+  test('toolbar has Sign In button', async ({ page }) => {
+    const authBtn = page.locator('#toolbar-auth');
+    await expect(authBtn).toBeVisible();
+    await expect(authBtn).toHaveText('Sign In');
   });
 
   test('controls panel and preview panel exist', async ({ page }) => {
@@ -68,55 +67,58 @@ test.describe('View Tabs', () => {
 });
 
 test.describe('Menu System', () => {
-  // The UI uses a universal icon bar (#mobile-icon-bar) for menu access.
-  // The old header #menu-btn is hidden (display: none !important).
-  // Menu panel uses 'open' class, not 'active'.
+  // The toolbar has a Menu button that opens a dropdown overlay.
+  // Menu overlay uses 'open' class.
 
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
   });
 
-  test('icon bar menu button is visible', async ({ page }) => {
-    await expect(page.locator('#mobile-menu-toggle')).toBeVisible();
+  test('toolbar menu button is visible', async ({ page }) => {
+    await expect(page.locator('#toolbar-menu')).toBeVisible();
   });
 
-  test('clicking menu toggle opens menu panel', async ({ page }) => {
-    const menuPanel = page.locator('#menu-panel');
-    await expect(menuPanel).not.toHaveClass(/open/);
+  test('clicking menu button opens menu dropdown', async ({ page }) => {
+    const menuOverlay = page.locator('#app-menu-overlay');
+    await expect(menuOverlay).not.toHaveClass(/open/);
 
-    await page.locator('#mobile-menu-toggle').click();
-    await expect(menuPanel).toHaveClass(/open/);
+    await page.locator('#toolbar-menu').click();
+    await expect(menuOverlay).toHaveClass(/open/);
   });
 
-  test('menu has correct sections', async ({ page }) => {
-    await page.locator('#mobile-menu-toggle').click();
+  test('menu has key items visible on desktop', async ({ page }) => {
+    await page.locator('#toolbar-menu').click();
 
-    const sectionTitles = page.locator('.menu-section-title');
-    const titles = await sectionTitles.allTextContents();
-    expect(titles).toEqual(['Account', 'File', 'Help', 'Troubleshooting', 'Links']);
+    // Menu-only items always visible
+    await expect(page.locator('#mm-shortcuts')).toBeVisible();
+    await expect(page.locator('#mm-about')).toBeVisible();
+    await expect(page.locator('#mm-cache')).toBeVisible();
+
+    // Toolbar duplicates hidden on desktop (present in DOM but not visible)
+    await expect(page.locator('#mm-load')).toBeAttached();
+    await expect(page.locator('#mm-load')).not.toBeVisible();
   });
 
-  test('uses "Export to File" / "Import from File" terminology', async ({ page }) => {
-    await page.locator('#mobile-menu-toggle').click();
-
-    await expect(page.locator('#menu-export-params .menu-item-text')).toHaveText('Export to File');
-    await expect(page.locator('#menu-import-params .menu-item-text')).toHaveText('Import from File');
+  test('toolbar uses "Import" / "Export" terminology', async ({ page }) => {
+    await expect(page.locator('#toolbar-import')).toHaveAttribute('title', 'Import from File');
+    await expect(page.locator('#toolbar-export')).toHaveAttribute('title', 'Export to File');
   });
 
-  test('close button closes menu', async ({ page }) => {
-    await page.locator('#mobile-menu-toggle').click();
-    await expect(page.locator('#menu-panel')).toHaveClass(/open/);
+  test('click outside closes menu', async ({ page }) => {
+    await page.locator('#toolbar-menu').click();
+    await expect(page.locator('#app-menu-overlay')).toHaveClass(/open/);
 
-    await page.locator('#menu-close-btn').click();
-    await expect(page.locator('#menu-panel')).not.toHaveClass(/open/);
+    // Click the overlay background (outside the menu)
+    await page.locator('#app-menu-overlay').click({ position: { x: 10, y: 400 } });
+    await expect(page.locator('#app-menu-overlay')).not.toHaveClass(/open/);
   });
 
   test('Escape key closes menu', async ({ page }) => {
-    await page.locator('#mobile-menu-toggle').click();
-    await expect(page.locator('#menu-panel')).toHaveClass(/open/);
+    await page.locator('#toolbar-menu').click();
+    await expect(page.locator('#app-menu-overlay')).toHaveClass(/open/);
 
     await page.keyboard.press('Escape');
-    await expect(page.locator('#menu-panel')).not.toHaveClass(/open/);
+    await expect(page.locator('#app-menu-overlay')).not.toHaveClass(/open/);
   });
 });
 
@@ -145,26 +147,35 @@ test.describe('Modal System', () => {
   });
 });
 
-test.describe('Icon Bar Responsiveness', () => {
-  // The icon bar is now universal (always visible on desktop and mobile).
-  // The CSS comment confirms: "Always visible on desktop and mobile".
-
-  test('icon bar visible at mobile width (375px)', async ({ page }) => {
+test.describe('Toolbar Responsiveness', () => {
+  test('toolbar visible at mobile width (375px)', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
     await page.goto('/');
-    await expect(page.locator('#mobile-icon-bar')).toBeVisible();
+    await expect(page.locator('.toolbar')).toBeVisible();
   });
 
-  test('icon bar visible at desktop width (1280px)', async ({ page }) => {
+  test('toolbar visible at desktop width (1280px)', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.goto('/');
-    await expect(page.locator('#mobile-icon-bar')).toBeVisible();
+    await expect(page.locator('.toolbar')).toBeVisible();
   });
 
-  test('icon bar has menu and params buttons', async ({ page }) => {
+  test('hamburger visible on mobile, hidden on desktop', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 667 });
     await page.goto('/');
-    await expect(page.locator('#mobile-menu-toggle')).toBeVisible();
-    await expect(page.locator('#mobile-params-toggle')).toBeVisible();
+    await expect(page.locator('#toolbar-hamburger')).toBeVisible();
+
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await expect(page.locator('#toolbar-hamburger')).not.toBeVisible();
+  });
+
+  test('toolbar actions visible on desktop, hidden on mobile', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto('/');
+    await expect(page.locator('#toolbar-actions')).toBeVisible();
+
+    await page.setViewportSize({ width: 375, height: 667 });
+    await expect(page.locator('#toolbar-actions')).not.toBeVisible();
   });
 });
 
@@ -188,13 +199,6 @@ test.describe('CSS Design Decisions', () => {
     expect(hasCustomProps).toBe(true);
   });
 
-  test('sidebar overlay has no backdrop-filter', async ({ page }) => {
-    // Design decision: no backdrop-filter on sidebar overlay (breaks Firefox/Android)
-    const backdropFilter = await page.locator('.sidebar-overlay').evaluate(
-      el => getComputedStyle(el).backdropFilter
-    );
-    expect(backdropFilter === 'none' || backdropFilter === '').toBe(true);
-  });
 });
 
 test.describe('Zoom and Download Controls', () => {
@@ -208,8 +212,66 @@ test.describe('Zoom and Download Controls', () => {
     await expect(page.locator('#zoom-reset')).toBeAttached();
   });
 
-  test('download buttons (SVG, PDF) present', async ({ page }) => {
-    await expect(page.locator('#dl-svg')).toBeAttached();
-    await expect(page.locator('#dl-pdf')).toBeAttached();
+  test('download buttons (SVG, PDF) present in toolbar', async ({ page }) => {
+    await expect(page.locator('#toolbar-dl-svg')).toBeAttached();
+    await expect(page.locator('#toolbar-dl-pdf')).toBeAttached();
+  });
+});
+
+test.describe('Layout Constraints', () => {
+  test('preview panel height fits within viewport', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto('/');
+    const box = await page.locator('.preview-panel').boundingBox();
+    // Preview must fit within viewport (800px minus toolbar ~52px, status ~24px)
+    expect(box.height).toBeLessThan(750);
+    expect(box.height).toBeGreaterThan(200);
+  });
+
+  test('controls panel has scrollable params area', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto('/');
+    const overflow = await page.locator('.scrollable-params').evaluate(
+      el => getComputedStyle(el).overflowY
+    );
+    expect(overflow).toBe('auto');
+  });
+
+  test('body overflow is hidden (no page scroll)', async ({ page }) => {
+    await page.goto('/');
+    const overflow = await page.locator('body').evaluate(
+      el => getComputedStyle(el).overflow
+    );
+    expect(overflow).toBe('hidden');
+  });
+
+  test('main container grid row fills available height', async ({ page }) => {
+    await page.goto('/');
+    const rows = await page.locator('.main-container').evaluate(
+      el => getComputedStyle(el).gridTemplateRows
+    );
+    // 1fr resolves to an actual pixel value, so just check it's not 'auto' or 'none'
+    expect(rows).not.toBe('auto');
+    expect(rows).not.toBe('none');
+  });
+
+  test('preview panel height is independent of params content', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 600 });
+    await page.goto('/');
+    const previewBox = await page.locator('.preview-panel').boundingBox();
+    // Preview shouldn't be taller than the viewport
+    expect(previewBox.height).toBeLessThan(580);
+  });
+});
+
+test.describe('Params Panel', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto('/');
+  });
+
+  test('params panel has header with collapse button', async ({ page }) => {
+    await expect(page.locator('.params-header h2')).toHaveText('Parameters');
+    await expect(page.locator('#params-collapse-btn')).toBeAttached();
   });
 });

@@ -283,16 +283,14 @@ describe('createParameterControl', () => {
         expect(input.maxLength).toBe(50);
     });
 
-    test('adds description element when present', () => {
+    test('adds description as tooltip when present', () => {
         const param = {
             type: 'number', label: 'Test', unit: 'mm',
             default: 10, min: 0, max: 100, step: 1,
             description: 'A helpful description'
         };
         const el = createParameterControl('test', param, false, noopCallbacks);
-        const desc = el.querySelector('.param-description');
-        expect(desc).not.toBeNull();
-        expect(desc.textContent).toBe('A helpful description');
+        expect(el.title).toBe('A helpful description');
     });
 });
 

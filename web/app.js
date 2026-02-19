@@ -528,8 +528,8 @@ function updateCoreMetricsPanel(values, metadata, params) {
             valueSpan.appendChild(unit);
         }
 
-        item.appendChild(label);
         item.appendChild(valueSpan);
+        item.appendChild(label);
         panel.appendChild(item);
     }
 }
@@ -630,19 +630,15 @@ function handleLoadParameters(event) {
     event.target.value = '';
 }
 
-// Menu system functions
+// Menu system functions (unified dropdown)
 function openMenu() {
-    const menuPanel = document.getElementById('menu-panel');
-    const menuOverlay = document.getElementById('menu-overlay');
-    menuPanel.classList.add('open');
-    menuOverlay.classList.add('active');
-    document.body.style.overflow = 'hidden';
+    const overlay = document.getElementById('app-menu-overlay');
+    if (overlay) overlay.classList.add('open');
 }
 
 function closeMenu() {
-    const menuPanel = document.getElementById('menu-panel');
-    if (menuPanel) menuPanel.classList.remove('open');
-    closeOverlay('menu-overlay');
+    const overlay = document.getElementById('app-menu-overlay');
+    if (overlay) overlay.classList.remove('open');
 }
 
 // Modal Dialog Functions - imported from modal.js
@@ -720,7 +716,6 @@ function showKeyboardShortcuts() {
     `;
 
     showModal('Keyboard Shortcuts', content);
-    closeMenu();
 }
 
 async function showAbout() {
@@ -741,18 +736,14 @@ async function showAbout() {
         const title = titleMatch ? titleMatch[1] : 'About';
 
         showModal(title, content);
-        closeMenu();
     } catch (error) {
         console.error('Error loading about:', error);
         // Fallback content
         showModal('About', '<p class="about-text">Unable to load about information.</p>');
-        closeMenu();
     }
 }
 
 async function clearCacheAndReload() {
-    closeMenu();
-
     const confirmed = confirm(
         'This will clear all cached data and reload the app.\n\n' +
         'Use this if you\'re experiencing issues with outdated code or data.\n\n' +
@@ -800,63 +791,53 @@ async function clearCacheAndReload() {
 
 function updateAuthUI(user) {
     state.authUser = user;
-    const signedOut = document.getElementById('menu-signed-out');
-    const signedIn = document.getElementById('menu-signed-in');
     const shareSaveBtn = document.getElementById('share-save-btn');
-    const menuSaveCloud = document.getElementById('menu-save-cloud');
-    const menuLoadProfile = document.getElementById('menu-load-profile');
-    const menuShare = document.getElementById('menu-share');
-    const menuPublish = document.getElementById('menu-publish');
+    const toolbarSave = document.getElementById('toolbar-save');
+    const toolbarShare = document.getElementById('toolbar-share');
+    const toolbarAuth = document.getElementById('toolbar-auth');
+    const mmSave = document.getElementById('mm-save');
+    const mmShare = document.getElementById('mm-share');
+    const mmAuth = document.getElementById('mm-auth');
+    const mmUserEmail = document.getElementById('mm-user-email');
 
     if (user) {
-        // Logged in
-        if (signedOut) signedOut.style.display = 'none';
-        if (signedIn) signedIn.style.display = 'block';
         if (shareSaveBtn) shareSaveBtn.style.display = 'inline-block';
+        if (toolbarSave) toolbarSave.disabled = false;
+        if (toolbarShare) toolbarShare.disabled = false;
+        if (mmSave) mmSave.disabled = false;
+        if (mmShare) mmShare.disabled = false;
 
-        // Enable cloud menu items (Load Profile is always enabled — it has standard presets)
-        for (const el of [menuSaveCloud, menuShare, menuPublish]) {
-            if (el) {
-                el.classList.remove('menu-item-disabled');
-                el.title = '';
-            }
+        if (toolbarAuth) {
+            toolbarAuth.textContent = 'Sign Out';
+            toolbarAuth.classList.remove('btn-primary');
+            toolbarAuth.title = user.email || 'Sign Out';
+        }
+        if (mmAuth) mmAuth.innerHTML = '<span class="icon">👤</span> Sign Out';
+        if (mmUserEmail) {
+            mmUserEmail.textContent = user.email || '';
+            mmUserEmail.style.display = user.email ? '' : 'none';
         }
 
-        // Update user info
-        const avatar = document.getElementById('menu-user-avatar');
-        const email = document.getElementById('menu-user-email');
-        if (avatar) {
-            avatar.src = user.user_metadata?.avatar_url || '';
-            avatar.style.display = user.user_metadata?.avatar_url ? 'block' : 'none';
-        }
-        if (email) email.textContent = user.email || 'Signed in';
-
-        // Show signed-in email in status bar
         const authStatus = document.getElementById('auth-status');
         if (authStatus) authStatus.textContent = user.email;
-
-        // Load cloud presets
         refreshCloudPresets();
     } else {
-        // Logged out
-        if (signedOut) signedOut.style.display = 'block';
-        if (signedIn) signedIn.style.display = 'none';
         if (shareSaveBtn) shareSaveBtn.style.display = 'none';
+        if (toolbarSave) toolbarSave.disabled = true;
+        if (toolbarShare) toolbarShare.disabled = true;
+        if (mmSave) mmSave.disabled = true;
+        if (mmShare) mmShare.disabled = true;
 
-        // Grey out cloud menu items (Load Profile stays enabled — it has standard presets)
-        for (const el of [menuSaveCloud, menuShare, menuPublish]) {
-            if (el) {
-                el.classList.add('menu-item-disabled');
-                el.title = 'Sign in to use cloud profiles';
-            }
+        if (toolbarAuth) {
+            toolbarAuth.textContent = 'Sign In';
+            toolbarAuth.classList.add('btn-primary');
+            toolbarAuth.title = 'Sign In';
         }
+        if (mmAuth) mmAuth.innerHTML = '<span class="icon">👤</span> Sign In';
+        if (mmUserEmail) mmUserEmail.style.display = 'none';
 
-        // Show sign-in link in status bar (click handled by delegation on #auth-status)
         const authStatus = document.getElementById('auth-status');
-        if (authStatus) {
-            authStatus.innerHTML = '<a href="#" class="auth-login-link">Sign in / Sign up</a>';
-        }
-
+        if (authStatus) authStatus.textContent = '';
         state.cloudPresets = [];
     }
 }
@@ -1682,19 +1663,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // CRITICAL: Set up Clear Cache FIRST so it always works, even if everything else fails
     try {
-        const menuBtn = document.getElementById('menu-btn');
-        const menuCloseBtn = document.getElementById('menu-close-btn');
-        const menuOverlay = document.getElementById('menu-overlay');
-        const menuClearCache = document.getElementById('menu-clear-cache');
-
-        // Basic menu open/close (mobile menu toggle handled later with full logic)
-        if (menuBtn) menuBtn.addEventListener('click', openMenu);
-        if (menuCloseBtn) menuCloseBtn.addEventListener('click', closeMenu);
-        if (menuOverlay) menuOverlay.addEventListener('click', closeMenu);
-
-        // Clear cache - MUST work even if app is broken
-        if (menuClearCache) menuClearCache.addEventListener('click', clearCacheAndReload);
-
+        const mmCache = document.getElementById('mm-cache');
+        if (mmCache) mmCache.addEventListener('click', () => { closeMenu(); clearCacheAndReload(); });
         console.log('[Init] Menu setup complete');
     } catch (e) {
         console.error('[Init] Menu setup failed:', e);
@@ -1713,9 +1683,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (elements.saveParamsBtn) elements.saveParamsBtn.addEventListener('click', saveParameters);
     if (elements.loadParamsBtn) elements.loadParamsBtn.addEventListener('click', () => elements.loadParamsInput.click());
     if (elements.loadParamsInput) elements.loadParamsInput.addEventListener('change', handleLoadParameters);
-    if (elements.dlSvg) elements.dlSvg.addEventListener('click', downloadSVG);
-    if (elements.dlPdf) elements.dlPdf.addEventListener('click', () => downloadPDF(collectParameters, sanitizeFilename));
-
     // Zoom controls
     if (elements.zoomInBtn) elements.zoomInBtn.addEventListener('click', zoomIn);
     if (elements.zoomOutBtn) elements.zoomOutBtn.addEventListener('click', zoomOut);
@@ -1726,172 +1693,197 @@ document.addEventListener('DOMContentLoaded', () => {
         tab.addEventListener('click', () => switchView(tab.dataset.view));
     });
 
-    // Universal icon bar - works on desktop and mobile
-    const mobileIconBar = document.getElementById('mobile-icon-bar');
-    const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
-    const mobileParamsToggle = document.getElementById('mobile-params-toggle');
-    const menuPanel = document.getElementById('menu-panel');
+    // ========================================================================
+    // Toolbar button handlers
+    // ========================================================================
     const controlsPanel = document.getElementById('controls-panel');
     const mainContainer = document.querySelector('.main-container');
-    const sidebarOverlay = document.getElementById('sidebar-overlay');
+    const isMobile = () => window.innerWidth <= 767;
 
-    if (mobileIconBar && mobileMenuToggle && mobileParamsToggle) {
-        const isMobile = () => window.innerWidth <= 1024;
+    // Toolbar: Load Profile
+    const toolbarLoad = document.getElementById('toolbar-load');
+    if (toolbarLoad) toolbarLoad.addEventListener('click', showLoadProfileModal);
 
-        // Toggle menu panel (same on desktop and mobile)
-        mobileMenuToggle.addEventListener('click', () => {
-            const isOpen = menuPanel.classList.contains('open');
+    // Toolbar: Save Profile
+    const toolbarSave = document.getElementById('toolbar-save');
+    if (toolbarSave) toolbarSave.addEventListener('click', handleCloudSave);
 
-            // Close parameters panel if open
-            controlsPanel.classList.remove('mobile-open', 'collapsed');
-            if (mainContainer) mainContainer.classList.remove('params-collapsed');
-            mobileParamsToggle.classList.remove('active');
+    // Toolbar: Import from File
+    const toolbarImport = document.getElementById('toolbar-import');
+    if (toolbarImport) toolbarImport.addEventListener('click', () => elements.loadParamsInput.click());
 
-            if (!isOpen) {
-                menuPanel.classList.add('open');
-                sidebarOverlay.classList.add('active');
-                mobileMenuToggle.classList.add('active');
-                document.body.style.overflow = 'hidden';
-            } else {
-                menuPanel.classList.remove('open');
-                sidebarOverlay.classList.remove('active');
-                mobileMenuToggle.classList.remove('active');
-                document.body.style.overflow = '';
-            }
-        });
+    // Toolbar: Export to File
+    const toolbarExport = document.getElementById('toolbar-export');
+    if (toolbarExport) toolbarExport.addEventListener('click', saveParameters);
 
-        // Toggle parameters panel (different behavior for desktop vs mobile)
-        mobileParamsToggle.addEventListener('click', () => {
-            // Close menu panel if open
-            menuPanel.classList.remove('open');
-            mobileMenuToggle.classList.remove('active');
+    // Toolbar: Download SVG
+    if (elements.dlSvg) elements.dlSvg.addEventListener('click', downloadSVG);
 
-            if (isMobile()) {
-                // Mobile: slide-out panel
-                const isOpen = controlsPanel.classList.contains('mobile-open');
+    // Toolbar: Download PDF
+    if (elements.dlPdf) elements.dlPdf.addEventListener('click', () => downloadPDF(collectParameters, sanitizeFilename));
 
-                if (!isOpen) {
-                    controlsPanel.classList.add('mobile-open');
-                    sidebarOverlay.classList.add('active');
-                    mobileParamsToggle.classList.add('active');
-                    document.body.style.overflow = 'hidden';
-                } else {
-                    controlsPanel.classList.remove('mobile-open');
-                    sidebarOverlay.classList.remove('active');
-                    mobileParamsToggle.classList.remove('active');
-                    document.body.style.overflow = '';
-                }
-            } else {
-                // Desktop: collapse/expand panel
-                const isCollapsed = controlsPanel.classList.contains('collapsed');
+    // Toolbar: Share
+    const toolbarShare = document.getElementById('toolbar-share');
+    if (toolbarShare) toolbarShare.addEventListener('click', handleShare);
 
-                if (!isCollapsed) {
-                    controlsPanel.classList.add('collapsed');
-                    if (mainContainer) mainContainer.classList.add('params-collapsed');
-                    mobileParamsToggle.classList.remove('active');
-                } else {
-                    controlsPanel.classList.remove('collapsed');
-                    if (mainContainer) mainContainer.classList.remove('params-collapsed');
-                    mobileParamsToggle.classList.add('active');
-                }
-            }
-        });
+    // Toolbar: Menu button (opens slide-in menu panel)
+    const toolbarMenuBtn = document.getElementById('toolbar-menu');
+    if (toolbarMenuBtn) toolbarMenuBtn.addEventListener('click', openMenu);
 
-        // Close panels on overlay click
-        if (sidebarOverlay) {
-            sidebarOverlay.addEventListener('click', () => {
-                menuPanel.classList.remove('open');
-                controlsPanel.classList.remove('mobile-open');
-                sidebarOverlay.classList.remove('active');
-                mobileMenuToggle.classList.remove('active');
-                mobileParamsToggle.classList.remove('active');
-                document.body.style.overflow = '';
-            });
+    // Toolbar: Auth/Sign In or Sign Out
+    const toolbarAuth = document.getElementById('toolbar-auth');
+    if (toolbarAuth) toolbarAuth.addEventListener('click', () => {
+        if (isAuthenticated()) {
+            signOut().catch(e => showErrorModal('Sign Out Failed', e.message));
+        } else {
+            showLoginModal();
         }
+    });
 
-        // Keyboard shortcuts for panel closing and zoom
-        document.addEventListener('keydown', (e) => {
-            // Escape key closes panels
-            if (e.key === 'Escape') {
-                if (menuPanel.classList.contains('open') || controlsPanel.classList.contains('mobile-open')) {
-                    e.preventDefault();
-                    menuPanel.classList.remove('open');
-                    controlsPanel.classList.remove('mobile-open');
-                    sidebarOverlay.classList.remove('active');
-                    mobileMenuToggle.classList.remove('active');
-                    mobileParamsToggle.classList.remove('active');
-                    document.body.style.overflow = '';
-                }
-            }
+    // ========================================================================
+    // Theme toggle
+    // ========================================================================
+    function toggleTheme() {
+        const html = document.documentElement;
+        const isDark = html.getAttribute('data-theme') === 'dark';
+        const newTheme = isDark ? 'light' : 'dark';
+        html.setAttribute('data-theme', newTheme);
+        try { localStorage.setItem('overstand-theme', newTheme); } catch(e) {}
 
-            // Zoom keyboard shortcuts (+, -, 0)
-            // Don't trigger if user is typing in an input field
-            if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'SELECT') {
-                if (e.key === '+' || e.key === '=') {
-                    e.preventDefault();
-                    zoomIn();
-                } else if (e.key === '-' || e.key === '_') {
-                    e.preventDefault();
-                    zoomOut();
-                } else if (e.key === '0') {
-                    e.preventDefault();
-                    zoomReset();
-                }
-            }
-        });
-
-        // Set initial state on page load
-        if (!isMobile()) {
-            // Desktop: parameters panel visible by default
-            mobileParamsToggle.classList.add('active');
-        }
+        // Update icon in toolbar and mobile menu
+        const icon = isDark ? '🌙' : '☀️';
+        const toolbarThemeIcon = document.querySelector('#toolbar-theme .icon');
+        if (toolbarThemeIcon) toolbarThemeIcon.textContent = icon;
+        const mmThemeIcon = document.querySelector('#mm-theme .icon');
+        if (mmThemeIcon) mmThemeIcon.textContent = icon;
     }
 
-    // Menu items (menu open/close and clear cache already set up above)
-    const menuLoadProfile = document.getElementById('menu-load-profile');
-    const menuSaveCloud = document.getElementById('menu-save-cloud');
-    const menuExportParams = document.getElementById('menu-export-params');
-    const menuImportParams = document.getElementById('menu-import-params');
-    const menuKeyboardShortcuts = document.getElementById('menu-keyboard-shortcuts');
-    const menuAbout = document.getElementById('menu-about');
+    const toolbarTheme = document.getElementById('toolbar-theme');
+    if (toolbarTheme) toolbarTheme.addEventListener('click', toggleTheme);
 
-    if (menuLoadProfile) menuLoadProfile.addEventListener('click', () => {
-        closeMenu();
-        showLoadProfileModal();
-    });
-    if (menuSaveCloud) menuSaveCloud.addEventListener('click', () => {
-        if (menuSaveCloud.classList.contains('menu-item-disabled')) return;
-        closeMenu();
-        handleCloudSave();
-    });
-    const menuShareBtn = document.getElementById('menu-share');
-    if (menuShareBtn) menuShareBtn.addEventListener('click', () => {
-        if (menuShareBtn.classList.contains('menu-item-disabled')) return;
-        closeMenu();
-        handleShare();
-    });
-    const menuPublishBtn = document.getElementById('menu-publish');
-    if (menuPublishBtn) menuPublishBtn.addEventListener('click', () => {
-        if (menuPublishBtn.classList.contains('menu-item-disabled')) return;
-        closeMenu();
-        handleMenuPublish();
-    });
-    if (menuExportParams) menuExportParams.addEventListener('click', () => { closeMenu(); saveParameters(); });
-    if (menuImportParams) menuImportParams.addEventListener('click', () => { closeMenu(); elements.loadParamsInput.click(); });
-    if (menuKeyboardShortcuts) menuKeyboardShortcuts.addEventListener('click', showKeyboardShortcuts);
-    if (menuAbout) menuAbout.addEventListener('click', showAbout);
+    // ========================================================================
+    // Params collapse/expand (desktop)
+    // ========================================================================
+    const paramsCollapseBtn = document.getElementById('params-collapse-btn');
+    const expandParamsBtn = document.getElementById('expand-params-btn');
 
-    // Auth event listeners
-    const menuSignIn = document.getElementById('menu-sign-in');
-    const menuSignOut = document.getElementById('menu-sign-out');
+    function collapseParams() {
+        if (mainContainer) mainContainer.classList.add('params-collapsed');
+        if (paramsCollapseBtn) paramsCollapseBtn.textContent = '▶';
+    }
+
+    function expandParams() {
+        if (mainContainer) mainContainer.classList.remove('params-collapsed');
+        if (paramsCollapseBtn) paramsCollapseBtn.textContent = '◀';
+    }
+
+    if (paramsCollapseBtn) {
+        paramsCollapseBtn.addEventListener('click', () => {
+            if (mainContainer && mainContainer.classList.contains('params-collapsed')) {
+                expandParams();
+            } else {
+                collapseParams();
+            }
+        });
+    }
+
+    if (expandParamsBtn) {
+        expandParamsBtn.addEventListener('click', expandParams);
+    }
+
+    // ========================================================================
+    // Mobile params drawer
+    // ========================================================================
+    const paramsDrawerOverlay = document.getElementById('params-drawer-overlay');
+
+    function openMobileParams() {
+        if (controlsPanel) controlsPanel.classList.add('mobile-open');
+        if (paramsDrawerOverlay) paramsDrawerOverlay.classList.add('open');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeMobileParams() {
+        if (controlsPanel) controlsPanel.classList.remove('mobile-open');
+        if (paramsDrawerOverlay) paramsDrawerOverlay.classList.remove('open');
+        document.body.style.overflow = '';
+    }
+
+    if (paramsDrawerOverlay) {
+        paramsDrawerOverlay.addEventListener('click', closeMobileParams);
+    }
+
+    // ========================================================================
+    // Hamburger + toolbar menu — opens unified dropdown
+    // ========================================================================
+    const toolbarHamburger = document.getElementById('toolbar-hamburger');
+    const appMenuOverlay = document.getElementById('app-menu-overlay');
+
+    if (toolbarHamburger) toolbarHamburger.addEventListener('click', openMenu);
+
+    // Close menu when clicking overlay background
+    if (appMenuOverlay) {
+        appMenuOverlay.addEventListener('click', (e) => {
+            if (e.target === appMenuOverlay) closeMenu();
+        });
+    }
+
+    // Menu item handlers
+    const mmLoad = document.getElementById('mm-load');
+    const mmSave = document.getElementById('mm-save');
+    const mmImport = document.getElementById('mm-import');
+    const mmExport = document.getElementById('mm-export');
+    const mmDlSvg = document.getElementById('mm-dl-svg');
+    const mmDlPdf = document.getElementById('mm-dl-pdf');
+    const mmShare = document.getElementById('mm-share');
+    const mmParams = document.getElementById('mm-params');
+    const mmTheme = document.getElementById('mm-theme');
+    const mmShortcuts = document.getElementById('mm-shortcuts');
+    const mmAbout = document.getElementById('mm-about');
+    const mmAuth = document.getElementById('mm-auth');
+
+    if (mmLoad) mmLoad.addEventListener('click', () => { closeMenu(); showLoadProfileModal(); });
+    if (mmSave) mmSave.addEventListener('click', () => { closeMenu(); handleCloudSave(); });
+    if (mmImport) mmImport.addEventListener('click', () => { closeMenu(); elements.loadParamsInput.click(); });
+    if (mmExport) mmExport.addEventListener('click', () => { closeMenu(); saveParameters(); });
+    if (mmDlSvg) mmDlSvg.addEventListener('click', () => { closeMenu(); downloadSVG(); });
+    if (mmDlPdf) mmDlPdf.addEventListener('click', () => { closeMenu(); downloadPDF(collectParameters, sanitizeFilename); });
+    if (mmShare) mmShare.addEventListener('click', () => { closeMenu(); handleShare(); });
+    if (mmParams) mmParams.addEventListener('click', () => { closeMenu(); openMobileParams(); });
+    if (mmTheme) mmTheme.addEventListener('click', () => { closeMenu(); toggleTheme(); });
+    if (mmShortcuts) mmShortcuts.addEventListener('click', () => { closeMenu(); showKeyboardShortcuts(); });
+    if (mmAbout) mmAbout.addEventListener('click', () => { closeMenu(); showAbout(); });
+    if (mmAuth) mmAuth.addEventListener('click', () => {
+        closeMenu();
+        if (isAuthenticated()) {
+            signOut().catch(e => showErrorModal('Sign Out Failed', e.message));
+        } else {
+            showLoginModal();
+        }
+    });
+
+    // ========================================================================
+    // Zoom keyboard shortcuts (+, -, 0)
+    // ========================================================================
+    document.addEventListener('keydown', (e) => {
+        if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'SELECT') {
+            if (e.key === '+' || e.key === '=') {
+                e.preventDefault();
+                zoomIn();
+            } else if (e.key === '-' || e.key === '_') {
+                e.preventDefault();
+                zoomOut();
+            } else if (e.key === '0') {
+                e.preventDefault();
+                zoomReset();
+            }
+        }
+    });
+
+
+    // Share banner event listeners
     const shareDismissBtn = document.getElementById('share-dismiss-btn');
     const shareSaveBtn = document.getElementById('share-save-btn');
 
-    if (menuSignIn) menuSignIn.addEventListener('click', () => { closeMenu(); showLoginModal(); });
-    if (menuSignOut) menuSignOut.addEventListener('click', async () => {
-        closeMenu();
-        try { await signOut(); } catch (e) { showErrorModal('Sign Out Failed', e.message); }
-    });
     if (shareDismissBtn) shareDismissBtn.addEventListener('click', () => {
         const banner = document.getElementById('share-banner');
         if (banner) banner.style.display = 'none';
@@ -1935,14 +1927,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (shareViaFacebookBtn) shareViaFacebookBtn.addEventListener('click', shareViaFacebook);
 
     // Initialize auth (non-blocking — cloud features activate when ready)
-    // Use event delegation on parent — the link gets replaced by updateAuthUI
-    document.getElementById('auth-status')?.addEventListener('click', (e) => {
-        const link = e.target.closest('.auth-login-link');
-        if (link) {
-            e.preventDefault();
-            showLoginModal();
-        }
-    });
     onAuthStateChange(updateAuthUI);
     initAuth();
 
@@ -2018,11 +2002,22 @@ document.addEventListener('keydown', (e) => {
             return;
         }
 
-        // Then check if menu is open
-        const menuPanel = document.getElementById('menu-panel');
-        if (menuPanel && menuPanel.classList.contains('open')) {
+        // Check app menu overlay
+        const appMenuOverlay = document.getElementById('app-menu-overlay');
+        if (appMenuOverlay && appMenuOverlay.classList.contains('open')) {
             e.preventDefault();
             closeMenu();
+            return;
+        }
+
+        // Check mobile params drawer
+        const controlsPanel = document.getElementById('controls-panel');
+        const paramsDrawerOverlay = document.getElementById('params-drawer-overlay');
+        if (controlsPanel && controlsPanel.classList.contains('mobile-open')) {
+            e.preventDefault();
+            controlsPanel.classList.remove('mobile-open');
+            if (paramsDrawerOverlay) paramsDrawerOverlay.classList.remove('open');
+            document.body.style.overflow = '';
         }
     }
 });
