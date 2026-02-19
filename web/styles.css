@@ -1303,6 +1303,10 @@ input[type="checkbox"] {
     min-height: 26px;
 }
 
+.output-group:nth-child(even) {
+    background: rgba(0, 0, 0, 0.025);
+}
+
 .output-group:last-child {
     border-bottom: none;
 }
@@ -2555,7 +2559,8 @@ input[type="checkbox"] {
     background: var(--color-surface-alt, var(--color-gray-50));
 }
 
-[data-theme="dark"] .param-group:nth-child(even) {
+[data-theme="dark"] .param-group:nth-child(even),
+[data-theme="dark"] .output-group:nth-child(even) {
     background: rgba(255, 255, 255, 0.03);
 }
 
