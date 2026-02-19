@@ -599,7 +599,7 @@ input[type="range"] {
     flex-shrink: 0;
 }
 
-input[type="text"] {
+.param-group input[type="text"] {
     width: 140px;
     padding: 2px 6px;
     border: 1px solid var(--color-gray-300);
