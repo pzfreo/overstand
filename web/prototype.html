@@ -1,0 +1,1232 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Overstand — UI Prototype</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================
+   CSS Custom Properties
+   ============================================ */
+:root {
+  /* Brand */
+  --color-primary: #6366f1;
+  --color-primary-light: #818cf8;
+  --color-primary-dark: #4f46e5;
+  --color-primary-rgb: 99, 102, 241;
+
+  /* Semantic */
+  --color-success: #10b981;
+  --color-error: #ef4444;
+  --color-warning: #f59e0b;
+
+  /* Surfaces */
+  --color-bg: #f8fafc;
+  --color-surface: #ffffff;
+  --color-surface-alt: #f1f5f9;
+
+  /* Text */
+  --color-text: #0f172a;
+  --color-text-secondary: #475569;
+  --color-text-muted: #94a3b8;
+
+  /* Borders */
+  --color-border: #e2e8f0;
+  --color-border-light: #f1f5f9;
+
+  /* Grays */
+  --color-gray-50: #f8fafc;
+  --color-gray-100: #f1f5f9;
+  --color-gray-200: #e2e8f0;
+  --color-gray-300: #cbd5e1;
+  --color-gray-400: #94a3b8;
+  --color-gray-500: #64748b;
+  --color-gray-600: #475569;
+  --color-gray-700: #334155;
+  --color-gray-800: #1e293b;
+  --color-gray-900: #0f172a;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+
+  /* Radii */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+
+  /* Spacing */
+  --space-xs: 0.5rem;
+  --space-sm: 0.75rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+
+  /* Layout */
+  --toolbar-height: 52px;
+  --params-width: 400px;
+}
+
+/* ============================================
+   Dark Theme
+   ============================================ */
+[data-theme="dark"] {
+  --color-bg: #0f172a;
+  --color-surface: #1e293b;
+  --color-surface-alt: #1a2332;
+  --color-text: #e2e8f0;
+  --color-text-secondary: #94a3b8;
+  --color-text-muted: #64748b;
+  --color-border: #334155;
+  --color-border-light: #1e293b;
+  --color-primary: #818cf8;
+  --color-primary-light: #a5b4fc;
+  --color-primary-dark: #6366f1;
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.2);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.2);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.3), 0 4px 6px -4px rgb(0 0 0 / 0.2);
+}
+
+/* ============================================
+   Reset & Base
+   ============================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
+  line-height: 1.5;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+button { font-family: inherit; cursor: pointer; border: none; background: none; }
+select, input { font-family: inherit; }
+
+/* ============================================
+   Top Toolbar
+   ============================================ */
+.toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  height: var(--toolbar-height);
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  padding: 0 var(--space-md);
+  gap: var(--space-sm);
+  box-shadow: var(--shadow-sm);
+}
+
+.toolbar-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-weight: 700;
+  font-size: 1.15rem;
+  color: var(--color-primary);
+  letter-spacing: -0.025em;
+  margin-right: var(--space-md);
+  flex-shrink: 0;
+}
+
+.toolbar-brand svg {
+  width: 28px;
+  height: 28px;
+}
+
+.toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.toolbar-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  border-radius: var(--radius-md);
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.toolbar-btn:hover {
+  background: var(--color-surface-alt);
+  color: var(--color-text);
+}
+
+.toolbar-btn .icon { font-size: 1.05rem; }
+
+.toolbar-btn.btn-primary {
+  background: var(--color-primary);
+  color: white;
+}
+.toolbar-btn.btn-primary:hover {
+  background: var(--color-primary-dark);
+  color: white;
+}
+
+.toolbar-spacer { flex: 1; }
+
+.toolbar-divider {
+  width: 1px;
+  height: 24px;
+  background: var(--color-border);
+  margin: 0 0.25rem;
+  flex-shrink: 0;
+}
+
+/* Hamburger */
+.toolbar-hamburger {
+  display: none;
+  width: 40px;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  color: var(--color-text-secondary);
+  border-radius: var(--radius-md);
+  margin-left: auto;
+}
+.toolbar-hamburger:hover { background: var(--color-surface-alt); }
+
+/* ============================================
+   Status Bar
+   ============================================ */
+.status-bar {
+  background: var(--color-surface-alt);
+  border-bottom: 1px solid var(--color-border);
+  padding: 0.3rem var(--space-md);
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.status-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--color-success);
+  margin-right: 0.3rem;
+}
+
+/* ============================================
+   Main Layout
+   ============================================ */
+.app-layout {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+/* ============================================
+   Params Panel
+   ============================================ */
+.params-panel {
+  width: var(--params-width);
+  flex-shrink: 0;
+  background: var(--color-surface);
+  border-right: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: width 0.25s ease, margin-left 0.25s ease;
+}
+
+.params-panel.collapsed {
+  width: 0;
+  margin-left: 0;
+  border-right: none;
+}
+.params-panel.collapsed .params-content {
+  display: none;
+}
+
+.params-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-sm) var(--space-md);
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.params-header h2 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-text);
+  letter-spacing: -0.01em;
+}
+
+.params-collapse-btn {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  transition: all 0.15s;
+}
+.params-collapse-btn:hover {
+  background: var(--color-surface-alt);
+  color: var(--color-text);
+}
+
+/* Core metrics */
+.core-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+  padding: var(--space-sm) var(--space-md);
+  background: linear-gradient(135deg, var(--color-primary-dark), var(--color-primary));
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.metric-card {
+  background: rgba(255,255,255,0.12);
+  backdrop-filter: blur(8px);
+  border-radius: var(--radius-sm);
+  padding: 0.4rem 0.5rem;
+  text-align: center;
+}
+.metric-card .metric-value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: white;
+  font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+}
+.metric-card .metric-label {
+  font-size: 0.65rem;
+  color: rgba(255,255,255,0.7);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* Parameter content (scrollable) */
+.params-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-sm) var(--space-md) var(--space-xl);
+}
+
+.param-section {
+  margin-bottom: var(--space-md);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.param-section-title {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-primary);
+  padding: 0.6rem var(--space-sm);
+  background: var(--color-surface-alt);
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.param-section-title::before {
+  content: '';
+  width: 3px;
+  height: 14px;
+  background: var(--color-primary);
+  border-radius: 2px;
+}
+
+.param-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem var(--space-sm);
+  border-bottom: 1px solid var(--color-border-light);
+}
+.param-row:last-child { border-bottom: none; }
+
+.param-label {
+  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+}
+
+.param-input {
+  width: 100px;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  background: var(--color-surface);
+  color: var(--color-text);
+  text-align: right;
+}
+.param-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb), 0.15);
+}
+
+.param-select {
+  width: 140px;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.param-checkbox {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--color-primary);
+}
+
+.param-output {
+  background: rgba(var(--color-primary-rgb), 0.05);
+  border-left: 3px solid var(--color-primary-light);
+}
+.param-output .param-value {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+}
+
+.param-unit {
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+  min-width: 22px;
+}
+
+/* Collapsible sections */
+.section-toggle { cursor: pointer; user-select: none; }
+.section-toggle:hover { filter: brightness(1.1); }
+.section-chevron {
+  float: right;
+  font-size: 0.65rem;
+  color: var(--color-text-muted);
+  transition: transform 0.2s;
+}
+.section-chevron.expanded { transform: rotate(90deg); }
+
+/* Primary metric (larger) */
+.metric-primary .metric-value { font-size: 1.15rem; }
+.metric-primary .metric-label { font-weight: 500; }
+
+/* ============================================
+   Preview Panel
+   ============================================ */
+.preview-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--color-bg);
+  min-width: 0;
+}
+
+.view-tabs {
+  display: flex;
+  gap: 0.25rem;
+  padding: var(--space-xs) var(--space-md);
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+  overflow-x: auto;
+}
+
+.view-tab {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  border-radius: var(--radius-md);
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.view-tab:hover {
+  color: var(--color-text-secondary);
+  background: var(--color-surface-alt);
+}
+.view-tab.active {
+  background: var(--color-surface);
+  color: var(--color-primary);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-border);
+}
+
+.view-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.35rem;
+  padding: 0.4rem var(--space-md);
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.view-tool-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  transition: all 0.15s;
+}
+.view-tool-btn:hover {
+  background: var(--color-surface-alt);
+  color: var(--color-primary);
+}
+
+.preview-canvas {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-lg);
+  overflow: auto;
+}
+
+.preview-canvas svg {
+  max-width: 100%;
+  max-height: 100%;
+}
+
+/* Expand params button (visible when collapsed) */
+.expand-params-btn {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 48px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-left: none;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  z-index: 10;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+.params-panel.collapsed ~ .preview-panel .expand-params-btn {
+  opacity: 1;
+  pointer-events: auto;
+}
+.preview-panel { position: relative; }
+
+/* ============================================
+   Footer
+   ============================================ */
+footer {
+  padding: 0.5rem var(--space-md);
+  text-align: center;
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+footer a {
+  color: var(--color-text-muted);
+  text-decoration: underline;
+}
+
+/* ============================================
+   Toast
+   ============================================ */
+.toast {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: var(--color-gray-800);
+  color: white;
+  padding: 0.6rem 1.2rem;
+  border-radius: var(--radius-lg);
+  font-size: 0.8rem;
+  font-weight: 500;
+  box-shadow: var(--shadow-lg);
+  z-index: 1000;
+  opacity: 0;
+  transition: all 0.3s ease;
+  pointer-events: none;
+}
+.toast.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+
+/* ============================================
+   Mobile Menu Overlay
+   ============================================ */
+.mobile-menu-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(0,0,0,0.4);
+}
+.mobile-menu-overlay.open { display: block; }
+
+.mobile-menu {
+  position: absolute;
+  top: var(--toolbar-height);
+  right: 0;
+  width: 260px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 0 0 0 var(--radius-lg);
+  box-shadow: var(--shadow-xl);
+  padding: var(--space-xs) 0;
+}
+
+.mobile-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.7rem var(--space-md);
+  font-size: 0.9rem;
+  color: var(--color-text);
+  transition: background 0.1s;
+}
+.mobile-menu-item:hover { background: var(--color-surface-alt); }
+.mobile-menu-item .icon { font-size: 1.1rem; width: 1.4rem; text-align: center; }
+.mobile-menu-sep {
+  height: 1px;
+  background: var(--color-border);
+  margin: var(--space-xs) 0;
+}
+
+/* ============================================
+   Mobile Params Drawer
+   ============================================ */
+.params-drawer-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 150;
+  background: rgba(0,0,0,0.4);
+}
+.params-drawer-overlay.open { display: block; }
+
+/* ============================================
+   Responsive: Tablet (768–1024px)
+   ============================================ */
+@media (max-width: 1024px) {
+  .toolbar-btn .label { display: none; }
+  .toolbar-btn { padding: 0.4rem 0.5rem; }
+  .toolbar-divider { display: none; }
+
+  :root { --params-width: 340px; }
+}
+
+/* ============================================
+   Responsive: Mobile (<768px)
+   ============================================ */
+@media (max-width: 767px) {
+  .toolbar-actions { display: none; }
+  .toolbar-hamburger { display: flex; }
+
+  /* Params becomes a left drawer */
+  .params-panel {
+    position: fixed;
+    top: var(--toolbar-height);
+    left: 0;
+    bottom: 0;
+    width: min(85vw, 380px);
+    z-index: 160;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    box-shadow: none;
+  }
+  .params-panel.mobile-open {
+    transform: translateX(0);
+    box-shadow: var(--shadow-xl);
+  }
+  .params-panel.collapsed {
+    width: min(85vw, 380px);
+    transform: translateX(-100%);
+  }
+  .params-panel.collapsed.mobile-open {
+    transform: translateX(0);
+  }
+  .params-panel.collapsed .params-content { display: block; }
+
+  .params-collapse-btn { display: none; }
+  .expand-params-btn { display: none !important; }
+
+  /* Add params toggle to status bar area */
+  .mobile-params-toggle {
+    display: flex;
+  }
+
+  .preview-canvas { padding: var(--space-sm); }
+}
+
+@media (min-width: 768px) {
+  .mobile-params-toggle { display: none !important; }
+}
+
+/* ============================================
+   Scrollbar styling
+   ============================================ */
+.params-content::-webkit-scrollbar { width: 5px; }
+.params-content::-webkit-scrollbar-track { background: transparent; }
+.params-content::-webkit-scrollbar-thumb {
+  background: var(--color-gray-300);
+  border-radius: 3px;
+}
+[data-theme="dark"] .params-content::-webkit-scrollbar-thumb {
+  background: var(--color-gray-600);
+}
+</style>
+</head>
+<body>
+
+<!-- ============================================
+     Toolbar
+     ============================================ -->
+<nav class="toolbar">
+  <div class="toolbar-brand">
+    <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+      <rect width="32" height="32" rx="6" fill="#4F46E5"/>
+      <text x="16" y="16" font-family="Arial Black, Helvetica Bold, sans-serif" font-weight="900" font-size="17" fill="white" text-anchor="middle" dominant-baseline="central">OS</text>
+    </svg>
+    Overstand
+  </div>
+
+  <div class="toolbar-actions">
+    <button class="toolbar-btn mobile-params-toggle" onclick="toggleMobileParams()" title="Parameters">
+      <span class="icon">⚙️</span><span class="label">Parameters</span>
+    </button>
+    <div class="toolbar-divider"></div>
+    <button class="toolbar-btn" onclick="showToast('New — choose a default profile')" title="New">
+      <span class="icon">✨</span><span class="label">New</span>
+    </button>
+    <button class="toolbar-btn" onclick="showToast('Load Profile — not connected')" title="Load Profile">
+      <span class="icon">📂</span><span class="label">Load</span>
+    </button>
+    <button class="toolbar-btn" onclick="showToast('Save — not connected')" title="Save">
+      <span class="icon">💾</span><span class="label">Save</span>
+    </button>
+    <div class="toolbar-divider"></div>
+    <button class="toolbar-btn" onclick="showToast('Import from File — not connected')" title="Import from File">
+      <span class="icon">📥</span><span class="label">Import</span>
+    </button>
+    <button class="toolbar-btn" onclick="showToast('Export to File — not connected')" title="Export to File">
+      <span class="icon">📤</span><span class="label">Export</span>
+    </button>
+    <div class="toolbar-divider"></div>
+    <button class="toolbar-btn" onclick="showToast('Download SVG — not connected')" title="Download SVG">
+      <span class="icon">⬇️</span><span class="label">Download</span>
+    </button>
+    <button class="toolbar-btn" onclick="showToast('Share — not connected')" title="Share">
+      <span class="icon">🔗</span><span class="label">Share</span>
+    </button>
+    <div class="toolbar-spacer"></div>
+    <button class="toolbar-btn" id="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+      <span class="icon">☀️</span>
+    </button>
+    <div class="toolbar-divider"></div>
+    <button class="toolbar-btn btn-primary" onclick="showToast('Sign In — not connected')">
+      Sign In
+    </button>
+  </div>
+
+  <button class="toolbar-hamburger" onclick="toggleMobileMenu()" title="Menu">☰</button>
+</nav>
+
+<!-- Status Bar -->
+<div class="status-bar">
+  <span><span class="status-dot"></span>Ready</span>
+  <span>Violin — Default Profile</span>
+  <span style="margin-left: auto;">Prototype only — no real functionality</span>
+</div>
+
+<!-- ============================================
+     Main Layout
+     ============================================ -->
+<main class="app-layout">
+
+  <!-- Params Panel -->
+  <aside class="params-panel" id="params-panel">
+    <div class="params-header">
+      <h2>Parameters</h2>
+      <button class="params-collapse-btn" onclick="toggleParams()" title="Collapse parameters">◀</button>
+    </div>
+
+    <!-- Key Measurements (from KEY_MEASUREMENTS config) -->
+    <div class="core-metrics">
+      <div class="metric-card metric-primary">
+        <div class="metric-value">5.2°</div>
+        <div class="metric-label">Neck Angle</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value">130.0</div>
+        <div class="metric-label">Neck Stop</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value">18.1</div>
+        <div class="metric-label">Nut to Ribs</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value">158.3°</div>
+        <div class="metric-label">Break Angle</div>
+      </div>
+    </div>
+
+    <div class="params-content">
+
+      <!-- Section 1: Instrument Identity -->
+      <div class="param-section">
+        <div class="param-section-title">🎻 Instrument Identity</div>
+        <div class="param-row">
+          <span class="param-label">Instrument Name</span>
+          <input class="param-input" type="text" value="My Instrument" style="width:140px;text-align:left">
+        </div>
+        <div class="param-row">
+          <span class="param-label">Instrument Family</span>
+          <select class="param-select">
+            <option>Violin Family (Body Stop Driven)</option>
+            <option>Viol Family (Body Stop Driven)</option>
+            <option>Guitar/Mandolin Family (Fret Join Driven)</option>
+          </select>
+        </div>
+        <div class="param-row">
+          <span class="param-label">Vibrating String Length</span>
+          <input class="param-input" type="number" value="325" step="0.5" min="10" max="1000"> <span class="param-unit">mm</span>
+        </div>
+      </div>
+
+      <!-- Section 2: Body & Bridge -->
+      <div class="param-section">
+        <div class="param-section-title">📐 Body &amp; Bridge</div>
+        <div class="param-row">
+          <span class="param-label">Body Length</span>
+          <input class="param-input" type="number" value="355" step="1" min="10" max="1000"> <span class="param-unit">mm</span>
+        </div>
+        <div class="param-row">
+          <span class="param-label">Overstand</span>
+          <input class="param-input" type="number" value="12" step="0.1" min="0" max="100"> <span class="param-unit">mm</span>
+        </div>
+        <div class="param-row">
+          <span class="param-label">Bridge Height</span>
+          <input class="param-input" type="number" value="33" step="0.1" min="0" max="100"> <span class="param-unit">mm</span>
+        </div>
+        <div class="param-row">
+          <span class="param-label">Arching Height</span>
+          <input class="param-input" type="number" value="15" step="0.1" min="0" max="100"> <span class="param-unit">mm</span>
+        </div>
+        <div class="param-row">
+          <span class="param-label">Body Stop</span>
+          <input class="param-input" type="number" value="195" step="0.1" min="10" max="500"> <span class="param-unit">mm</span>
+        </div>
+      </div>
+
+      <!-- Section 3: String Action -->
+      <div class="param-section">
+        <div class="param-section-title">🎼 String Action</div>
+        <div class="param-row">
+          <span class="param-label">String height at nut</span>
+          <input class="param-input" type="number" value="0.6" step="0.1" min="0" max="10"> <span class="param-unit">mm</span>
+        </div>
+        <div class="param-row">
+          <span class="param-label">String height at end of fb</span>
+          <input class="param-input" type="number" value="4" step="0.1" min="0" max="10"> <span class="param-unit">mm</span>
+        </div>
+      </div>
+
+      <!-- Section 5: Fingerboard (collapsed by default) -->
+      <div class="param-section collapsed-section">
+        <div class="param-section-title section-toggle" onclick="toggleSection(this)">🎯 Fingerboard <span class="section-chevron">▶</span></div>
+        <div class="section-body" style="display:none">
+          <div class="param-row">
+            <span class="param-label">Fingerboard Length</span>
+            <input class="param-input" type="number" value="270" step="1" min="20" max="1000"> <span class="param-unit">mm</span>
+          </div>
+          <div class="param-row">
+            <span class="param-label">Fingerboard Radius</span>
+            <input class="param-input" type="number" value="41" step="1" min="20" max="1000"> <span class="param-unit">mm</span>
+          </div>
+          <div class="param-row">
+            <span class="param-label">Width at Nut</span>
+            <input class="param-input" type="number" value="24" step="0.1" min="10" max="100"> <span class="param-unit">mm</span>
+          </div>
+          <div class="param-row">
+            <span class="param-label">Fingerboard width at end</span>
+            <input class="param-input" type="number" value="30" step="0.1" min="10" max="100"> <span class="param-unit">mm</span>
+          </div>
+          <div class="param-row">
+            <span class="param-label">FB visible height at nut</span>
+            <input class="param-input" type="number" value="4" step="0.1" min="0" max="100"> <span class="param-unit">mm</span>
+          </div>
+          <div class="param-row">
+            <span class="param-label">FB visible height at body join</span>
+            <input class="param-input" type="number" value="6" step="0.1" min="0" max="100"> <span class="param-unit">mm</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 6: Cross-Section: Neck (collapsed) -->
+      <div class="param-section collapsed-section">
+        <div class="param-section-title section-toggle" onclick="toggleSection(this)">📏 Cross-Section: Neck <span class="section-chevron">▶</span></div>
+        <div class="section-body" style="display:none">
+          <div class="param-row">
+            <span class="param-label">Button Width at Join</span>
+            <input class="param-input" type="number" value="28" step="0.5" min="15" max="100"> <span class="param-unit">mm</span>
+          </div>
+          <div class="param-row">
+            <span class="param-label">Neck Width at Top of Ribs</span>
+            <input class="param-input" type="number" value="30" step="0.5" min="15" max="80"> <span class="param-unit">mm</span>
+          </div>
+          <div class="param-row">
+            <span class="param-label">Fingerboard Blend %</span>
+            <input class="param-input" type="number" value="0" step="5" min="0" max="100"> <span class="param-unit">%</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 8: Advanced Geometry (collapsed) -->
+      <div class="param-section collapsed-section">
+        <div class="param-section-title section-toggle" onclick="toggleSection(this)">⚙️ Advanced Geometry <span class="section-chevron">▶</span></div>
+        <div class="section-body" style="display:none">
+          <div class="param-row">
+            <span class="param-label">Rib Height</span>
+            <input class="param-input" type="number" value="30" step="0.5" min="10" max="500"> <span class="param-unit">mm</span>
+          </div>
+          <div class="param-row">
+            <span class="param-label">Belly Edge Thickness</span>
+            <input class="param-input" type="number" value="3.5" step="0.1" min="0" max="10"> <span class="param-unit">mm</span>
+          </div>
+          <div class="param-row">
+            <span class="param-label">Tailpiece Height</span>
+            <input class="param-input" type="number" value="0" step="0.1" min="0" max="100"> <span class="param-unit">mm</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 9: Display Options (collapsed) -->
+      <div class="param-section collapsed-section">
+        <div class="param-section-title section-toggle" onclick="toggleSection(this)">👁️ Display Options <span class="section-chevron">▶</span></div>
+        <div class="section-body" style="display:none">
+          <div class="param-row">
+            <span class="param-label">Show Measurements</span>
+            <label style="display:flex;align-items:center;gap:0.4rem">
+              <input class="param-checkbox" type="checkbox" checked>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Output Section: Core Measurements -->
+      <div class="param-section">
+        <div class="param-section-title">📊 Core Measurements</div>
+        <div class="param-row param-output">
+          <span class="param-label">Neck Angle</span>
+          <span class="param-value">5.2°</span>
+        </div>
+        <div class="param-row param-output">
+          <span class="param-label">Neck Stop</span>
+          <span class="param-value">130.0 mm</span>
+        </div>
+        <div class="param-row param-output">
+          <span class="param-label">Body Stop</span>
+          <span class="param-value">195.0 mm</span>
+        </div>
+        <div class="param-row param-output">
+          <span class="param-label">Nut Relative to Ribs</span>
+          <span class="param-value">18.1 mm</span>
+        </div>
+        <div class="param-row param-output">
+          <span class="param-label">String Break Angle</span>
+          <span class="param-value">158.3°</span>
+        </div>
+        <div class="param-row param-output">
+          <span class="param-label">Downward Force %</span>
+          <span class="param-value">18.8%</span>
+        </div>
+        <div class="param-row param-output">
+          <span class="param-label">Total FB Thickness at Nut</span>
+          <span class="param-value">5.1 mm</span>
+        </div>
+        <div class="param-row param-output">
+          <span class="param-label">Total FB Thickness at Join</span>
+          <span class="param-value">7.3 mm</span>
+        </div>
+        <div class="param-row param-output">
+          <span class="param-label">Neck Block Max Width</span>
+          <span class="param-value">27.2 mm</span>
+        </div>
+      </div>
+
+      <!-- Output Section: Detailed Calculations (collapsed) -->
+      <div class="param-section collapsed-section">
+        <div class="param-section-title section-toggle" onclick="toggleSection(this)">🔬 Detailed Calculations <span class="section-chevron">▶</span></div>
+        <div class="section-body" style="display:none">
+          <div class="param-row param-output">
+            <span class="param-label">String Angle to Ribs</span>
+            <span class="param-value">5.2°</span>
+          </div>
+          <div class="param-row param-output">
+            <span class="param-label">Afterlength Angle</span>
+            <span class="param-value">11.4°</span>
+          </div>
+          <div class="param-row param-output">
+            <span class="param-label">Neck Line Angle</span>
+            <span class="param-value">4.8°</span>
+          </div>
+          <div class="param-row param-output">
+            <span class="param-label">FB Direction Angle</span>
+            <span class="param-value">4.6°</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </aside>
+
+  <!-- Preview Panel -->
+  <section class="preview-panel">
+    <button class="expand-params-btn" onclick="toggleParams()" title="Show parameters">▶</button>
+
+    <div class="view-tabs">
+      <button class="view-tab active">Side View</button>
+      <button class="view-tab" onclick="switchTab(this)">Cross-Section</button>
+      <button class="view-tab" onclick="switchTab(this)">Dimensions</button>
+      <button class="view-tab" onclick="switchTab(this)">Fingerboard</button>
+      <button class="view-tab" onclick="switchTab(this)">Nut Spacing</button>
+    </div>
+    <div class="view-toolbar">
+      <button class="view-tool-btn" onclick="showToast('Zoom In')" title="Zoom In">🔍+</button>
+      <button class="view-tool-btn" onclick="showToast('Zoom Out')" title="Zoom Out">🔍−</button>
+      <button class="view-tool-btn" onclick="showToast('Fit to View')" title="Fit">⊞</button>
+    </div>
+
+    <div class="preview-canvas">
+      <svg viewBox="0 0 600 300" width="600" height="300" xmlns="http://www.w3.org/2000/svg">
+        <!-- Placeholder neck side-view outline -->
+        <defs>
+          <linearGradient id="bg-grad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="var(--color-surface-alt, #f1f5f9)"/>
+            <stop offset="100%" stop-color="var(--color-bg, #f8fafc)"/>
+          </linearGradient>
+        </defs>
+        <rect width="600" height="300" fill="url(#bg-grad)" rx="8"/>
+
+        <!-- Simplified neck profile -->
+        <g transform="translate(80, 50)">
+          <!-- Body outline hint -->
+          <ellipse cx="400" cy="120" rx="80" ry="100" fill="none" stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="4"/>
+
+          <!-- Neck outline -->
+          <path d="M 0,100 C 50,98 150,92 250,80 L 350,70 L 370,65 L 380,70 L 380,130 L 370,140 L 350,140 L 250,130 C 150,120 50,112 0,110 Z"
+                fill="none" stroke="#6366f1" stroke-width="2"/>
+
+          <!-- Fingerboard -->
+          <path d="M 20,97 L 300,82 L 300,128 L 20,113 Z"
+                fill="rgba(99,102,241,0.08)" stroke="#818cf8" stroke-width="1"/>
+
+          <!-- Nut line -->
+          <line x1="20" y1="95" x2="20" y2="115" stroke="#6366f1" stroke-width="2.5"/>
+
+          <!-- Bridge position line -->
+          <line x1="350" y1="68" x2="350" y2="142" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3"/>
+
+          <!-- Dimension annotation -->
+          <line x1="20" y1="160" x2="350" y2="160" stroke="#94a3b8" stroke-width="0.75"/>
+          <line x1="20" y1="155" x2="20" y2="165" stroke="#94a3b8" stroke-width="0.75"/>
+          <line x1="350" y1="155" x2="350" y2="165" stroke="#94a3b8" stroke-width="0.75"/>
+          <text x="185" y="175" text-anchor="middle" font-size="11" fill="#64748b" font-family="Outfit, sans-serif">325 mm string length</text>
+
+          <!-- Labels -->
+          <text x="20" y="88" text-anchor="middle" font-size="9" fill="#6366f1" font-family="Outfit, sans-serif" font-weight="600">Nut</text>
+          <text x="350" y="58" text-anchor="middle" font-size="9" fill="#94a3b8" font-family="Outfit, sans-serif">Bridge</text>
+        </g>
+
+        <!-- Title -->
+        <text x="300" y="25" text-anchor="middle" font-size="13" fill="#64748b" font-family="Outfit, sans-serif" font-weight="500">Side View — Violin (prototype placeholder)</text>
+      </svg>
+    </div>
+  </section>
+</main>
+
+<!-- Footer -->
+<footer>
+  <a href="#">Privacy</a> · <a href="#">Terms</a> · Overstand Prototype v0.1
+</footer>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Mobile Menu Overlay -->
+<div class="mobile-menu-overlay" id="mobile-menu-overlay" onclick="closeMobileMenu()">
+  <div class="mobile-menu" onclick="event.stopPropagation()">
+    <button class="mobile-menu-item" onclick="toggleMobileParams(); closeMobileMenu()">
+      <span class="icon">⚙️</span> Parameters
+    </button>
+    <div class="mobile-menu-sep"></div>
+    <button class="mobile-menu-item" onclick="showToast('New — choose a default profile'); closeMobileMenu()">
+      <span class="icon">✨</span> New
+    </button>
+    <button class="mobile-menu-item" onclick="showToast('Load Profile'); closeMobileMenu()">
+      <span class="icon">📂</span> Load Profile
+    </button>
+    <button class="mobile-menu-item" onclick="showToast('Save'); closeMobileMenu()">
+      <span class="icon">💾</span> Save
+    </button>
+    <div class="mobile-menu-sep"></div>
+    <button class="mobile-menu-item" onclick="showToast('Import from File'); closeMobileMenu()">
+      <span class="icon">📥</span> Import from File
+    </button>
+    <button class="mobile-menu-item" onclick="showToast('Export to File'); closeMobileMenu()">
+      <span class="icon">📤</span> Export to File
+    </button>
+    <div class="mobile-menu-sep"></div>
+    <button class="mobile-menu-item" onclick="showToast('Download SVG'); closeMobileMenu()">
+      <span class="icon">⬇️</span> Download SVG
+    </button>
+    <button class="mobile-menu-item" onclick="showToast('Share'); closeMobileMenu()">
+      <span class="icon">🔗</span> Share
+    </button>
+    <div class="mobile-menu-sep"></div>
+    <button class="mobile-menu-item" onclick="toggleTheme(); closeMobileMenu()">
+      <span class="icon" id="mobile-theme-icon">☀️</span> Toggle Theme
+    </button>
+    <div class="mobile-menu-sep"></div>
+    <button class="mobile-menu-item" onclick="showToast('Sign In'); closeMobileMenu()">
+      <span class="icon">👤</span> Sign In
+    </button>
+  </div>
+</div>
+
+<!-- Params Drawer Overlay (mobile) -->
+<div class="params-drawer-overlay" id="params-drawer-overlay" onclick="closeMobileParams()"></div>
+
+<script>
+/* ============================================
+   Theme Toggle
+   ============================================ */
+function toggleTheme() {
+  const html = document.documentElement;
+  const isDark = html.getAttribute('data-theme') === 'dark';
+  html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+  const icon = isDark ? '☀️' : '🌙';
+  document.getElementById('theme-toggle').querySelector('.icon').textContent = icon;
+  const mobileIcon = document.getElementById('mobile-theme-icon');
+  if (mobileIcon) mobileIcon.textContent = icon;
+}
+
+/* ============================================
+   Params Panel Toggle (desktop)
+   ============================================ */
+function toggleParams() {
+  const panel = document.getElementById('params-panel');
+  const btn = panel.querySelector('.params-collapse-btn');
+  panel.classList.toggle('collapsed');
+  btn.textContent = panel.classList.contains('collapsed') ? '▶' : '◀';
+}
+
+/* ============================================
+   Mobile Menu
+   ============================================ */
+function toggleMobileMenu() {
+  document.getElementById('mobile-menu-overlay').classList.toggle('open');
+}
+function closeMobileMenu() {
+  document.getElementById('mobile-menu-overlay').classList.remove('open');
+}
+
+/* ============================================
+   Mobile Params Drawer
+   ============================================ */
+function toggleMobileParams() {
+  const panel = document.getElementById('params-panel');
+  const overlay = document.getElementById('params-drawer-overlay');
+  const isOpen = panel.classList.contains('mobile-open');
+  if (isOpen) {
+    panel.classList.remove('mobile-open');
+    overlay.classList.remove('open');
+  } else {
+    panel.classList.add('mobile-open');
+    overlay.classList.add('open');
+  }
+}
+function closeMobileParams() {
+  document.getElementById('params-panel').classList.remove('mobile-open');
+  document.getElementById('params-drawer-overlay').classList.remove('open');
+}
+
+/* ============================================
+   Collapsible Parameter Sections
+   ============================================ */
+function toggleSection(titleEl) {
+  const body = titleEl.nextElementSibling;
+  const chevron = titleEl.querySelector('.section-chevron');
+  const isHidden = body.style.display === 'none';
+  body.style.display = isHidden ? '' : 'none';
+  chevron.classList.toggle('expanded', isHidden);
+}
+
+/* ============================================
+   View Tab Switching
+   ============================================ */
+function switchTab(el) {
+  document.querySelectorAll('.view-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  showToast('Switched to ' + el.textContent);
+}
+// Make first tab clickable too
+document.querySelector('.view-tab.active').addEventListener('click', function() {
+  switchTab(this);
+});
+
+/* ============================================
+   Toast Notification
+   ============================================ */
+let toastTimer;
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg + ' — not connected in prototype';
+  toast.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove('show'), 2000);
+}
+</script>
+</body>
+</html>
