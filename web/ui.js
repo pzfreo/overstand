@@ -480,34 +480,24 @@ export function displayCurrentView() {
         tab.classList.toggle('active', tab.dataset.view === state.currentView);
     });
 
-    // Manage download button visibility based on view
-    const svgBtn = document.getElementById('dl-svg');
-    const pdfBtn = document.getElementById('dl-pdf');
+    // Manage download button state based on view
+    const svgBtn = document.getElementById('toolbar-dl-svg');
+    const pdfBtn = document.getElementById('toolbar-dl-pdf');
+    const mmSvgBtn = document.getElementById('mm-dl-svg');
+    const mmPdfBtn = document.getElementById('mm-dl-pdf');
 
     if (state.currentView === 'dimensions' || state.currentView === 'fret_positions') {
         // For table views, disable SVG but enable PDF
-        if (svgBtn) {
-            svgBtn.style.display = 'block';
-            svgBtn.disabled = true;
-            svgBtn.style.opacity = '0.3';
-        }
-        if (pdfBtn) {
-            pdfBtn.style.display = 'block';
-            pdfBtn.disabled = false;
-            pdfBtn.style.opacity = '1';
-        }
+        if (svgBtn) { svgBtn.disabled = true; }
+        if (pdfBtn) { pdfBtn.disabled = false; }
+        if (mmSvgBtn) { mmSvgBtn.disabled = true; }
+        if (mmPdfBtn) { mmPdfBtn.disabled = false; }
     } else {
-        // For all SVG views (including radius_template), show both buttons enabled
-        if (svgBtn) {
-            svgBtn.style.display = 'block';
-            svgBtn.disabled = false;
-            svgBtn.style.opacity = '1';
-        }
-        if (pdfBtn) {
-            pdfBtn.style.display = 'block';
-            pdfBtn.disabled = false;
-            pdfBtn.style.opacity = '1';
-        }
+        // For all SVG views (including radius_template), enable both
+        if (svgBtn) { svgBtn.disabled = false; }
+        if (pdfBtn) { pdfBtn.disabled = false; }
+        if (mmSvgBtn) { mmSvgBtn.disabled = false; }
+        if (mmPdfBtn) { mmPdfBtn.disabled = false; }
     }
 }
 

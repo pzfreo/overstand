@@ -142,3 +142,54 @@ describe('Design decisions: user-facing terminology', () => {
         expect(indexSource).not.toMatch(/Import from JSON/i);
     });
 });
+
+describe('Design decisions: toolbar layout', () => {
+    test('index.html has a toolbar element', () => {
+        expect(indexSource).toMatch(/class="toolbar"/);
+        expect(indexSource).toMatch(/id="toolbar"/);
+    });
+
+    test('toolbar has brand with "Overstand" text', () => {
+        expect(indexSource).toMatch(/class="toolbar-brand"/);
+        expect(indexSource).toMatch(/Overstand/);
+    });
+
+    test('toolbar has hamburger for mobile', () => {
+        expect(indexSource).toMatch(/id="toolbar-hamburger"/);
+    });
+
+    test('download buttons are in toolbar (not preview panel)', () => {
+        expect(indexSource).toMatch(/id="toolbar-dl-svg"/);
+        expect(indexSource).toMatch(/id="toolbar-dl-pdf"/);
+    });
+
+    test('state.js references toolbar download button IDs', () => {
+        expect(stateSource).toMatch(/toolbar-dl-svg/);
+        expect(stateSource).toMatch(/toolbar-dl-pdf/);
+    });
+
+    test('params panel width is 400px in main grid', () => {
+        expect(stylesSource).toMatch(/grid-template-columns:\s*400px\s+1fr/);
+    });
+
+    test('no icon bar HTML remains', () => {
+        expect(indexSource).not.toMatch(/mobile-icon-bar/);
+        expect(indexSource).not.toMatch(/mobile-menu-toggle/);
+        expect(indexSource).not.toMatch(/mobile-params-toggle/);
+    });
+});
+
+describe('Design decisions: dark theme', () => {
+    test('CSS has dark theme overrides via data-theme attribute', () => {
+        expect(stylesSource).toMatch(/\[data-theme="dark"\]/);
+    });
+
+    test('index.html has data-theme attribute on html element', () => {
+        expect(indexSource).toMatch(/data-theme="light"/);
+    });
+
+    test('theme is read from localStorage before first paint', () => {
+        // The theme init script must appear in <head> before stylesheets load
+        expect(indexSource).toMatch(/overstand-theme/);
+    });
+});

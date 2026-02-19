@@ -73,16 +73,20 @@ body {
     background: linear-gradient(135deg, #f0f4ff 0%, #e0e7ff 100%);
     color: var(--color-gray-800);
     min-height: 100vh;
-    padding: 1rem 1rem 0 0; /* No left padding - icon bar handles it; no bottom padding - footer sits flush */
+    padding: 0;
     line-height: 1.5;
+    display: flex;
+    flex-direction: column;
 }
 
 .app-container {
     max-width: 1400px;
-    margin: 0 auto 0 56px; /* Account for 56px icon bar on left */
+    margin: 0 auto;
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 1rem); /* Account for body top padding only */
+    flex: 1;
+    min-height: 0;
+    width: 100%;
 }
 
 .app-footer {
@@ -116,43 +120,18 @@ h1 {
     text-shadow: none;
 }
 
-header {
-    color: var(--color-gray-900);
-    margin-bottom: 0.5rem;
-    padding: 0.25rem 0;
-}
-
-.header-content {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 1rem;
-}
-
-.header-text {
-    flex: 1;
-    text-align: center;
-}
-
-.subtitle {
-    display: none;
-    /* Hide subtitle to save space */
-}
-
 .status-bar {
-    background: var(--color-surface);
-    padding: 0.4rem 0.75rem;
-    border-radius: var(--radius-md);
-    margin-bottom: 0.5rem;
-    box-shadow: var(--shadow-sm);
+    background: var(--color-gray-50);
+    padding: 0.3rem 1rem;
+    border-bottom: 1px solid var(--color-gray-200);
     display: flex;
     align-items: center;
     gap: 0.5rem;
     transition: all 0.3s ease;
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     font-weight: 500;
-    border: 1px solid var(--color-gray-100);
-    min-height: 32px;
+    min-height: 28px;
+    color: var(--color-gray-500);
 }
 
 .status-bar.loading {
@@ -256,7 +235,7 @@ header {
     border-radius: var(--radius-xl);
     box-shadow: var(--shadow-xl);
     display: grid;
-    grid-template-columns: 500px 1fr;
+    grid-template-columns: 400px 1fr;
     gap: 0;
     overflow: hidden;
     flex: 1;
@@ -270,85 +249,7 @@ header {
     grid-template-columns: 0px 1fr;
 }
 
-/* ============================================
-   ICON BAR (Universal - Desktop & Mobile)
-   ============================================ */
-
-.mobile-icon-bar {
-    display: flex; /* Always visible on desktop and mobile */
-    position: fixed;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    width: 56px;
-    background: linear-gradient(135deg, var(--color-primary-dark) 0%, var(--color-primary) 100%);
-    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.15);
-    z-index: 1004;
-    flex-direction: column;
-    padding: 1rem 0;
-    gap: 0.5rem;
-}
-
-.mobile-icon-btn {
-    width: 48px;
-    height: 48px;
-    margin: 0 auto;
-    background: rgba(255, 255, 255, 0.1);
-    border: none;
-    border-radius: var(--radius-md);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    color: white;
-    font-size: 1.5rem;
-}
-
-.mobile-icon-btn:hover,
-.mobile-icon-btn:active {
-    background: rgba(255, 255, 255, 0.2);
-    transform: scale(1.05);
-}
-
-.mobile-icon-btn.active {
-    background: rgba(255, 255, 255, 0.3);
-}
-
-.icon-menu,
-.icon-edit {
-    line-height: 1;
-    user-select: none;
-}
-
-/* Close button inside sidebar (mobile only) */
-.mobile-close-btn {
-    display: none;
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
-    background: transparent;
-    border: none;
-    padding: 8px;
-    font-size: 1.5rem;
-    color: var(--color-gray-500);
-    cursor: pointer;
-    z-index: 11;
-    opacity: 0;
-    transition: all 0.3s ease;
-    width: 40px;
-    height: 40px;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-}
-
-.mobile-close-btn:hover {
-    color: var(--color-gray-900);
-    background: var(--color-gray-100);
-}
-
-/* Overlay for mobile sidebar */
+/* Overlay for sidebar/menu click-to-close */
 .sidebar-overlay {
     display: none;
     position: fixed;
@@ -356,21 +257,14 @@ header {
     left: 0;
     right: 0;
     bottom: 0;
-    background: transparent;  /* No overlay opacity on mobile */
-    /* backdrop-filter causes sidebar blur on mobile Firefox */
-    z-index: 1001;  /* Between app-container (0) and controls-panel (1002) */
-    opacity: 0;
-    visibility: hidden;
-    /* Overlay is purely visual - never blocks clicks */
+    background: transparent;
+    z-index: 1001;
     transition: opacity 0.3s ease, visibility 0.3s ease;
-    pointer-events: none !important;
 }
 
 .sidebar-overlay.active {
-    opacity: 1;
-    visibility: visible;
-    /* Keep pointer-events: none - let clicks pass through to panels */
-    pointer-events: none !important;
+    display: block;
+    pointer-events: auto;
 }
 
 @media (max-width: 1024px) {
@@ -378,34 +272,22 @@ header {
         position: relative;
         z-index: 0;
         padding: 0;
-        margin-left: 56px; /* Account for icon bar */
     }
 
-    body {
-        padding: 0;
-        background: var(--color-gray-50);
+    .main-container {
+        grid-template-columns: 340px 1fr;
     }
 
-    header {
-        background: white;
-        margin: 0;
-        padding: 1rem;
-        box-shadow: var(--shadow-sm);
-        position: sticky;
-        top: 0;
-        z-index: 1001;
+    .preview-panel {
+        width: 100%;
     }
 
-    .subtitle {
-        display: none;
+    .sticky-generate-section {
+        padding-top: 0.75rem;
     }
+}
 
-    h1 {
-        font-size: 1.25rem;
-        padding-left: 1rem; /* Standard padding */
-        text-align: left;
-    }
-
+@media (max-width: 767px) {
     .main-container {
         grid-template-columns: 1fr;
         max-height: none;
@@ -416,59 +298,55 @@ header {
         border: none;
     }
 
-    /* Hide desktop menu button on mobile */
-    .menu-btn {
-        display: none;
+    /* Controls-panel becomes a left drawer on mobile */
+    .controls-panel {
+        position: fixed !important;
+        top: 52px !important; /* Below toolbar */
+        left: 0 !important;
+        bottom: 0 !important;
+        width: min(85vw, 380px) !important;
+        max-width: 400px !important;
+        height: auto !important;
+        transform: translateX(-100%) !important;
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        z-index: 160 !important;
+        box-shadow: var(--shadow-xl) !important;
+        background: var(--color-surface) !important;
     }
 
-    /* Both controls-panel and menu-panel slide from left */
-    .controls-panel,
+    .controls-panel.mobile-open {
+        transform: translateX(0) !important;
+    }
+
+    /* Menu panel slides from left on mobile */
     .menu-panel {
         position: fixed !important;
         top: 0 !important;
-        left: 56px !important;
-        right: auto !important; /* Override desktop right: 0 */
+        left: 0 !important;
         bottom: 0 !important;
-        width: calc(100% - 56px) !important;
-        max-width: 400px !important;
-        height: auto !important; /* Override base height: 100% */
+        width: min(85vw, 320px) !important;
+        max-width: 320px !important;
+        height: auto !important;
         transform: translateX(-100%) !important;
         transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
         z-index: 1003 !important;
         box-shadow: var(--shadow-xl) !important;
         border-radius: 0 var(--radius-xl) var(--radius-xl) 0 !important;
-        background: var(--color-surface) !important; /* Bright white background on mobile */
+        background: var(--color-surface) !important;
     }
 
-    .controls-panel.mobile-open,
     .menu-panel.open {
         transform: translateX(0) !important;
-    }
-
-    .status-bar {
-        margin: 1rem;
-    }
-
-    .sidebar-overlay {
-        display: block;
-        left: 56px !important; /* Start after icon bar */
-        z-index: 1002 !important; /* Above app-container, below panels */
-    }
-
-    .sidebar-overlay.active {
-        /* Cover everything except icon bar */
-        left: 56px !important;
     }
 
     .preview-panel {
         width: 100%;
         height: 80vh;
-        /* Give reasonable height on mobile */
         min-height: 500px;
     }
 
-    .sticky-generate-section {
-        padding-top: 0.75rem; /* Standard padding */
+    .status-bar {
+        font-size: 0.7rem;
     }
 }
 
@@ -483,15 +361,21 @@ header {
 }
 
 /* Desktop-specific controls-panel behavior */
-@media (min-width: 1025px) {
+@media (min-width: 768px) {
     .controls-panel {
         position: relative;
-        width: 500px;
-        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: width 0.25s ease;
+        overflow: hidden;
     }
 
-    .controls-panel.collapsed {
-        transform: translateX(calc(-500px - 56px)); /* Slide under icon bar */
+    .main-container.params-collapsed .controls-panel {
+        width: 0;
+        border-right: none;
+        overflow: hidden;
+    }
+
+    .main-container.params-collapsed .controls-panel > * {
+        display: none;
     }
 }
 
@@ -1565,36 +1449,7 @@ input[type="checkbox"] {
    MENU SYSTEM
    ============================================ */
 
-.menu-btn {
-    /* Hide header menu button completely - use icon bar instead */
-    display: none !important;
-}
-
-.menu-btn:hover {
-    background: var(--color-gray-50);
-    border-color: var(--color-primary);
-    color: var(--color-primary);
-}
-
-.menu-icon {
-    font-size: 1.2rem;
-    line-height: 1;
-}
-
-.menu-label {
-    font-size: 0.85rem;
-}
-
-/* Hide menu label on mobile to save space */
-@media (max-width: 768px) {
-    .menu-label {
-        display: none;
-    }
-
-    .menu-btn {
-        padding: 0.5rem;
-    }
-}
+/* Menu button is no longer in header — menu is triggered from toolbar */
 
 /* Menu Panel - Desktop and Mobile: slides from left */
 .menu-panel {
@@ -1606,20 +1461,20 @@ input[type="checkbox"] {
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Desktop menu panel (slides from left, matching mobile) */
-@media (min-width: 1025px) {
+/* Desktop menu panel (slides from left) */
+@media (min-width: 768px) {
     .menu-panel {
-        left: 56px;  /* Start after icon bar */
+        left: 0;
         width: 320px;
         height: 100vh;
-        box-shadow: var(--shadow-xl);  /* Shadow on right side */
-        z-index: 1003;  /* Above overlay, same as controls-panel */
-        transform: translateX(-100%);  /* Hidden to the left */
-        border-radius: 0 var(--radius-xl) var(--radius-xl) 0;  /* Rounded right corners */
+        box-shadow: var(--shadow-xl);
+        z-index: 1003;
+        transform: translateX(-100%);
+        border-radius: 0 var(--radius-xl) var(--radius-xl) 0;
     }
 
     .menu-panel.open {
-        transform: translateX(0);  /* Slide into view */
+        transform: translateX(0);
     }
 }
 
@@ -1723,14 +1578,14 @@ input[type="checkbox"] {
     font-family: 'SF Mono', 'Monaco', monospace;
 }
 
-/* Menu Overlay (legacy - now using sidebar-overlay for unified behavior) */
+/* Menu Overlay */
 .menu-overlay {
     position: fixed;
     top: 0;
-    left: 56px;  /* Start after icon bar */
-    width: calc(100% - 56px);
+    left: 0;
+    width: 100%;
     height: 100%;
-    background: transparent;  /* No overlay opacity */
+    background: transparent;
     z-index: 1002;
     opacity: 0;
     pointer-events: none;
@@ -1739,7 +1594,7 @@ input[type="checkbox"] {
 
 .menu-overlay.active {
     opacity: 1;
-    pointer-events: all;  /* Allow clicking to close */
+    pointer-events: all;
 }
 
 @media (max-width: 768px) {
@@ -2677,4 +2532,398 @@ input[type="checkbox"] {
 
 .share-banner-dismiss:hover {
     color: var(--color-gray-800);
+}
+
+/* ============================================
+   TOP TOOLBAR
+   ============================================ */
+
+.toolbar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    height: 52px;
+    background: var(--color-surface);
+    border-bottom: 1px solid var(--color-gray-200);
+    display: flex;
+    align-items: center;
+    padding: 0 1rem;
+    gap: 0.75rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.toolbar-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 700;
+    font-size: 1.15rem;
+    color: var(--color-primary);
+    letter-spacing: -0.025em;
+    margin-right: 1rem;
+    flex-shrink: 0;
+}
+
+.toolbar-brand svg {
+    width: 28px;
+    height: 28px;
+}
+
+.toolbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex: 1;
+    min-width: 0;
+}
+
+.toolbar-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 0.75rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--color-gray-600);
+    border-radius: var(--radius-md);
+    border: none;
+    background: none;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+    flex-shrink: 0;
+    font-family: inherit;
+}
+
+.toolbar-btn:hover {
+    background: var(--color-gray-100);
+    color: var(--color-gray-900);
+}
+
+.toolbar-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.toolbar-btn:disabled:hover {
+    background: none;
+    color: var(--color-gray-600);
+}
+
+.toolbar-btn .icon {
+    font-size: 1.05rem;
+}
+
+.toolbar-btn.btn-primary {
+    background: var(--color-primary);
+    color: white;
+}
+
+.toolbar-btn.btn-primary:hover {
+    background: var(--color-primary-dark);
+    color: white;
+}
+
+.toolbar-spacer {
+    flex: 1;
+}
+
+.toolbar-divider {
+    width: 1px;
+    height: 24px;
+    background: var(--color-gray-200);
+    margin: 0 0.25rem;
+    flex-shrink: 0;
+}
+
+.toolbar-hamburger {
+    display: none;
+    width: 40px;
+    height: 40px;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    color: var(--color-gray-600);
+    border-radius: var(--radius-md);
+    border: none;
+    background: none;
+    cursor: pointer;
+    margin-left: auto;
+    font-family: inherit;
+}
+
+.toolbar-hamburger:hover {
+    background: var(--color-gray-100);
+}
+
+/* ============================================
+   PARAMS HEADER (collapse button)
+   ============================================ */
+
+.params-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--color-gray-200);
+    flex-shrink: 0;
+}
+
+.params-header h2 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--color-gray-800);
+    letter-spacing: -0.01em;
+    margin: 0;
+}
+
+.params-collapse-btn {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-sm);
+    color: var(--color-gray-400);
+    font-size: 0.85rem;
+    transition: all 0.15s;
+    border: none;
+    background: none;
+    cursor: pointer;
+}
+
+.params-collapse-btn:hover {
+    background: var(--color-gray-100);
+    color: var(--color-gray-800);
+}
+
+/* Expand params button (visible when params collapsed) */
+.expand-params-btn {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 24px;
+    height: 48px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-gray-200);
+    border-left: none;
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-gray-400);
+    font-size: 0.75rem;
+    cursor: pointer;
+    box-shadow: var(--shadow-sm);
+    z-index: 10;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+}
+
+.expand-params-btn:hover {
+    color: var(--color-gray-800);
+    background: var(--color-gray-50);
+}
+
+.main-container.params-collapsed .expand-params-btn {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* ============================================
+   DARK THEME
+   ============================================ */
+
+[data-theme="dark"] {
+    --color-primary: #818cf8;
+    --color-primary-light: #a5b4fc;
+    --color-primary-dark: #6366f1;
+    --color-primary-rgb: 129, 140, 248;
+
+    --color-gray-900: #e2e8f0;
+    --color-gray-800: #cbd5e1;
+    --color-gray-700: #94a3b8;
+    --color-gray-600: #64748b;
+    --color-gray-500: #475569;
+    --color-gray-400: #334155;
+    --color-gray-300: #1e293b;
+    --color-gray-200: #334155;
+    --color-gray-100: #1e293b;
+    --color-gray-50: #1a2332;
+
+    --color-surface: #1e293b;
+    --color-surface-glass: rgba(30, 41, 59, 0.9);
+
+    --color-success-light: rgba(16, 185, 129, 0.15);
+    --color-error-light: rgba(239, 68, 68, 0.15);
+    --color-warning-light: rgba(245, 158, 11, 0.15);
+    --color-blue-light: rgba(59, 130, 246, 0.15);
+
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.2);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.2);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.3), 0 4px 6px -4px rgb(0 0 0 / 0.2);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.3), 0 8px 10px -6px rgb(0 0 0 / 0.2);
+}
+
+[data-theme="dark"] body {
+    background: #0f172a;
+}
+
+[data-theme="dark"] .toolbar {
+    border-bottom-color: var(--color-gray-200);
+}
+
+[data-theme="dark"] .core-metrics-panel {
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+}
+
+[data-theme="dark"] .menu-header {
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+}
+
+[data-theme="dark"] .modal-header {
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+}
+
+[data-theme="dark"] input[type="number"],
+[data-theme="dark"] input[type="text"],
+[data-theme="dark"] select {
+    background: var(--color-gray-50);
+    color: var(--color-gray-900);
+    border-color: var(--color-gray-200);
+}
+
+[data-theme="dark"] .accordion-header {
+    background: linear-gradient(to right, var(--color-gray-50), var(--color-surface));
+}
+
+[data-theme="dark"] .category-section {
+    background: var(--color-surface);
+}
+
+/* ============================================
+   MOBILE MENU OVERLAY (hamburger menu)
+   ============================================ */
+
+.mobile-menu-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    background: rgba(0, 0, 0, 0.4);
+}
+
+.mobile-menu-overlay.open {
+    display: block;
+}
+
+.mobile-menu {
+    position: absolute;
+    top: 52px;
+    right: 0;
+    width: 260px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-gray-200);
+    border-radius: 0 0 0 var(--radius-lg);
+    box-shadow: var(--shadow-xl);
+    padding: 0.5rem 0;
+}
+
+.mobile-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    width: 100%;
+    padding: 0.7rem 1rem;
+    font-size: 0.9rem;
+    color: var(--color-gray-800);
+    border: none;
+    background: none;
+    cursor: pointer;
+    transition: background 0.1s;
+    font-family: inherit;
+    text-align: left;
+}
+
+.mobile-menu-item:hover {
+    background: var(--color-gray-100);
+}
+
+.mobile-menu-item:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.mobile-menu-item:disabled:hover {
+    background: none;
+}
+
+.mobile-menu-item .icon {
+    font-size: 1.1rem;
+    width: 1.4rem;
+    text-align: center;
+}
+
+.mobile-menu-sep {
+    height: 1px;
+    background: var(--color-gray-200);
+    margin: 0.5rem 0;
+}
+
+/* ============================================
+   PARAMS DRAWER OVERLAY (mobile)
+   ============================================ */
+
+.params-drawer-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 150;
+    background: rgba(0, 0, 0, 0.4);
+}
+
+.params-drawer-overlay.open {
+    display: block;
+}
+
+/* ============================================
+   TOOLBAR RESPONSIVE: Tablet (<=1024px)
+   ============================================ */
+
+@media (max-width: 1024px) {
+    .toolbar-btn .label {
+        display: none;
+    }
+
+    .toolbar-btn {
+        padding: 0.4rem 0.5rem;
+    }
+
+    .toolbar-divider {
+        display: none;
+    }
+}
+
+/* ============================================
+   TOOLBAR RESPONSIVE: Mobile (<768px)
+   ============================================ */
+
+@media (max-width: 767px) {
+    .toolbar-actions {
+        display: none;
+    }
+
+    .toolbar-hamburger {
+        display: flex;
+    }
+
+    .params-collapse-btn {
+        display: none;
+    }
+
+    .expand-params-btn {
+        display: none !important;
+    }
 }

@@ -634,8 +634,10 @@ function handleLoadParameters(event) {
 function openMenu() {
     const menuPanel = document.getElementById('menu-panel');
     const menuOverlay = document.getElementById('menu-overlay');
+    const sidebarOverlay = document.getElementById('sidebar-overlay');
     menuPanel.classList.add('open');
     menuOverlay.classList.add('active');
+    if (sidebarOverlay) sidebarOverlay.classList.add('active');
     document.body.style.overflow = 'hidden';
 }
 
@@ -643,6 +645,9 @@ function closeMenu() {
     const menuPanel = document.getElementById('menu-panel');
     if (menuPanel) menuPanel.classList.remove('open');
     closeOverlay('menu-overlay');
+    const sidebarOverlay = document.getElementById('sidebar-overlay');
+    if (sidebarOverlay) sidebarOverlay.classList.remove('active');
+    document.body.style.overflow = '';
 }
 
 // Modal Dialog Functions - imported from modal.js
@@ -808,18 +813,43 @@ function updateAuthUI(user) {
     const menuShare = document.getElementById('menu-share');
     const menuPublish = document.getElementById('menu-publish');
 
+    // Toolbar buttons
+    const toolbarSave = document.getElementById('toolbar-save');
+    const toolbarShare = document.getElementById('toolbar-share');
+    const toolbarAuth = document.getElementById('toolbar-auth');
+    // Mobile menu buttons
+    const mmSave = document.getElementById('mm-save');
+    const mmShare = document.getElementById('mm-share');
+    const mmAuth = document.getElementById('mm-auth');
+
     if (user) {
         // Logged in
         if (signedOut) signedOut.style.display = 'none';
         if (signedIn) signedIn.style.display = 'block';
         if (shareSaveBtn) shareSaveBtn.style.display = 'inline-block';
 
-        // Enable cloud menu items (Load Profile is always enabled — it has standard presets)
+        // Enable cloud menu items
         for (const el of [menuSaveCloud, menuShare, menuPublish]) {
             if (el) {
                 el.classList.remove('menu-item-disabled');
                 el.title = '';
             }
+        }
+
+        // Enable toolbar cloud buttons
+        if (toolbarSave) toolbarSave.disabled = false;
+        if (toolbarShare) toolbarShare.disabled = false;
+        if (mmSave) mmSave.disabled = false;
+        if (mmShare) mmShare.disabled = false;
+
+        // Update toolbar auth button to show email
+        if (toolbarAuth) {
+            toolbarAuth.textContent = user.email?.split('@')[0] || 'Account';
+            toolbarAuth.classList.remove('btn-primary');
+            toolbarAuth.title = user.email || 'Account';
+        }
+        if (mmAuth) {
+            mmAuth.innerHTML = `<span class="icon">👤</span> ${user.email?.split('@')[0] || 'Account'}`;
         }
 
         // Update user info
@@ -843,7 +873,7 @@ function updateAuthUI(user) {
         if (signedIn) signedIn.style.display = 'none';
         if (shareSaveBtn) shareSaveBtn.style.display = 'none';
 
-        // Grey out cloud menu items (Load Profile stays enabled — it has standard presets)
+        // Grey out cloud menu items
         for (const el of [menuSaveCloud, menuShare, menuPublish]) {
             if (el) {
                 el.classList.add('menu-item-disabled');
@@ -851,7 +881,23 @@ function updateAuthUI(user) {
             }
         }
 
-        // Show sign-in link in status bar (click handled by delegation on #auth-status)
+        // Disable toolbar cloud buttons
+        if (toolbarSave) toolbarSave.disabled = true;
+        if (toolbarShare) toolbarShare.disabled = true;
+        if (mmSave) mmSave.disabled = true;
+        if (mmShare) mmShare.disabled = true;
+
+        // Reset toolbar auth button
+        if (toolbarAuth) {
+            toolbarAuth.textContent = 'Sign In';
+            toolbarAuth.classList.add('btn-primary');
+            toolbarAuth.title = 'Sign In';
+        }
+        if (mmAuth) {
+            mmAuth.innerHTML = '<span class="icon">👤</span> Sign In';
+        }
+
+        // Show sign-in link in status bar
         const authStatus = document.getElementById('auth-status');
         if (authStatus) {
             authStatus.innerHTML = '<a href="#" class="auth-login-link">Sign in / Sign up</a>';
@@ -1682,13 +1728,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // CRITICAL: Set up Clear Cache FIRST so it always works, even if everything else fails
     try {
-        const menuBtn = document.getElementById('menu-btn');
         const menuCloseBtn = document.getElementById('menu-close-btn');
         const menuOverlay = document.getElementById('menu-overlay');
         const menuClearCache = document.getElementById('menu-clear-cache');
 
-        // Basic menu open/close (mobile menu toggle handled later with full logic)
-        if (menuBtn) menuBtn.addEventListener('click', openMenu);
+        // Basic menu close handlers
         if (menuCloseBtn) menuCloseBtn.addEventListener('click', closeMenu);
         if (menuOverlay) menuOverlay.addEventListener('click', closeMenu);
 
@@ -1713,9 +1757,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (elements.saveParamsBtn) elements.saveParamsBtn.addEventListener('click', saveParameters);
     if (elements.loadParamsBtn) elements.loadParamsBtn.addEventListener('click', () => elements.loadParamsInput.click());
     if (elements.loadParamsInput) elements.loadParamsInput.addEventListener('change', handleLoadParameters);
-    if (elements.dlSvg) elements.dlSvg.addEventListener('click', downloadSVG);
-    if (elements.dlPdf) elements.dlPdf.addEventListener('click', () => downloadPDF(collectParameters, sanitizeFilename));
-
     // Zoom controls
     if (elements.zoomInBtn) elements.zoomInBtn.addEventListener('click', zoomIn);
     if (elements.zoomOutBtn) elements.zoomOutBtn.addEventListener('click', zoomOut);
@@ -1726,126 +1767,194 @@ document.addEventListener('DOMContentLoaded', () => {
         tab.addEventListener('click', () => switchView(tab.dataset.view));
     });
 
-    // Universal icon bar - works on desktop and mobile
-    const mobileIconBar = document.getElementById('mobile-icon-bar');
-    const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
-    const mobileParamsToggle = document.getElementById('mobile-params-toggle');
+    // ========================================================================
+    // Toolbar button handlers
+    // ========================================================================
     const menuPanel = document.getElementById('menu-panel');
     const controlsPanel = document.getElementById('controls-panel');
     const mainContainer = document.querySelector('.main-container');
     const sidebarOverlay = document.getElementById('sidebar-overlay');
+    const isMobile = () => window.innerWidth <= 767;
 
-    if (mobileIconBar && mobileMenuToggle && mobileParamsToggle) {
-        const isMobile = () => window.innerWidth <= 1024;
+    // Toolbar: Load Profile
+    const toolbarLoad = document.getElementById('toolbar-load');
+    if (toolbarLoad) toolbarLoad.addEventListener('click', showLoadProfileModal);
 
-        // Toggle menu panel (same on desktop and mobile)
-        mobileMenuToggle.addEventListener('click', () => {
-            const isOpen = menuPanel.classList.contains('open');
+    // Toolbar: Save Profile
+    const toolbarSave = document.getElementById('toolbar-save');
+    if (toolbarSave) toolbarSave.addEventListener('click', handleCloudSave);
 
-            // Close parameters panel if open
-            controlsPanel.classList.remove('mobile-open', 'collapsed');
-            if (mainContainer) mainContainer.classList.remove('params-collapsed');
-            mobileParamsToggle.classList.remove('active');
+    // Toolbar: Import from File
+    const toolbarImport = document.getElementById('toolbar-import');
+    if (toolbarImport) toolbarImport.addEventListener('click', () => elements.loadParamsInput.click());
 
-            if (!isOpen) {
-                menuPanel.classList.add('open');
-                sidebarOverlay.classList.add('active');
-                mobileMenuToggle.classList.add('active');
-                document.body.style.overflow = 'hidden';
-            } else {
-                menuPanel.classList.remove('open');
-                sidebarOverlay.classList.remove('active');
-                mobileMenuToggle.classList.remove('active');
-                document.body.style.overflow = '';
-            }
-        });
+    // Toolbar: Export to File
+    const toolbarExport = document.getElementById('toolbar-export');
+    if (toolbarExport) toolbarExport.addEventListener('click', saveParameters);
 
-        // Toggle parameters panel (different behavior for desktop vs mobile)
-        mobileParamsToggle.addEventListener('click', () => {
-            // Close menu panel if open
-            menuPanel.classList.remove('open');
-            mobileMenuToggle.classList.remove('active');
+    // Toolbar: Download SVG
+    if (elements.dlSvg) elements.dlSvg.addEventListener('click', downloadSVG);
 
-            if (isMobile()) {
-                // Mobile: slide-out panel
-                const isOpen = controlsPanel.classList.contains('mobile-open');
+    // Toolbar: Download PDF
+    if (elements.dlPdf) elements.dlPdf.addEventListener('click', () => downloadPDF(collectParameters, sanitizeFilename));
 
-                if (!isOpen) {
-                    controlsPanel.classList.add('mobile-open');
-                    sidebarOverlay.classList.add('active');
-                    mobileParamsToggle.classList.add('active');
-                    document.body.style.overflow = 'hidden';
-                } else {
-                    controlsPanel.classList.remove('mobile-open');
-                    sidebarOverlay.classList.remove('active');
-                    mobileParamsToggle.classList.remove('active');
-                    document.body.style.overflow = '';
-                }
-            } else {
-                // Desktop: collapse/expand panel
-                const isCollapsed = controlsPanel.classList.contains('collapsed');
+    // Toolbar: Share
+    const toolbarShare = document.getElementById('toolbar-share');
+    if (toolbarShare) toolbarShare.addEventListener('click', handleShare);
 
-                if (!isCollapsed) {
-                    controlsPanel.classList.add('collapsed');
-                    if (mainContainer) mainContainer.classList.add('params-collapsed');
-                    mobileParamsToggle.classList.remove('active');
-                } else {
-                    controlsPanel.classList.remove('collapsed');
-                    if (mainContainer) mainContainer.classList.remove('params-collapsed');
-                    mobileParamsToggle.classList.add('active');
-                }
-            }
-        });
+    // Toolbar: Menu button (opens slide-in menu panel)
+    const toolbarMenuBtn = document.getElementById('toolbar-menu');
+    if (toolbarMenuBtn) toolbarMenuBtn.addEventListener('click', openMenu);
 
-        // Close panels on overlay click
-        if (sidebarOverlay) {
-            sidebarOverlay.addEventListener('click', () => {
-                menuPanel.classList.remove('open');
-                controlsPanel.classList.remove('mobile-open');
-                sidebarOverlay.classList.remove('active');
-                mobileMenuToggle.classList.remove('active');
-                mobileParamsToggle.classList.remove('active');
-                document.body.style.overflow = '';
-            });
-        }
+    // Toolbar: Auth/Sign In
+    const toolbarAuth = document.getElementById('toolbar-auth');
+    if (toolbarAuth) toolbarAuth.addEventListener('click', showLoginModal);
 
-        // Keyboard shortcuts for panel closing and zoom
-        document.addEventListener('keydown', (e) => {
-            // Escape key closes panels
-            if (e.key === 'Escape') {
-                if (menuPanel.classList.contains('open') || controlsPanel.classList.contains('mobile-open')) {
-                    e.preventDefault();
-                    menuPanel.classList.remove('open');
-                    controlsPanel.classList.remove('mobile-open');
-                    sidebarOverlay.classList.remove('active');
-                    mobileMenuToggle.classList.remove('active');
-                    mobileParamsToggle.classList.remove('active');
-                    document.body.style.overflow = '';
-                }
-            }
+    // ========================================================================
+    // Theme toggle
+    // ========================================================================
+    function toggleTheme() {
+        const html = document.documentElement;
+        const isDark = html.getAttribute('data-theme') === 'dark';
+        const newTheme = isDark ? 'light' : 'dark';
+        html.setAttribute('data-theme', newTheme);
+        try { localStorage.setItem('overstand-theme', newTheme); } catch(e) {}
 
-            // Zoom keyboard shortcuts (+, -, 0)
-            // Don't trigger if user is typing in an input field
-            if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'SELECT') {
-                if (e.key === '+' || e.key === '=') {
-                    e.preventDefault();
-                    zoomIn();
-                } else if (e.key === '-' || e.key === '_') {
-                    e.preventDefault();
-                    zoomOut();
-                } else if (e.key === '0') {
-                    e.preventDefault();
-                    zoomReset();
-                }
-            }
-        });
-
-        // Set initial state on page load
-        if (!isMobile()) {
-            // Desktop: parameters panel visible by default
-            mobileParamsToggle.classList.add('active');
-        }
+        // Update icon in toolbar and mobile menu
+        const icon = isDark ? '☀️' : '🌙';
+        const toolbarThemeIcon = document.querySelector('#toolbar-theme .icon');
+        if (toolbarThemeIcon) toolbarThemeIcon.textContent = icon;
+        const mmThemeIcon = document.querySelector('#mm-theme .icon');
+        if (mmThemeIcon) mmThemeIcon.textContent = icon;
     }
+
+    const toolbarTheme = document.getElementById('toolbar-theme');
+    if (toolbarTheme) toolbarTheme.addEventListener('click', toggleTheme);
+
+    // ========================================================================
+    // Params collapse/expand (desktop)
+    // ========================================================================
+    const paramsCollapseBtn = document.getElementById('params-collapse-btn');
+    const expandParamsBtn = document.getElementById('expand-params-btn');
+
+    function collapseParams() {
+        if (mainContainer) mainContainer.classList.add('params-collapsed');
+        if (paramsCollapseBtn) paramsCollapseBtn.textContent = '▶';
+    }
+
+    function expandParams() {
+        if (mainContainer) mainContainer.classList.remove('params-collapsed');
+        if (paramsCollapseBtn) paramsCollapseBtn.textContent = '◀';
+    }
+
+    if (paramsCollapseBtn) {
+        paramsCollapseBtn.addEventListener('click', () => {
+            if (mainContainer && mainContainer.classList.contains('params-collapsed')) {
+                expandParams();
+            } else {
+                collapseParams();
+            }
+        });
+    }
+
+    if (expandParamsBtn) {
+        expandParamsBtn.addEventListener('click', expandParams);
+    }
+
+    // ========================================================================
+    // Mobile params drawer
+    // ========================================================================
+    const paramsDrawerOverlay = document.getElementById('params-drawer-overlay');
+
+    function openMobileParams() {
+        if (controlsPanel) controlsPanel.classList.add('mobile-open');
+        if (paramsDrawerOverlay) paramsDrawerOverlay.classList.add('open');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeMobileParams() {
+        if (controlsPanel) controlsPanel.classList.remove('mobile-open');
+        if (paramsDrawerOverlay) paramsDrawerOverlay.classList.remove('open');
+        document.body.style.overflow = '';
+    }
+
+    if (paramsDrawerOverlay) {
+        paramsDrawerOverlay.addEventListener('click', closeMobileParams);
+    }
+
+    // ========================================================================
+    // Hamburger menu (mobile) — opens mobile-menu-overlay dropdown
+    // ========================================================================
+    const toolbarHamburger = document.getElementById('toolbar-hamburger');
+    const mobileMenuOverlay = document.getElementById('mobile-menu-overlay');
+
+    function openMobileMenu() {
+        if (mobileMenuOverlay) mobileMenuOverlay.classList.add('open');
+    }
+
+    function closeMobileMenu() {
+        if (mobileMenuOverlay) mobileMenuOverlay.classList.remove('open');
+    }
+
+    if (toolbarHamburger) toolbarHamburger.addEventListener('click', openMobileMenu);
+
+    // Close mobile menu when clicking overlay background
+    if (mobileMenuOverlay) {
+        mobileMenuOverlay.addEventListener('click', (e) => {
+            if (e.target === mobileMenuOverlay) closeMobileMenu();
+        });
+    }
+
+    // Mobile menu item handlers
+    const mmLoad = document.getElementById('mm-load');
+    const mmSave = document.getElementById('mm-save');
+    const mmImport = document.getElementById('mm-import');
+    const mmExport = document.getElementById('mm-export');
+    const mmDlSvg = document.getElementById('mm-dl-svg');
+    const mmDlPdf = document.getElementById('mm-dl-pdf');
+    const mmShare = document.getElementById('mm-share');
+    const mmParams = document.getElementById('mm-params');
+    const mmTheme = document.getElementById('mm-theme');
+    const mmMenu = document.getElementById('mm-menu');
+    const mmAuth = document.getElementById('mm-auth');
+
+    if (mmLoad) mmLoad.addEventListener('click', () => { closeMobileMenu(); showLoadProfileModal(); });
+    if (mmSave) mmSave.addEventListener('click', () => { closeMobileMenu(); handleCloudSave(); });
+    if (mmImport) mmImport.addEventListener('click', () => { closeMobileMenu(); elements.loadParamsInput.click(); });
+    if (mmExport) mmExport.addEventListener('click', () => { closeMobileMenu(); saveParameters(); });
+    if (mmDlSvg) mmDlSvg.addEventListener('click', () => { closeMobileMenu(); downloadSVG(); });
+    if (mmDlPdf) mmDlPdf.addEventListener('click', () => { closeMobileMenu(); downloadPDF(collectParameters, sanitizeFilename); });
+    if (mmShare) mmShare.addEventListener('click', () => { closeMobileMenu(); handleShare(); });
+    if (mmParams) mmParams.addEventListener('click', () => { closeMobileMenu(); openMobileParams(); });
+    if (mmTheme) mmTheme.addEventListener('click', () => { closeMobileMenu(); toggleTheme(); });
+    if (mmMenu) mmMenu.addEventListener('click', () => { closeMobileMenu(); openMenu(); });
+    if (mmAuth) mmAuth.addEventListener('click', () => { closeMobileMenu(); showLoginModal(); });
+
+    // Sidebar overlay click-to-close (for menu panel on desktop)
+    if (sidebarOverlay) {
+        sidebarOverlay.addEventListener('click', () => {
+            closeMenu();
+            sidebarOverlay.classList.remove('active');
+        });
+    }
+
+    // ========================================================================
+    // Zoom keyboard shortcuts (+, -, 0)
+    // ========================================================================
+    document.addEventListener('keydown', (e) => {
+        if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'SELECT') {
+            if (e.key === '+' || e.key === '=') {
+                e.preventDefault();
+                zoomIn();
+            } else if (e.key === '-' || e.key === '_') {
+                e.preventDefault();
+                zoomOut();
+            } else if (e.key === '0') {
+                e.preventDefault();
+                zoomReset();
+            }
+        }
+    });
 
     // Menu items (menu open/close and clear cache already set up above)
     const menuLoadProfile = document.getElementById('menu-load-profile');
@@ -2015,6 +2124,25 @@ document.addEventListener('keydown', (e) => {
         if (modalOverlay && modalOverlay.classList.contains('active')) {
             e.preventDefault();
             closeModal();
+            return;
+        }
+
+        // Check mobile menu overlay
+        const mobileMenuOverlay = document.getElementById('mobile-menu-overlay');
+        if (mobileMenuOverlay && mobileMenuOverlay.classList.contains('open')) {
+            e.preventDefault();
+            mobileMenuOverlay.classList.remove('open');
+            return;
+        }
+
+        // Check mobile params drawer
+        const controlsPanel = document.getElementById('controls-panel');
+        const paramsDrawerOverlay = document.getElementById('params-drawer-overlay');
+        if (controlsPanel && controlsPanel.classList.contains('mobile-open')) {
+            e.preventDefault();
+            controlsPanel.classList.remove('mobile-open');
+            if (paramsDrawerOverlay) paramsDrawerOverlay.classList.remove('open');
+            document.body.style.overflow = '';
             return;
         }
 
