@@ -443,10 +443,12 @@ export function displayCurrentView() {
 
     if (state.currentView === 'dimensions') {
         setZoomButtonsState(false);
+        elements.preview.style.overflow = 'auto';
         elements.preview.innerHTML = state.views[state.currentView];
     } else if (state.currentView === 'fret_positions') {
         // Disable zoom controls for fret positions view
         setZoomButtonsState(false);
+        elements.preview.style.overflow = 'auto';
 
         const fretData = state.views.fret_positions;
         if (fretData && fretData.available) {
@@ -456,6 +458,7 @@ export function displayCurrentView() {
         }
     } else {
         setZoomButtonsState(true);
+        elements.preview.style.overflow = 'hidden';
 
         state.svgCanvas = SVG().addTo('#preview-container');
         state.svgCanvas.svg(state.views[state.currentView]);

@@ -808,11 +808,6 @@ function updateAuthUI(user) {
     const signedOut = document.getElementById('menu-signed-out');
     const signedIn = document.getElementById('menu-signed-in');
     const shareSaveBtn = document.getElementById('share-save-btn');
-    const menuSaveCloud = document.getElementById('menu-save-cloud');
-    const menuLoadProfile = document.getElementById('menu-load-profile');
-    const menuShare = document.getElementById('menu-share');
-    const menuPublish = document.getElementById('menu-publish');
-
     // Toolbar buttons
     const toolbarSave = document.getElementById('toolbar-save');
     const toolbarShare = document.getElementById('toolbar-share');
@@ -828,28 +823,20 @@ function updateAuthUI(user) {
         if (signedIn) signedIn.style.display = 'block';
         if (shareSaveBtn) shareSaveBtn.style.display = 'inline-block';
 
-        // Enable cloud menu items
-        for (const el of [menuSaveCloud, menuShare, menuPublish]) {
-            if (el) {
-                el.classList.remove('menu-item-disabled');
-                el.title = '';
-            }
-        }
-
         // Enable toolbar cloud buttons
         if (toolbarSave) toolbarSave.disabled = false;
         if (toolbarShare) toolbarShare.disabled = false;
         if (mmSave) mmSave.disabled = false;
         if (mmShare) mmShare.disabled = false;
 
-        // Update toolbar auth button to show email
+        // Update toolbar auth button to Sign Out
         if (toolbarAuth) {
-            toolbarAuth.textContent = user.email?.split('@')[0] || 'Account';
+            toolbarAuth.textContent = 'Sign Out';
             toolbarAuth.classList.remove('btn-primary');
-            toolbarAuth.title = user.email || 'Account';
+            toolbarAuth.title = user.email || 'Sign Out';
         }
         if (mmAuth) {
-            mmAuth.innerHTML = `<span class="icon">👤</span> ${user.email?.split('@')[0] || 'Account'}`;
+            mmAuth.innerHTML = '<span class="icon">👤</span> Sign Out';
         }
 
         // Update user info
@@ -873,14 +860,6 @@ function updateAuthUI(user) {
         if (signedIn) signedIn.style.display = 'none';
         if (shareSaveBtn) shareSaveBtn.style.display = 'none';
 
-        // Grey out cloud menu items
-        for (const el of [menuSaveCloud, menuShare, menuPublish]) {
-            if (el) {
-                el.classList.add('menu-item-disabled');
-                el.title = 'Sign in to use cloud profiles';
-            }
-        }
-
         // Disable toolbar cloud buttons
         if (toolbarSave) toolbarSave.disabled = true;
         if (toolbarShare) toolbarShare.disabled = true;
@@ -897,11 +876,9 @@ function updateAuthUI(user) {
             mmAuth.innerHTML = '<span class="icon">👤</span> Sign In';
         }
 
-        // Show sign-in link in status bar
+        // Clear status bar auth info
         const authStatus = document.getElementById('auth-status');
-        if (authStatus) {
-            authStatus.innerHTML = '<a href="#" class="auth-login-link">Sign in / Sign up</a>';
-        }
+        if (authStatus) authStatus.textContent = '';
 
         state.cloudPresets = [];
     }
@@ -1806,9 +1783,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const toolbarMenuBtn = document.getElementById('toolbar-menu');
     if (toolbarMenuBtn) toolbarMenuBtn.addEventListener('click', openMenu);
 
-    // Toolbar: Auth/Sign In
+    // Toolbar: Auth/Sign In or Sign Out
     const toolbarAuth = document.getElementById('toolbar-auth');
-    if (toolbarAuth) toolbarAuth.addEventListener('click', showLoginModal);
+    if (toolbarAuth) toolbarAuth.addEventListener('click', () => {
+        if (isAuthenticated()) {
+            signOut().catch(e => showErrorModal('Sign Out Failed', e.message));
+        } else {
+            showLoginModal();
+        }
+    });
 
     // ========================================================================
     // Theme toggle
@@ -1928,7 +1911,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (mmParams) mmParams.addEventListener('click', () => { closeMobileMenu(); openMobileParams(); });
     if (mmTheme) mmTheme.addEventListener('click', () => { closeMobileMenu(); toggleTheme(); });
     if (mmMenu) mmMenu.addEventListener('click', () => { closeMobileMenu(); openMenu(); });
-    if (mmAuth) mmAuth.addEventListener('click', () => { closeMobileMenu(); showLoginModal(); });
+    if (mmAuth) mmAuth.addEventListener('click', () => {
+        closeMobileMenu();
+        if (isAuthenticated()) {
+            signOut().catch(e => showErrorModal('Sign Out Failed', e.message));
+        } else {
+            showLoginModal();
+        }
+    });
 
     // Sidebar overlay click-to-close (for menu panel on desktop)
     if (sidebarOverlay) {
@@ -1957,34 +1947,11 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Menu items (menu open/close and clear cache already set up above)
-    const menuLoadProfile = document.getElementById('menu-load-profile');
-    const menuSaveCloud = document.getElementById('menu-save-cloud');
     const menuExportParams = document.getElementById('menu-export-params');
     const menuImportParams = document.getElementById('menu-import-params');
     const menuKeyboardShortcuts = document.getElementById('menu-keyboard-shortcuts');
     const menuAbout = document.getElementById('menu-about');
 
-    if (menuLoadProfile) menuLoadProfile.addEventListener('click', () => {
-        closeMenu();
-        showLoadProfileModal();
-    });
-    if (menuSaveCloud) menuSaveCloud.addEventListener('click', () => {
-        if (menuSaveCloud.classList.contains('menu-item-disabled')) return;
-        closeMenu();
-        handleCloudSave();
-    });
-    const menuShareBtn = document.getElementById('menu-share');
-    if (menuShareBtn) menuShareBtn.addEventListener('click', () => {
-        if (menuShareBtn.classList.contains('menu-item-disabled')) return;
-        closeMenu();
-        handleShare();
-    });
-    const menuPublishBtn = document.getElementById('menu-publish');
-    if (menuPublishBtn) menuPublishBtn.addEventListener('click', () => {
-        if (menuPublishBtn.classList.contains('menu-item-disabled')) return;
-        closeMenu();
-        handleMenuPublish();
-    });
     if (menuExportParams) menuExportParams.addEventListener('click', () => { closeMenu(); saveParameters(); });
     if (menuImportParams) menuImportParams.addEventListener('click', () => { closeMenu(); elements.loadParamsInput.click(); });
     if (menuKeyboardShortcuts) menuKeyboardShortcuts.addEventListener('click', showKeyboardShortcuts);
@@ -2044,14 +2011,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (shareViaFacebookBtn) shareViaFacebookBtn.addEventListener('click', shareViaFacebook);
 
     // Initialize auth (non-blocking — cloud features activate when ready)
-    // Use event delegation on parent — the link gets replaced by updateAuthUI
-    document.getElementById('auth-status')?.addEventListener('click', (e) => {
-        const link = e.target.closest('.auth-login-link');
-        if (link) {
-            e.preventDefault();
-            showLoginModal();
-        }
-    });
     onAuthStateChange(updateAuthUI);
     initAuth();
 

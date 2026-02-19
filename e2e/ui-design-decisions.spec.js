@@ -21,11 +21,10 @@ test.describe('Page Structure', () => {
     await expect(toolbar.locator('.toolbar-brand')).toContainText('Overstand');
   });
 
-  test('status bar has "Sign in / Sign up" link', async ({ page }) => {
-    // JS rewrites the auth area via updateAuthUI — use class selector, not id
-    const authLink = page.locator('#auth-status .auth-login-link');
-    await expect(authLink).toBeVisible();
-    await expect(authLink).toHaveText('Sign in / Sign up');
+  test('toolbar has Sign In button', async ({ page }) => {
+    const authBtn = page.locator('#toolbar-auth');
+    await expect(authBtn).toBeVisible();
+    await expect(authBtn).toHaveText('Sign In');
   });
 
   test('controls panel and preview panel exist', async ({ page }) => {
