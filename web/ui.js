@@ -118,6 +118,17 @@ function generateComponentBasedUI(callbacks, currentParams) {
             currentParams: currentParams
         });
 
+        // Inject notes textarea into the Identity section
+        if (sectionDef.id === 'identity') {
+            const notesGroup = document.createElement('div');
+            notesGroup.className = 'param-group notes-group';
+            notesGroup.innerHTML = `
+                <textarea id="profile-description" class="profile-description"
+                    placeholder="Notes (optional)"
+                    rows="1"></textarea>`;
+            section.getAccordion().appendChild(notesGroup);
+        }
+
         container.appendChild(section.getElement());
         state.uiSections.input.push(section);
     }

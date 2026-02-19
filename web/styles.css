@@ -127,15 +127,15 @@ h1 {
 
 .status-bar {
     background: var(--color-gray-50);
-    padding: 0.3rem 1rem;
+    padding: 0.15rem 1rem;
     border-bottom: 1px solid var(--color-gray-200);
     display: flex;
     align-items: center;
     gap: 0.5rem;
     transition: all 0.3s ease;
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     font-weight: 500;
-    min-height: 28px;
+    min-height: 22px;
     color: var(--color-gray-500);
 }
 
@@ -364,10 +364,9 @@ h1 {
     }
 }
 
-/* Profile description textarea */
-.profile-description-section {
-    padding: 0.35rem 0.75rem;
-    border-bottom: 1px solid var(--color-gray-200);
+/* Notes textarea (inside Identity accordion) */
+.notes-group {
+    padding: 0.25rem 0.5rem;
 }
 
 .profile-description {
@@ -514,10 +513,10 @@ h1 {
 }
 
 .category-section {
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
     background: white;
     border-radius: var(--radius-md);
-    padding: 0.75rem 1rem;
+    padding: 0.5rem 0.75rem;
     border: 1px solid var(--color-gray-200);
     box-shadow: var(--shadow-sm);
 }
@@ -525,12 +524,12 @@ h1 {
 .category-title {
     font-weight: 700;
     color: var(--color-primary);
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
     font-size: 0.85rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
     border-bottom: 1px solid var(--color-gray-100);
-    padding-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
     display: flex;
     align-items: center;
 }
@@ -549,10 +548,10 @@ h1 {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0.25rem 0.5rem;
+    padding: 0.15rem 0.5rem;
     border-bottom: 1px solid var(--color-gray-100);
     gap: 0.25rem;
-    min-height: 28px;
+    min-height: 26px;
 }
 
 .param-group:last-child {
@@ -1253,18 +1252,14 @@ input[type="checkbox"] {
     display: flex;
     align-items: center;
     gap: 0.4rem;
-    padding: 0.5rem 0.75rem;
+    padding: 0.3rem 0.75rem;
     background: var(--color-gray-50);
     cursor: pointer;
     user-select: none;
     transition: background 0.15s ease;
     border-bottom: 1px solid var(--color-gray-200);
-    border-top: 1px solid var(--color-gray-200);
 }
 
-.accordion-section:first-child .accordion-header {
-    border-top: none;
-}
 
 .accordion-header:hover {
     background: var(--color-gray-100);
@@ -1276,7 +1271,7 @@ input[type="checkbox"] {
 }
 
 .accordion-icon {
-    font-size: 0.85rem;
+    font-size: 0.75rem;
     line-height: 1;
     flex-shrink: 0;
 }
@@ -1311,7 +1306,7 @@ input[type="checkbox"] {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0.4rem 0.75rem;
+    padding: 0.25rem 0.75rem;
     border-bottom: 1px solid var(--color-gray-100);
 }
 
@@ -1366,7 +1361,7 @@ input[type="checkbox"] {
 
 .core-metrics-panel {
     background: var(--color-gray-50);
-    padding: 0.4rem 0.5rem;
+    padding: 0.3rem 0.5rem;
     border-bottom: 1px solid var(--color-gray-200);
 }
 
@@ -2317,13 +2312,13 @@ input[type="checkbox"] {
     position: sticky;
     top: 0;
     z-index: 100;
-    height: 52px;
+    height: 44px;
     background: var(--color-surface);
     border-bottom: 1px solid var(--color-gray-200);
     display: flex;
     align-items: center;
     padding: 0 1rem;
-    gap: 0.75rem;
+    gap: 0.5rem;
     box-shadow: var(--shadow-sm);
 }
 
@@ -2332,7 +2327,7 @@ input[type="checkbox"] {
     align-items: center;
     gap: 0.5rem;
     font-weight: 700;
-    font-size: 1.15rem;
+    font-size: 1.05rem;
     color: var(--color-primary);
     letter-spacing: -0.025em;
     margin-right: 1rem;
@@ -2340,8 +2335,8 @@ input[type="checkbox"] {
 }
 
 .toolbar-brand svg {
-    width: 28px;
-    height: 28px;
+    width: 24px;
+    height: 24px;
 }
 
 .toolbar-actions {
@@ -2356,8 +2351,8 @@ input[type="checkbox"] {
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
-    padding: 0.4rem 0.75rem;
-    font-size: 0.85rem;
+    padding: 0.3rem 0.6rem;
+    font-size: 0.8rem;
     font-weight: 500;
     color: var(--color-gray-600);
     border-radius: var(--radius-md);

@@ -14,6 +14,7 @@ Comprehensive record of deliberate UI/UX decisions made throughout the project's
 - **Mobile breakpoint is 1024px** (single canonical value in `constants.js`) — `08306c2`
 - Secondary breakpoints at 768px (tabs wrap, compact modals) and 480px (single column)
 - Z-index stacking: toolbar 100, params drawer 160, app-menu 200, modals 2000
+- **CaneCalc density reference**: CaneCalc (bamboo rod taper tool) uses ~40px toolbar, no accordion overhead, continuous flowing params. Overstand targets similar density. — PR `#90`
 
 ## Toolbar & Menu
 
@@ -25,6 +26,7 @@ Comprehensive record of deliberate UI/UX decisions made throughout the project's
 - **Auth button in toolbar**: shows "Sign In" when logged out (primary button style), "Sign Out" when logged in — PR `#90`
 - User email shown as info row in menu when signed in — PR `#90`
 - Hamburger visible on mobile only; toolbar actions visible on desktop only — PR `#90`
+- **Toolbar height 44px** (reduced from 52px for CaneCalc-level density), brand SVG 24px, button padding `0.3rem 0.6rem` — PR `#90`
 
 ## Auto-Generate (no Generate button)
 
@@ -46,6 +48,9 @@ Comprehensive record of deliberate UI/UX decisions made throughout the project's
 - `"(calculated)"` label dynamically appended to output-only fields
 - **Output params** styled with left indigo border and subtle background tint — PR `#90`
 - **Input widths**: number/text inputs 100px, selects 140px, right-aligned — PR `#90`
+- **Notes textarea inside Instrument Identity accordion** (not standalone) — collapsed with the section, saves ~35px when Identity is collapsed — PR `#90`
+- **Compact accordion headers**: `padding: 0.3rem 0.75rem`, no border-top (bottom border of previous section suffices) — PR `#90`
+- **Tight param row spacing**: `min-height: 26px`, `padding: 0.15rem 0.5rem` — CaneCalc-inspired density — PR `#90`
 
 ## Core Metrics Panel
 
