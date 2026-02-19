@@ -70,7 +70,7 @@
     (function() {
         try {
             var t = localStorage.getItem('overstand-theme');
-            if (t === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+            if (t !== 'light') document.documentElement.setAttribute('data-theme', 'dark');
         } catch(e) {}
     })();
     </script>
