@@ -29,6 +29,8 @@ public/
 .coverage
 htmlcov/
 .pytest_cache/
+test-results/
+playwright-report/
 
 # Web/Pyodide cache
 web/.dist/
