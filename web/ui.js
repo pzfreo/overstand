@@ -323,12 +323,9 @@ export function createParameterControl(name, param, isOutput, callbacks) {
         group.dataset.paramName = name;
     }
 
-    // Add description if present (common to all types)
+    // Add description as tooltip (common to all types)
     if (param.description) {
-        const desc = document.createElement('div');
-        desc.className = 'param-description';
-        desc.textContent = param.description;
-        group.appendChild(desc);
+        group.title = param.description;
     }
 
     return group;
