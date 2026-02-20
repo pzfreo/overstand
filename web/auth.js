@@ -5,8 +5,8 @@
  * session management, and auth state change notifications.
  *
  * Sign-in uses a popup window to avoid reloading the main page (and Pyodide).
- * The popup completes OAuth, writes tokens (implicit) or code (PKCE) to localStorage,
- * and the opener picks it up via polling and sets the session.
+ * The popup completes OAuth and sends the result to the opener via postMessage
+ * (tokens never touch storage). Falls back to brief localStorage for redirect flow.
  */
 
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js';
@@ -60,7 +60,9 @@ export async function initAuth() {
             currentUser = session?.user || null;
         }
 
-        // Listen for oauth-result from popup via localStorage (storage event fires cross-window)
+        // Listen for oauth-result from popup via postMessage (preferred, tokens never touch storage)
+        window.addEventListener('message', handleOAuthMessage);
+        // Fallback: listen for localStorage changes from redirect flow
         window.addEventListener('storage', handleOAuthStorage);
 
         notifyListeners(currentUser, 'INITIAL');
@@ -70,9 +72,19 @@ export async function initAuth() {
 }
 
 /**
- * Handle localStorage change from OAuth popup.
- * The storage event fires in other windows when localStorage is modified.
- * This is a backup — signInWithProvider also polls localStorage directly.
+ * Handle postMessage from OAuth popup (preferred path — tokens never touch storage).
+ * Origin is verified to prevent cross-origin attacks.
+ */
+async function handleOAuthMessage(event) {
+    if (event.origin !== window.location.origin) return;
+    if (!event.data || event.data.type !== 'oauth-result') return;
+
+    await handleOAuthResult(JSON.stringify(event.data));
+}
+
+/**
+ * Handle localStorage change from OAuth redirect fallback.
+ * Only used when popup was blocked and redirect flow is used.
  */
 async function handleOAuthStorage(event) {
     if (event.key !== 'oauth-result' || !event.newValue) return;
@@ -153,7 +165,7 @@ export async function signInWithProvider(provider) {
         throw new Error('No OAuth URL returned');
     }
 
-    // Clear any stale oauth code
+    // Clear any stale oauth data
     localStorage.removeItem('oauth-result');
 
     // Open in a centered popup
@@ -173,8 +185,9 @@ export async function signInWithProvider(provider) {
         return;
     }
 
-    // Poll localStorage as a fallback — the storage event can be unreliable
-    // when the popup closes immediately after writing.
+    // Poll localStorage as a fallback for redirect flow — postMessage is the
+    // primary mechanism (handled by handleOAuthMessage listener), but the
+    // storage event can be unreliable when the popup closes immediately.
     const pollInterval = setInterval(async () => {
         const result = localStorage.getItem('oauth-result');
         if (result) {

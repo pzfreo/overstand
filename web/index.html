@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="referrer" content="no-referrer">
     <title>Overstand</title>
 
     <!-- Emergency cache reset - runs before anything else loads -->
@@ -95,15 +96,15 @@
     <!-- iOS Splash Screens (optional but recommended) -->
     <link rel="apple-touch-startup-image" href="icons/icon-512x512.png">
 
-    <!-- Supabase JS v2 (auth + database) -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <!-- Supabase JS v2 (auth + database) — pinned for SRI -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.97.0/dist/umd/supabase.min.js" integrity="sha384-1+ItoWbWcmVSm+Y+dJaUt4SEWNA21/jxef+Z0TSHHVy/dEUxEUEnZ1bHn6GT5hj+" crossorigin="anonymous"></script>
 
     <!-- Pyodide (v0.29.1 uses Python 3.13) -->
-    <script src="https://cdn.jsdelivr.net/pyodide/v0.29.1/full/pyodide.js"></script>
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.29.1/full/pyodide.js" integrity="sha384-83RLbXeFEHU0aB9vk+YAxZ9IboI3AA4dkFyDN8OaRIUzQqaxqvvDAeAU9QYHzEPT" crossorigin="anonymous"></script>
 
     <!-- SVG.js for zoom/pan -->
-    <script src="https://cdn.jsdelivr.net/npm/@svgdotjs/svg.js@3.2.4/dist/svg.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@svgdotjs/svg.panzoom.js@2.1.2/dist/svg.panzoom.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@svgdotjs/svg.js@3.2.4/dist/svg.min.js" integrity="sha384-E9th7bqNIiKK7X6i2f4uxD81Ian0ob12auwMGYCnA/JYhUn1qrYLDC/LVDpgNjIM" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@svgdotjs/svg.panzoom.js@2.1.2/dist/svg.panzoom.min.js" integrity="sha384-d+KQQrvnnLeTsS+Q5DfPR40pNMHx64sSJKeGt/usQMYpb1oEVbdQ3QtOJaRUlGDu" crossorigin="anonymous"></script>
 
     <!-- Application styles -->
     <link rel="stylesheet" href="styles.css">
@@ -391,9 +392,9 @@
     <div class="params-drawer-overlay" id="params-drawer-overlay"></div>
 
     <!-- PDF libs (jsPDF 2.5.2, svg2pdf 2.7.0, autotable 5.0.7) -->
-    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/svg2pdf.js@2.7.0/dist/svg2pdf.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@5.0.7/dist/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js" integrity="sha384-en/ztfPSRkGfME4KIm05joYXynqzUgbsG5nMrj/xEFAHXkeZfO3yMK8QQ+mP7p1/" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/svg2pdf.js@2.7.0/dist/svg2pdf.umd.min.js" integrity="sha384-UMdplNeJF/mRqnsNO/vfK5po5eKyTMGCymHkdARQ9NFscA4DX3buGxfhUJcPLbWj" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@5.0.7/dist/jspdf.plugin.autotable.min.js" integrity="sha384-dIbnedacRYRBIEfq+CpuVaJ/+MlG7QkNfYqMqLEdaL2nTsyRxcF6vGZdsnvQpeWR" crossorigin="anonymous"></script>
 
     <!-- Main Application Script -->
     <script type="module" src="app.js"></script>
