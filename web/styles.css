@@ -1734,6 +1734,66 @@ input[type="checkbox"] {
     color: var(--color-blue-700, #1d4ed8);
 }
 
+.modal-content .modal-confirm-message,
+.modal-content .modal-prompt-message {
+    margin: 0 0 1rem 0;
+    line-height: 1.5;
+    white-space: pre-line;
+}
+
+.modal-prompt-input {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--color-border, #d1d5db);
+    border-radius: 6px;
+    font-size: 0.95rem;
+    margin-bottom: 1rem;
+    box-sizing: border-box;
+    background: var(--color-surface, #fff);
+    color: var(--color-text, #1f2937);
+}
+
+.modal-prompt-input:focus {
+    outline: none;
+    border-color: var(--color-primary, #4F46E5);
+    box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.modal-btn {
+    padding: 0.5rem 1.25rem;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.15s;
+}
+
+.modal-btn-cancel {
+    background: var(--color-gray-100, #f3f4f6);
+    color: var(--color-text-secondary, #6b7280);
+}
+
+.modal-btn-cancel:hover {
+    background: var(--color-gray-200, #e5e7eb);
+}
+
+.modal-btn-confirm {
+    background: var(--color-primary, #4F46E5);
+    color: white;
+}
+
+.modal-btn-confirm:hover {
+    background: var(--color-primary-dark, #4338ca);
+}
+
 /* Mobile Responsive */
 @media (max-width: 768px) {
     .modal-dialog {

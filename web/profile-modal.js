@@ -1,6 +1,6 @@
 import { state, elements } from './state.js';
 import * as ui from './ui.js';
-import { escapeHtml, showErrorModal } from './modal.js';
+import { escapeHtml, showErrorModal, showConfirmModal } from './modal.js';
 import { isAuthenticated, getCurrentUser } from './auth.js';
 import { deleteCloudPreset, publishToCommunity, loadCommunityProfiles, unpublishFromCommunity, loadCommunityProfileParameters, getUserBookmarks, toggleBookmark } from './cloud_presets.js';
 import { debounce, collectParameters, applyParametersToForm, refreshAfterParameterLoad, confirmDiscardChanges, updateSaveIndicator, closeOverlay } from './params.js';
@@ -107,7 +107,7 @@ function populateMyProfilesTab() {
             handleShareFromProfile(preset);
         });
         row.querySelector('.delete-btn').addEventListener('click', async () => {
-            if (!confirm(`Delete profile "${preset.preset_name}"?`)) return;
+            if (!await showConfirmModal('Delete Profile', `Delete profile "${preset.preset_name}"?`)) return;
             try {
                 await deleteCloudPreset(preset.id);
                 await refreshCloudPresets();
@@ -127,10 +127,10 @@ async function loadStandardPreset(presetId) {
     if (_loadPreset) await _loadPreset();
 }
 
-function loadCloudPreset(preset) {
+async function loadCloudPreset(preset) {
     if (!preset || !preset.parameters) return;
 
-    if (!confirmDiscardChanges(`Loading "${preset.preset_name}" will overwrite your current parameter values.`)) return;
+    if (!await confirmDiscardChanges(`Loading "${preset.preset_name}" will overwrite your current parameter values.`)) return;
 
     applyParametersToForm(preset.parameters);
 
@@ -311,7 +311,7 @@ export async function populateCommunityTab() {
             const unpublishEl = row.querySelector('.unpublish-btn');
             if (unpublishEl) {
                 unpublishEl.addEventListener('click', async () => {
-                    if (!confirm(`Remove "${profile.preset_name}" from community profiles?`)) return;
+                    if (!await showConfirmModal('Unpublish Profile', `Remove "${profile.preset_name}" from community profiles?`)) return;
                     try {
                         await unpublishFromCommunity(profile.id);
                         populateCommunityTab();
@@ -335,7 +335,7 @@ export async function populateCommunityTab() {
 }
 
 async function loadCommunityPreset(profile) {
-    if (!confirmDiscardChanges(`Loading "${profile.preset_name}" will overwrite your current parameter values.`)) return;
+    if (!await confirmDiscardChanges(`Loading "${profile.preset_name}" will overwrite your current parameter values.`)) return;
 
     try {
         ui.setStatus('loading', 'Loading community profile...');
@@ -375,7 +375,7 @@ export async function handlePublish(preset) {
     const authorName = user.user_metadata?.full_name || user.email || 'Anonymous';
     const instrumentFamily = preset.parameters.instrument_family || '';
 
-    const confirmed = confirm(
+    const confirmed = await showConfirmModal('Publish Profile',
         `Publish "${preset.preset_name}" to the community?\n\n` +
         `Author: ${authorName}\n` +
         `This will be visible to all Overstand users.`

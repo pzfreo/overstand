@@ -83,7 +83,7 @@ async function loadPreset() {
     if (!presetId) return;
 
     const presetDisplayName = state.uiMetadata?.presets?.[presetId]?.display_name || state.presets?.[presetId]?.name || presetId;
-    if (!confirmDiscardChanges(`Loading "${presetDisplayName}" will overwrite your current parameter values.`)) {
+    if (!await confirmDiscardChanges(`Loading "${presetDisplayName}" will overwrite your current parameter values.`)) {
         const previousValue = elements.presetSelect?.dataset.previousValue || '';
         if (elements.presetSelect) elements.presetSelect.value = previousValue;
         return;
