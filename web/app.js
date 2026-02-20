@@ -14,7 +14,7 @@ import { downloadSVG, saveParameters, handleLoadParameters, sanitizeFilename } f
 import { showKeyboardShortcuts, showAbout, clearCacheAndReload } from './info-modals.js';
 import { updateAuthUI, showLoginModal, refreshCloudPresets } from './auth-ui.js';
 import { showLoadProfileModal, closeLoadProfileModal, switchProfileTab, setLoadPresetCallback } from './profile-modal.js';
-import { handleCloudSave, handleShare, handleShareURL, handleShareSave, closeShareModal, handleShareCopy, shareViaEmail, shareViaWhatsApp, shareViaFacebook } from './share.js';
+import { handleCloudSave, handleShare, handleMenuPublish, handleShareURL, handleShareSave, closeShareModal, handleShareCopy, shareViaEmail, shareViaWhatsApp, shareViaFacebook } from './share.js';
 import { initKeyboardShortcuts, setKeyboardActions } from './keyboard.js';
 
 // Wire up circular dependency callbacks
@@ -327,6 +327,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const toolbarShare = document.getElementById('toolbar-share');
     if (toolbarShare) toolbarShare.addEventListener('click', handleShare);
 
+    const toolbarPublish = document.getElementById('toolbar-publish');
+    if (toolbarPublish) toolbarPublish.addEventListener('click', handleMenuPublish);
+
     const toolbarMenuBtn = document.getElementById('toolbar-menu');
     if (toolbarMenuBtn) toolbarMenuBtn.addEventListener('click', openMenu);
 
@@ -424,6 +427,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const mmDlSvg = document.getElementById('mm-dl-svg');
     const mmDlPdf = document.getElementById('mm-dl-pdf');
     const mmShare = document.getElementById('mm-share');
+    const mmPublish = document.getElementById('mm-publish');
     const mmParams = document.getElementById('mm-params');
     const mmTheme = document.getElementById('mm-theme');
     const mmShortcuts = document.getElementById('mm-shortcuts');
@@ -437,6 +441,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (mmDlSvg) mmDlSvg.addEventListener('click', () => { closeMenu(); downloadSVG(); });
     if (mmDlPdf) mmDlPdf.addEventListener('click', () => { closeMenu(); downloadPDF(collectParameters, sanitizeFilename); });
     if (mmShare) mmShare.addEventListener('click', () => { closeMenu(); handleShare(); });
+    if (mmPublish) mmPublish.addEventListener('click', () => { closeMenu(); handleMenuPublish(); });
     if (mmParams) mmParams.addEventListener('click', () => { closeMenu(); openMobileParams(); });
     if (mmTheme) mmTheme.addEventListener('click', () => { closeMenu(); toggleTheme(); });
     if (mmShortcuts) mmShortcuts.addEventListener('click', () => { closeMenu(); showKeyboardShortcuts(); });

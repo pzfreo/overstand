@@ -18,14 +18,14 @@ Comprehensive record of deliberate UI/UX decisions made throughout the project's
 
 ## Toolbar & Menu
 
+- **Toolbar is the primary home for all user actions.** Every action (Load, Save, Import, Export, SVG, PDF, Share, Publish, Theme, Auth) should have a toolbar button. On desktop, all toolbar buttons are visible. As the viewport narrows, CSS hides toolbar action buttons and the hamburger menu becomes the way to access them. The menu duplicates all toolbar actions for mobile, plus has menu-only items (Shortcuts, About, Cache, GitHub links). **When adding a new action, add it to both the toolbar AND the menu** — the toolbar for desktop, the menu for mobile.
+- **Progressive shrink**: at desktop widths, toolbar buttons are visible and hamburger is hidden. Below the mobile breakpoint (1024px), toolbar action buttons hide and the hamburger appears. The menu contains all actions so nothing is lost at any viewport width. Menu items that duplicate toolbar buttons are marked `mobile-only` in HTML (hidden on desktop to avoid duplication). Menu-only items (Shortcuts, About, Cache, GitHub) have no `mobile-only` class and are always visible in the menu.
 - **Single unified dropdown menu** (`#app-menu-overlay`) — replaces two separate systems (slide-in panel + mobile dropdown) — PR `#90`
 - Menu dropdown anchored top-right below toolbar, 280px wide, `max-height: calc(100vh - 60px)` with scroll — PR `#90`
-- **Menu items not duplicated in toolbar**: toolbar has Load, Save, Import, Export, SVG, PDF, Share; menu has additional items (Shortcuts, About, Cache, GitHub, etc.) — PR `#90`
 - Both toolbar Menu button and hamburger open the same dropdown
 - Close via: click outside, Escape key, or clicking a menu item
 - **Auth button in toolbar**: shows "Sign In" when logged out (primary button style), "Sign Out" when logged in — PR `#90`
 - User email shown as info row in menu when signed in — PR `#90`
-- Hamburger visible on mobile only; toolbar actions visible on desktop only — PR `#90`
 - **Toolbar height 44px** (reduced from 52px for CaneCalc-level density), brand SVG 24px, button padding `0.3rem 0.6rem` — PR `#90`
 
 ## Auto-Generate (no Generate button)
@@ -153,7 +153,7 @@ Rationale: instrument makers don't know what JSON is. "Profiles" better describe
 - **Share is a top-level menu item** (not buried inside Load Profile modal) — `40e2cf9`
 - Community profiles: browse, search by name, filter by instrument family — `c496543`
 - **Bookmark/star feature**: bookmarked profiles float to top for user, high-bookmark profiles rank higher for everyone — `b13ed34`
-- **Publish is a separate top-level menu action** (not per-row in My Profiles) — `b13ed34`
+- **Publish is a toolbar button** next to Share (not buried in a menu or per-row in My Profiles) — `b13ed34`, PR `#93`
 
 ## Preset / Standard Instruments System
 
