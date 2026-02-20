@@ -1474,6 +1474,12 @@ input[type="checkbox"] {
     transition: opacity 0.3s ease;
 }
 
+/* General-purpose modal (confirm/prompt/info) must stack above
+   load-profile and share-profile overlays which share .modal-overlay */
+#modal-overlay {
+    z-index: 2100;
+}
+
 .modal-overlay.active {
     display: flex;
     opacity: 1;

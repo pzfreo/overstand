@@ -13,7 +13,7 @@ Comprehensive record of deliberate UI/UX decisions made throughout the project's
 - **Modals must live outside main container** for z-index to work (currently outside `.app-container`) — `82aa63b`
 - **Mobile breakpoint is 1024px** (single canonical value in `constants.js`) — `08306c2`
 - Secondary breakpoints at 768px (tabs wrap, compact modals) and 480px (single column)
-- Z-index stacking: toolbar 100, params drawer 160, app-menu 200, modals 2000
+- Z-index stacking: toolbar 100, params drawer 160, app-menu 200, load/share modals 2000, confirm/prompt modal (`#modal-overlay`) 2100
 - **CaneCalc density reference**: CaneCalc (bamboo rod taper tool) uses ~40px toolbar, no accordion overhead, continuous flowing params. Overstand targets similar density. — PR `#90`
 
 ## Toolbar & Menu
