@@ -132,11 +132,11 @@ test.describe('Modal System', () => {
     await expect(modal).not.toHaveClass(/active/);
   });
 
-  test('modal z-index is 2000', async ({ page }) => {
+  test('modal z-index is above other overlays (2100)', async ({ page }) => {
     const zIndex = await page.locator('#modal-overlay').evaluate(
       el => getComputedStyle(el).zIndex
     );
-    expect(zIndex).toBe('2000');
+    expect(zIndex).toBe('2100');
   });
 
   test('modal is outside .app-container', async ({ page }) => {
