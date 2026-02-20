@@ -1,8 +1,8 @@
 import { state, elements } from './state.js';
 import * as ui from './ui.js';
-import { escapeHtml, showErrorModal, showConfirmModal } from './modal.js';
+import { escapeHtml, showErrorModal, showConfirmModal, showPromptModal } from './modal.js';
 import { isAuthenticated, getCurrentUser } from './auth.js';
-import { deleteCloudPreset, publishToCommunity, loadCommunityProfiles, unpublishFromCommunity, loadCommunityProfileParameters, getUserBookmarks, toggleBookmark } from './cloud_presets.js';
+import { deleteCloudPreset, isPresetPublished, publishToCommunity, loadCommunityProfiles, unpublishFromCommunity, loadCommunityProfileParameters, getUserBookmarks, toggleBookmark } from './cloud_presets.js';
 import { debounce, collectParameters, applyParametersToForm, refreshAfterParameterLoad, confirmDiscardChanges, updateSaveIndicator, closeOverlay } from './params.js';
 import { showLoginModal, refreshCloudPresets } from './auth-ui.js';
 
@@ -102,7 +102,17 @@ function populateMyProfilesTab() {
             loadCloudPreset(preset);
         });
         row.querySelector('.delete-btn').addEventListener('click', async () => {
-            if (!await showConfirmModal('Delete Profile', `Delete profile "${preset.preset_name}"?`)) return;
+            const published = await isPresetPublished(preset.preset_name);
+            if (published) {
+                const typed = await showPromptModal('Delete Published Profile',
+                    `"${preset.preset_name}" is published to the community. Deleting it will also remove it from community profiles.\n\nType the profile name to confirm:`);
+                if (typed !== preset.preset_name) {
+                    if (typed !== null) showErrorModal('Delete Cancelled', 'The name you entered did not match.');
+                    return;
+                }
+            } else {
+                if (!await showConfirmModal('Delete Profile', `Delete profile "${preset.preset_name}"?`)) return;
+            }
             try {
                 await deleteCloudPreset(preset.id);
                 await refreshCloudPresets();

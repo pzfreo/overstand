@@ -64,6 +64,28 @@ export async function loadUserPresets() {
 }
 
 /**
+ * Check if a preset name is published to the community by the current user.
+ * @param {string} presetName - Name to check
+ * @returns {boolean} true if published
+ */
+export async function isPresetPublished(presetName) {
+    const supabase = getSupabaseClient();
+    const user = getCurrentUser();
+    if (!supabase || !user) return false;
+
+    const { data, error } = await supabase
+        .from('shared_presets')
+        .select('id')
+        .eq('owner_id', user.id)
+        .eq('preset_name', presetName)
+        .eq('is_published', true)
+        .limit(1);
+
+    if (error) return false;
+    return data && data.length > 0;
+}
+
+/**
  * Delete a cloud preset by its UUID.
  * @param {string} presetId - UUID of the preset to delete
  */
