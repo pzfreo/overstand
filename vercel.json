@@ -56,7 +56,7 @@
       "headers": [
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' https://cdn.jsdelivr.net https://cloud.umami.is https://vercel.live; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co https://cdn.jsdelivr.net https://cloud.umami.is https://api-gateway.umami.dev https://vercel.live; img-src 'self' data: blob:; worker-src 'self' blob:; frame-src 'self' https://vercel.live; object-src 'none'; base-uri 'self'"
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' https://cdn.jsdelivr.net https://cloud.umami.is https://vercel.live; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co https://cdn.jsdelivr.net https://cloud.umami.is https://api-gateway.umami.dev https://vercel.live https://pypi.org https://files.pythonhosted.org; img-src 'self' data: blob:; worker-src 'self' blob:; frame-src 'self' https://vercel.live; object-src 'none'; base-uri 'self'"
         },
         {
           "key": "X-Content-Type-Options",
