@@ -1,5 +1,6 @@
 import { state, elements } from './state.js';
 import * as ui from './ui.js';
+import { showConfirmModal } from './modal.js';
 
 // Callbacks injected by app.js to avoid circular imports with generation.js
 let _updateDerivedValues = null;
@@ -71,9 +72,10 @@ export function updateSaveIndicator() {
     }
 }
 
-export function confirmDiscardChanges(actionDescription) {
+export async function confirmDiscardChanges(actionDescription) {
     if (!state.parametersModified) return true;
-    return confirm(`You have unsaved changes. ${actionDescription}\n\nDo you want to continue?`);
+    return showConfirmModal('Unsaved Changes',
+        `You have unsaved changes. ${actionDescription}\n\nDo you want to continue?`);
 }
 
 // Handle parameter changes - update derived values immediately, debounce generation

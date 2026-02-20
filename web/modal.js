@@ -2,8 +2,12 @@
  * Modal Dialog Module
  *
  * Provides a consistent modal dialog system for the application.
- * Replaces browser alert() dialogs with styled modals.
+ * Replaces browser alert(), confirm(), and prompt() with styled modals.
  */
+
+// Pending resolve callback for confirm/prompt modals.
+// Called by closeModal() to resolve as "cancel" when user presses Escape or clicks outside.
+let _pendingResolve = null;
 
 /**
  * Show a modal dialog with the given title and content
@@ -32,6 +36,92 @@ export function closeModal() {
     const modalOverlay = document.getElementById('modal-overlay');
     modalOverlay.classList.remove('active');
     document.body.style.overflow = '';
+
+    // If a confirm/prompt modal is pending, resolve as cancel
+    if (_pendingResolve) {
+        const resolve = _pendingResolve;
+        _pendingResolve = null;
+        resolve(undefined);
+    }
+}
+
+/**
+ * Show a confirmation modal (replaces confirm())
+ * @param {string} title - Modal title
+ * @param {string} message - Confirmation message
+ * @returns {Promise<boolean>} true if confirmed, false if cancelled
+ */
+export function showConfirmModal(title, message) {
+    return new Promise(resolve => {
+        _pendingResolve = (val) => resolve(val === undefined ? false : val);
+
+        const content = `
+            <p class="modal-confirm-message">${escapeHtml(message)}</p>
+            <div class="modal-actions">
+                <button class="modal-btn modal-btn-cancel" id="modal-cancel">Cancel</button>
+                <button class="modal-btn modal-btn-confirm" id="modal-confirm">OK</button>
+            </div>`;
+        showModal(title, content);
+
+        document.getElementById('modal-confirm').onclick = () => {
+            _pendingResolve = null;
+            closeModal();
+            resolve(true);
+        };
+        document.getElementById('modal-cancel').onclick = () => {
+            _pendingResolve = null;
+            closeModal();
+            resolve(false);
+        };
+    });
+}
+
+/**
+ * Show a prompt modal (replaces prompt())
+ * @param {string} title - Modal title
+ * @param {string} message - Prompt message
+ * @param {string} [defaultValue=''] - Default input value
+ * @returns {Promise<string|null>} Input value if confirmed, null if cancelled
+ */
+export function showPromptModal(title, message, defaultValue = '') {
+    return new Promise(resolve => {
+        _pendingResolve = (val) => resolve(val === undefined ? null : val);
+
+        const content = `
+            <p class="modal-prompt-message">${escapeHtml(message)}</p>
+            <input type="text" class="modal-prompt-input" id="modal-prompt-input" value="${escapeHtml(defaultValue)}">
+            <div class="modal-actions">
+                <button class="modal-btn modal-btn-cancel" id="modal-cancel">Cancel</button>
+                <button class="modal-btn modal-btn-confirm" id="modal-confirm">OK</button>
+            </div>`;
+        showModal(title, content);
+
+        const input = document.getElementById('modal-prompt-input');
+        input.focus();
+        input.select();
+
+        // Allow Enter key to submit
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                e.stopPropagation();
+                _pendingResolve = null;
+                closeModal();
+                resolve(input.value);
+            }
+        });
+
+        document.getElementById('modal-confirm').onclick = () => {
+            _pendingResolve = null;
+            closeModal();
+            resolve(input.value);
+        };
+        document.getElementById('modal-cancel').onclick = () => {
+            _pendingResolve = null;
+            closeModal();
+            resolve(null);
+        };
+    });
 }
 
 /**

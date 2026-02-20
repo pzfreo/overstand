@@ -1,6 +1,6 @@
 import { state, elements } from './state.js';
 import * as ui from './ui.js';
-import { showErrorModal } from './modal.js';
+import { showErrorModal, showConfirmModal, showPromptModal } from './modal.js';
 import { isAuthenticated, getCurrentUser } from './auth.js';
 import { saveToCloud, createShareLink, loadSharedPreset, copyToClipboard, cloudPresetExists, publishToCommunity } from './cloud_presets.js';
 import { collectParameters, applyParametersToForm, refreshAfterParameterLoad, confirmDiscardChanges, updateSaveIndicator, closeOverlay } from './params.js';
@@ -15,33 +15,37 @@ export async function handleShareFromProfile(preset) {
     if (!preset || !preset.parameters) return;
 
     try {
-        ui.setStatus('loading', 'Creating share link...');
-        const url = await createShareLink(preset.preset_name, preset.parameters);
-
-        if (navigator.share && isMobileDevice()) {
-            try {
-                await navigator.share({
-                    title: `Overstand: ${preset.preset_name}`,
-                    text: `Check out my instrument profile "${preset.preset_name}" on Overstand`,
-                    url: url
-                });
-                ui.setStatus('ready', 'Shared successfully!');
-                return;
-            } catch (e) {
-                if (e.name === 'AbortError') {
-                    ui.setStatus('ready', 'Share cancelled');
-                    return;
-                }
-            }
-        }
-
-        showShareModal(preset.preset_name, url);
-        ui.setStatus('ready', 'Share link created');
+        await _shareWithLink(preset.preset_name, preset.parameters);
     } catch (e) {
         console.error('[Share] Failed:', e);
         showErrorModal('Share Failed', e.message);
         ui.setStatus('error', 'Share link creation failed');
     }
+}
+
+async function _shareWithLink(presetName, params) {
+    ui.setStatus('loading', 'Creating share link...');
+    const url = await createShareLink(presetName, params);
+
+    if (navigator.share && isMobileDevice()) {
+        try {
+            await navigator.share({
+                title: `Overstand: ${presetName}`,
+                text: `Check out my instrument profile "${presetName}" on Overstand`,
+                url: url
+            });
+            ui.setStatus('ready', 'Shared successfully!');
+            return;
+        } catch (e) {
+            if (e.name === 'AbortError') {
+                ui.setStatus('ready', 'Share cancelled');
+                return;
+            }
+        }
+    }
+
+    showShareModal(presetName, url);
+    ui.setStatus('ready', 'Share link created');
 }
 
 export function showShareModal(profileName, shareUrl) {
@@ -108,13 +112,13 @@ export async function handleCloudSave() {
     const params = collectParameters();
     const defaultName = params.instrument_name || 'My Preset';
 
-    const presetName = prompt('Profile name:', defaultName);
+    const presetName = await showPromptModal('Save Profile', 'Profile name:', defaultName);
     if (!presetName) return;
 
     try {
         const exists = await cloudPresetExists(presetName);
         if (exists) {
-            if (!confirm(`A profile named "${presetName}" already exists. Overwrite it?`)) return;
+            if (!await showConfirmModal('Overwrite Profile', `A profile named "${presetName}" already exists. Overwrite it?`)) return;
         }
 
         const description = document.getElementById('profile-description')?.value || '';
@@ -137,28 +141,7 @@ export async function handleShare() {
     const presetName = params.instrument_name || 'Shared Preset';
 
     try {
-        ui.setStatus('loading', 'Creating share link...');
-        const url = await createShareLink(presetName, params);
-
-        if (navigator.share && isMobileDevice()) {
-            try {
-                await navigator.share({
-                    title: `Overstand: ${presetName}`,
-                    text: `Check out my instrument profile "${presetName}" on Overstand`,
-                    url: url
-                });
-                ui.setStatus('ready', 'Shared successfully!');
-                return;
-            } catch (e) {
-                if (e.name === 'AbortError') {
-                    ui.setStatus('ready', 'Share cancelled');
-                    return;
-                }
-            }
-        }
-
-        showShareModal(presetName, url);
-        ui.setStatus('ready', 'Share link created');
+        await _shareWithLink(presetName, params);
     } catch (e) {
         console.error('[Share] Failed:', e);
         showErrorModal('Share Failed', e.message);
@@ -172,13 +155,13 @@ export async function handleMenuPublish() {
     const params = collectParameters();
     const defaultName = state.currentProfileName || params.instrument_name || 'My Profile';
 
-    const presetName = prompt('Publish to community as:', defaultName);
+    const presetName = await showPromptModal('Publish', 'Publish to community as:', defaultName);
     if (!presetName) return;
 
     try {
         const exists = await cloudPresetExists(presetName);
         if (exists) {
-            if (!confirm(`A profile named "${presetName}" already exists. Overwrite and publish?`)) return;
+            if (!await showConfirmModal('Overwrite & Publish', `A profile named "${presetName}" already exists. Overwrite and publish?`)) return;
         }
 
         ui.setStatus('loading', 'Saving and publishing...');
@@ -252,7 +235,7 @@ export async function handleShareURL() {
 export async function handleShareSave() {
     if (!isAuthenticated() || !state.sharedPreset) return;
 
-    const presetName = prompt('Save profile as:', state.sharedPreset.preset_name);
+    const presetName = await showPromptModal('Save Shared Profile', 'Save profile as:', state.sharedPreset.preset_name);
     if (!presetName) return;
 
     try {

@@ -42,11 +42,11 @@ export function saveParameters() {
     analytics.trackParametersSaved();
 }
 
-export function handleLoadParameters(event) {
+export async function handleLoadParameters(event) {
     const file = event.target.files[0];
     if (!file) return;
 
-    if (!confirmDiscardChanges(`Importing "${file.name}" will overwrite your current parameter values.`)) {
+    if (!await confirmDiscardChanges(`Importing "${file.name}" will overwrite your current parameter values.`)) {
         event.target.value = '';
         return;
     }

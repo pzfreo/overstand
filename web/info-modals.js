@@ -1,6 +1,6 @@
 import * as ui from './ui.js';
 import * as analytics from './analytics.js';
-import { showModal } from './modal.js';
+import { showModal, showConfirmModal, showErrorModal } from './modal.js';
 import { markdownToHtml } from './markdown-parser.js';
 import { IS_MAC } from './constants.js';
 
@@ -99,7 +99,7 @@ export async function showAbout() {
 }
 
 export async function clearCacheAndReload() {
-    const confirmed = confirm(
+    const confirmed = await showConfirmModal('Clear Cache',
         'This will clear all cached data and reload the app.\n\n' +
         'Use this if you\'re experiencing issues with outdated code or data.\n\n' +
         'Continue?'
@@ -128,6 +128,6 @@ export async function clearCacheAndReload() {
 
     } catch (error) {
         console.error('[ClearCache] Error:', error);
-        alert('Failed to clear cache: ' + error.message + '\n\nTry manually clearing your browser cache.');
+        showErrorModal('Cache Error', 'Failed to clear cache: ' + error.message + '\n\nTry manually clearing your browser cache.');
     }
 }
