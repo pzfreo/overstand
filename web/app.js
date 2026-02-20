@@ -19,6 +19,7 @@ import { initKeyboardShortcuts, setKeyboardActions } from './keyboard.js';
 
 // Wire up circular dependency callbacks
 setGenerationCallbacks({ updateDerivedValues, debouncedGenerate });
+ui.setSwitchViewCallback(switchView);
 
 const UI_CALLBACKS = {
     collectParameters,
