@@ -8,7 +8,7 @@ Comprehensive record of deliberate UI/UX decisions made throughout the project's
 
 - **Top toolbar** with brand, action buttons, theme toggle, menu, and auth — replaces old icon bar — PR `#90`
 - **Desktop params panel 400px wide** (CSS grid `400px 1fr`); collapsing expands preview to full width — PR `#90`
-- **Mobile params**: full-screen overlay with "Edit Profile" header and close button (✕). Scrollable. Opened via "Edit Profile" menu item (first item in hamburger menu). Close via ✕ button, overlay tap, or Escape key. — PR `#96`
+- **Mobile params**: full-screen overlay with "Edit Parameters" header and close button (✕). Scrollable. Opened via "Edit Parameters" menu item (first item in hamburger menu). Close via ✕ button, overlay tap, or Escape key. — PR `#96`
 - **Viewport-constrained layout**: `overflow: hidden` on `.app-container` prevents page from expanding beyond viewport height — PR `#90`
 - **Modals must live outside main container** for z-index to work (currently outside `.app-container`) — `82aa63b`
 - **Mobile breakpoint is 1024px** (single canonical value in `constants.js`) — `08306c2`
@@ -22,11 +22,11 @@ Comprehensive record of deliberate UI/UX decisions made throughout the project's
 - **Progressive shrink**: at desktop widths, toolbar buttons are visible and hamburger is hidden. Below the mobile breakpoint (1024px), toolbar action buttons hide and the hamburger appears. The menu contains all actions so nothing is lost at any viewport width. Menu items that duplicate toolbar buttons are marked `mobile-only` in HTML (hidden on desktop to avoid duplication). Menu-only items (Shortcuts, About, Cache, GitHub) have no `mobile-only` class and are always visible in the menu.
 - **Single unified dropdown menu** (`#app-menu-overlay`) — replaces two separate systems (slide-in panel + mobile dropdown) — PR `#90`
 - Menu dropdown anchored top-right below toolbar, 280px wide, `max-height: calc(100dvh - 60px)` with scroll (`dvh` accounts for mobile browser chrome) — PR `#90`, PR `#96`
-- **Mobile menu order**: Edit Profile → Sign In → Load/Save → Import/Export → Downloads/Share/Publish → Theme → Shortcuts/About → Cache → GitHub. Sign In is near the top so it's always reachable above Android navigation bars. — PR `#96`
+- **Mobile menu order**: Edit Parameters → Sign In → Load/Save → Import/Export → Downloads/Share/Publish → Theme → Shortcuts/About → Cache → GitHub. Sign In is near the top so it's always reachable above Android navigation bars. — PR `#96`
 - Both toolbar Menu button and hamburger open the same dropdown
 - Close via: click outside, Escape key, or clicking a menu item
 - **Auth button in toolbar**: shows "Sign In" when logged out (primary button style), "Sign Out" when logged in — PR `#90`
-- User email shown as info row in menu when signed in (below Edit Profile on mobile, in menu on desktop) — PR `#90`, PR `#96`
+- User email shown as info row in menu when signed in (below Edit Parameters on mobile, in menu on desktop) — PR `#90`, PR `#96`
 - **Toolbar height 44px** (reduced from 52px for CaneCalc-level density), brand SVG 24px, button padding `0.3rem 0.6rem` — PR `#90`
 
 ## Auto-Generate (no Generate button)
@@ -78,7 +78,7 @@ Comprehensive record of deliberate UI/UX decisions made throughout the project's
 | "Sign in / Sign up" | **"Sign In"** (toolbar button) | PR `#90` |
 | built-in presets | **"Standard Instruments"** | `08306c2` |
 | "Generating..." | **"Updating preview..."** | `ccf1aca` |
-| "Parameters" (mobile menu) | **"Edit Profile"** | PR `#96` |
+| "Parameters" (mobile menu) | **"Edit Parameters"** | PR `#96` |
 
 Rationale: instrument makers don't know what JSON is. "Profiles" better describes personal saved configurations.
 
@@ -122,8 +122,8 @@ Rationale: instrument makers don't know what JSON is. "Profiles" better describe
 
 ## Mobile Specifics
 
-- **"Edit Profile" is first item in hamburger menu** — on mobile, opening the parameters panel is the primary action, so it sits at the top of the menu with its own separator — PR `#96`
-- **Mobile params drawer is full-screen** with sticky "Edit Profile" header and ✕ close button — replaces the old partial-width side drawer (which lacked a close button and had scroll issues) — PR `#96`
+- **"Edit Parameters" is first item in hamburger menu** — on mobile, opening the parameters panel is the primary action, so it sits at the top of the menu with its own separator — PR `#96`
+- **Mobile params drawer is full-screen** with sticky "Edit Parameters" header and ✕ close button — replaces the old partial-width side drawer (which lacked a close button and had scroll issues) — PR `#96`
 - **No `backdrop-filter: blur()` on overlays** (breaks on Firefox/Android) — `addaa8a`, `240de00`
 - **Web Share API only on `pointer: coarse` devices** (Mac desktop `navigator.share` triggers annoying native dialog, so desktop always gets share modal) — `3ed4e1b`
 - Email share opens `_blank` (don't navigate away from app) — `1f6341c`

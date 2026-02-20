@@ -282,14 +282,14 @@ test.describe('Mobile Params Drawer', () => {
     await page.goto('/');
   });
 
-  test('"Edit Profile" is first item in hamburger menu', async ({ page }) => {
+  test('"Edit Parameters" is first item in hamburger menu', async ({ page }) => {
     await page.click('#toolbar-hamburger');
     const firstButton = page.locator('#app-menu button.app-menu-item').first();
     await expect(firstButton).toHaveAttribute('id', 'mm-params');
-    await expect(firstButton).toContainText('Edit Profile');
+    await expect(firstButton).toContainText('Edit Parameters');
   });
 
-  test('"Sign In" is right after "Edit Profile" in hamburger menu', async ({ page }) => {
+  test('"Sign In" is right after "Edit Parameters" in hamburger menu', async ({ page }) => {
     await page.click('#toolbar-hamburger');
     const buttons = page.locator('#app-menu button.app-menu-item');
     // mm-auth should be the second button (after mm-params)
@@ -308,7 +308,7 @@ test.describe('Mobile Params Drawer', () => {
   test('mobile params drawer has close button and header', async ({ page }) => {
     const closeHeader = page.locator('#mobile-params-close');
     await expect(closeHeader).toBeAttached();
-    await expect(closeHeader.locator('.close-label')).toHaveText('Edit Profile');
+    await expect(closeHeader.locator('.close-label')).toHaveText('Edit Parameters');
     await expect(page.locator('#mobile-params-close-btn')).toBeAttached();
   });
 
