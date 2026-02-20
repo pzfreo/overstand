@@ -265,13 +265,34 @@ export async function publishToCommunity(presetName, description, parameters, au
         .single();
 
     if (error) {
-        // Unique constraint violation — user already published this name
         if (error.code === '23505') {
-            throw new Error(`You already have a published profile named "${presetName}". Unpublish it first to re-publish.`);
+            throw new Error(`A published profile named "${presetName}" already exists. Unpublish it first to re-publish.`);
         }
         throw error;
     }
     return data;
+}
+
+/**
+ * Check if a published community profile exists with the given name.
+ * Returns { exists, isOwner } so callers can distinguish "my profile" from "someone else's".
+ * @param {string} presetName - Name to check
+ * @returns {{ exists: boolean, isOwner: boolean }}
+ */
+export async function checkPublishedName(presetName) {
+    const supabase = getSupabaseClient();
+    const user = getCurrentUser();
+    if (!supabase || !user) return { exists: false, isOwner: false };
+
+    const { data, error } = await supabase
+        .from('shared_presets')
+        .select('id, owner_id')
+        .eq('preset_name', presetName)
+        .eq('is_published', true)
+        .limit(1);
+
+    if (error || !data || data.length === 0) return { exists: false, isOwner: false };
+    return { exists: true, isOwner: data[0].owner_id === user.id };
 }
 
 /**

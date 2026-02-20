@@ -2,7 +2,7 @@ import { state, elements } from './state.js';
 import * as ui from './ui.js';
 import { showErrorModal, showConfirmModal, showPromptModal } from './modal.js';
 import { isAuthenticated, getCurrentUser } from './auth.js';
-import { saveToCloud, createShareLink, loadSharedPreset, copyToClipboard, cloudPresetExists, publishToCommunity } from './cloud_presets.js';
+import { saveToCloud, createShareLink, loadSharedPreset, copyToClipboard, cloudPresetExists, checkPublishedName, publishToCommunity } from './cloud_presets.js';
 import { collectParameters, applyParametersToForm, refreshAfterParameterLoad, confirmDiscardChanges, updateSaveIndicator, closeOverlay } from './params.js';
 import { showLoginModal, refreshCloudPresets } from './auth-ui.js';
 
@@ -153,15 +153,30 @@ export async function handleMenuPublish() {
     if (!isAuthenticated()) { showLoginModal(); return; }
 
     const params = collectParameters();
-    const defaultName = state.currentProfileName || params.instrument_name || 'My Profile';
+    let defaultName = state.currentProfileName || params.instrument_name || 'My Profile';
 
-    const presetName = await showPromptModal('Publish', 'Publish to community as:', defaultName);
-    if (!presetName) return;
+    // Loop so the user can retry with a different name if the name is taken
+    let presetName;
+    while (true) {
+        presetName = await showPromptModal('Publish', 'Publish to community as:', defaultName);
+        if (!presetName) return;
+
+        const published = await checkPublishedName(presetName);
+        if (published.exists && !published.isOwner) {
+            await showConfirmModal('Name Taken', `"${presetName}" is already published by another user. Please choose a different name.`);
+            defaultName = presetName;
+            continue;
+        }
+        if (published.exists && published.isOwner) {
+            if (!await showConfirmModal('Update Published Profile', `You already have a published profile named "${presetName}". Update it with the new parameters?`)) return;
+        }
+        break;
+    }
 
     try {
         const exists = await cloudPresetExists(presetName);
         if (exists) {
-            if (!await showConfirmModal('Overwrite & Publish', `A profile named "${presetName}" already exists. Overwrite and publish?`)) return;
+            if (!await showConfirmModal('Overwrite & Publish', `A profile named "${presetName}" already exists in your saved profiles. Overwrite and publish?`)) return;
         }
 
         ui.setStatus('loading', 'Saving and publishing...');

@@ -2,7 +2,7 @@ import { state, elements } from './state.js';
 import * as ui from './ui.js';
 import { escapeHtml, showErrorModal, showConfirmModal, showPromptModal } from './modal.js';
 import { isAuthenticated, getCurrentUser } from './auth.js';
-import { deleteCloudPreset, isPresetPublished, publishToCommunity, loadCommunityProfiles, unpublishFromCommunity, loadCommunityProfileParameters, getUserBookmarks, toggleBookmark } from './cloud_presets.js';
+import { deleteCloudPreset, isPresetPublished, checkPublishedName, publishToCommunity, loadCommunityProfiles, unpublishFromCommunity, loadCommunityProfileParameters, getUserBookmarks, toggleBookmark } from './cloud_presets.js';
 import { debounce, collectParameters, applyParametersToForm, refreshAfterParameterLoad, confirmDiscardChanges, updateSaveIndicator, closeOverlay } from './params.js';
 import { showLoginModal, refreshCloudPresets } from './auth-ui.js';
 
@@ -380,10 +380,18 @@ export async function handlePublish(preset) {
     const authorName = user.user_metadata?.full_name || user.email || 'Anonymous';
     const instrumentFamily = preset.parameters.instrument_family || '';
 
-    const confirmed = await showConfirmModal('Publish Profile',
-        `Publish "${preset.preset_name}" to the community?\n\n` +
-        `Author: ${authorName}\n` +
-        `This will be visible to all Overstand users.`
+    const published = await checkPublishedName(preset.preset_name);
+    if (published.exists && !published.isOwner) {
+        showErrorModal('Name Taken', `A community profile named "${preset.preset_name}" is already published by another user. Please choose a different name.`);
+        return;
+    }
+
+    const confirmMsg = published.exists && published.isOwner
+        ? `Update your published profile "${preset.preset_name}" with new parameters?\n\nAuthor: ${authorName}\nThis will be visible to all Overstand users.`
+        : `Publish "${preset.preset_name}" to the community?\n\nAuthor: ${authorName}\nThis will be visible to all Overstand users.`;
+    const confirmed = await showConfirmModal(
+        published.isOwner ? 'Update Published Profile' : 'Publish Profile',
+        confirmMsg
     );
     if (!confirmed) return;
 
