@@ -1,6 +1,7 @@
 import { state } from './state.js';
 import { showInfoModal, showErrorModal } from './modal.js';
 import { trackPDFExported, trackError } from './analytics.js';
+import { VIEW_FILENAME_PARTS } from './constants.js';
 
 export async function downloadPDF(collectParameters, sanitizeFilename) {
     if (!state || !state.views || !state.views[state.currentView]) {
@@ -19,13 +20,6 @@ export async function downloadPDF(collectParameters, sanitizeFilename) {
         if (!svg2pdf) throw new Error('svg2pdf library not loaded correctly. Please reload the page.');
 
         const currentView = state.currentView;
-        const viewNames = {
-            'top': 'top-view',
-            'side': 'side-view',
-            'cross_section': 'cross-section',
-            'dimensions': 'dimensions',
-            'fret_positions': 'fret-positions'
-        };
 
         const params = collectParameters();
         const instrumentName = params.instrument_name || 'instrument';
@@ -138,7 +132,7 @@ export async function downloadPDF(collectParameters, sanitizeFilename) {
             document.body.removeChild(svgElement);
         }
 
-        doc.save(`${filename}_${viewNames[currentView]}_${selectedFormat.name}.pdf`);
+        doc.save(`${filename}_${VIEW_FILENAME_PARTS[currentView]}_${selectedFormat.name}.pdf`);
         trackPDFExported(params.instrument_family || 'unknown');
 
     } catch (error) {

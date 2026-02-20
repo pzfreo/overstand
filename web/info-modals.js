@@ -2,10 +2,10 @@ import * as ui from './ui.js';
 import * as analytics from './analytics.js';
 import { showModal } from './modal.js';
 import { markdownToHtml } from './markdown-parser.js';
+import { IS_MAC } from './constants.js';
 
 export function showKeyboardShortcuts() {
-    const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-    const mod = isMac ? '⌘' : 'Ctrl';
+    const mod = IS_MAC ? '⌘' : 'Ctrl';
 
     const content = `
         <div class="shortcuts-section">
