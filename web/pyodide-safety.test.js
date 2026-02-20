@@ -15,13 +15,16 @@ import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const appSource = readFileSync(resolve(__dirname, 'app.js'), 'utf-8');
+const generationSource = readFileSync(resolve(__dirname, 'generation.js'), 'utf-8');
 
 describe('Pyodide injection safety', () => {
 
   test('no string interpolation inside runPythonAsync calls', () => {
     // Match template literal interpolation (${...}) inside runPythonAsync blocks.
     // This pattern catches both direct variable interpolation and .replace() escaping.
-    const lines = appSource.split('\n');
+    // Check all files that call runPythonAsync
+    const combinedSource = appSource + '\n' + generationSource;
+    const lines = combinedSource.split('\n');
     const violations = [];
 
     let insideRunPython = false;
@@ -51,15 +54,18 @@ describe('Pyodide injection safety', () => {
   test('user data is passed via globals.set() before runPythonAsync', () => {
     // Verify the safe pattern: globals.set() followed by runPythonAsync
     // referencing the global variable (not string interpolation)
-    const generateNeckMatch = appSource.includes('globals.set("_params_json", paramsJson)');
+    // This pattern is now in generation.js after refactoring
+    const combinedSource = appSource + '\n' + generationSource;
+    const generateNeckMatch = combinedSource.includes('globals.set("_params_json", paramsJson)');
     expect(generateNeckMatch).toBe(true);
   });
 
   test('no .replace() used to escape strings for Python execution', () => {
     // The old vulnerable pattern was: paramsJson.replace(/'/g, "\\'")
     // This should never appear near runPythonAsync calls
+    const combinedSource = appSource + '\n' + generationSource;
     const dangerousPattern = /paramsJson\.replace\(.*runPythonAsync|runPythonAsync[^)]*paramsJson\.replace/s;
-    expect(dangerousPattern.test(appSource)).toBe(false);
+    expect(dangerousPattern.test(combinedSource)).toBe(false);
   });
 
   test('runPythonAsync calls with static strings are safe', () => {
