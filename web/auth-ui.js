@@ -8,9 +8,11 @@ export function updateAuthUI(user) {
     const shareSaveBtn = document.getElementById('share-save-btn');
     const toolbarSave = document.getElementById('toolbar-save');
     const toolbarShare = document.getElementById('toolbar-share');
+    const toolbarPublish = document.getElementById('toolbar-publish');
     const toolbarAuth = document.getElementById('toolbar-auth');
     const mmSave = document.getElementById('mm-save');
     const mmShare = document.getElementById('mm-share');
+    const mmPublish = document.getElementById('mm-publish');
     const mmAuth = document.getElementById('mm-auth');
     const mmUserEmail = document.getElementById('mm-user-email');
 
@@ -18,8 +20,10 @@ export function updateAuthUI(user) {
         if (shareSaveBtn) shareSaveBtn.style.display = 'inline-block';
         if (toolbarSave) toolbarSave.disabled = false;
         if (toolbarShare) toolbarShare.disabled = false;
+        if (toolbarPublish) toolbarPublish.disabled = false;
         if (mmSave) mmSave.disabled = false;
         if (mmShare) mmShare.disabled = false;
+        if (mmPublish) mmPublish.disabled = false;
 
         if (toolbarAuth) {
             toolbarAuth.textContent = 'Sign Out';
@@ -39,8 +43,10 @@ export function updateAuthUI(user) {
         if (shareSaveBtn) shareSaveBtn.style.display = 'none';
         if (toolbarSave) toolbarSave.disabled = true;
         if (toolbarShare) toolbarShare.disabled = true;
+        if (toolbarPublish) toolbarPublish.disabled = true;
         if (mmSave) mmSave.disabled = true;
         if (mmShare) mmShare.disabled = true;
+        if (mmPublish) mmPublish.disabled = true;
 
         if (toolbarAuth) {
             toolbarAuth.textContent = 'Sign In';
