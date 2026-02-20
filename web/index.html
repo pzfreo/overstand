@@ -190,6 +190,10 @@
 
         <div class="main-container">
             <div class="controls-panel" id="controls-panel">
+                <div class="mobile-params-close" id="mobile-params-close">
+                    <span class="close-label">Edit Parameters</span>
+                    <button class="close-btn" id="mobile-params-close-btn" aria-label="Close parameters">✕</button>
+                </div>
                 <div class="params-header">
                     <h2>Parameters</h2>
                     <button class="params-collapse-btn" id="params-collapse-btn" title="Collapse parameters">◀</button>
@@ -355,6 +359,10 @@
     <div class="app-menu-overlay" id="app-menu-overlay">
         <div class="app-menu" id="app-menu">
             <!-- Mobile-only: these duplicate toolbar buttons, hidden on desktop -->
+            <button class="app-menu-item mobile-only" id="mm-params"><span class="icon">⚙️</span> Edit Parameters</button>
+            <div class="app-menu-item app-menu-email mobile-only" id="mm-user-email" style="display: none;"></div>
+            <button class="app-menu-item mobile-only" id="mm-auth"><span class="icon">👤</span> Sign In</button>
+            <div class="app-menu-sep mobile-only"></div>
             <button class="app-menu-item mobile-only" id="mm-load"><span class="icon">📂</span> Load Profile</button>
             <button class="app-menu-item mobile-only" id="mm-save" disabled><span class="icon">💾</span> Save Profile</button>
             <div class="app-menu-sep mobile-only"></div>
@@ -366,9 +374,8 @@
             <button class="app-menu-item mobile-only" id="mm-share" disabled><span class="icon">🔗</span> Share</button>
             <button class="app-menu-item mobile-only" id="mm-publish" disabled><span class="icon">📢</span> Publish to Community</button>
             <div class="app-menu-sep mobile-only"></div>
-            <button class="app-menu-item mobile-only" id="mm-params"><span class="icon">⚙️</span> Parameters</button>
             <button class="app-menu-item mobile-only" id="mm-theme"><span class="icon">☀️</span> Toggle Theme</button>
-            <div class="app-menu-sep mobile-only"></div>
+            <div class="app-menu-sep"></div>
             <!-- Always visible: menu-only items -->
             <button class="app-menu-item" id="mm-shortcuts"><span class="icon">⌨️</span> Keyboard Shortcuts</button>
             <button class="app-menu-item" id="mm-about"><span class="icon">ℹ️</span> About</button>
@@ -377,9 +384,6 @@
             <div class="app-menu-sep"></div>
             <a href="https://github.com/pzfreo/overstand" target="_blank" class="app-menu-item"><span class="icon">🔗</span> GitHub Repository <span class="icon-right">↗</span></a>
             <a href="https://github.com/pzfreo/overstand/issues" target="_blank" class="app-menu-item"><span class="icon">🐛</span> Report Issue <span class="icon-right">↗</span></a>
-            <div class="app-menu-sep mobile-only"></div>
-            <div class="app-menu-item app-menu-email" id="mm-user-email" style="display: none;"></div>
-            <button class="app-menu-item mobile-only" id="mm-auth"><span class="icon">👤</span> Sign In</button>
         </div>
     </div>
 

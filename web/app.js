@@ -393,18 +393,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function openMobileParams() {
         if (controlsPanel) controlsPanel.classList.add('mobile-open');
-        if (paramsDrawerOverlay) paramsDrawerOverlay.classList.add('open');
         document.body.style.overflow = 'hidden';
     }
 
     function closeMobileParams() {
         if (controlsPanel) controlsPanel.classList.remove('mobile-open');
-        if (paramsDrawerOverlay) paramsDrawerOverlay.classList.remove('open');
         document.body.style.overflow = '';
     }
 
     if (paramsDrawerOverlay) {
         paramsDrawerOverlay.addEventListener('click', closeMobileParams);
+    }
+
+    const mobileParamsCloseBtn = document.getElementById('mobile-params-close-btn');
+    if (mobileParamsCloseBtn) {
+        mobileParamsCloseBtn.addEventListener('click', closeMobileParams);
     }
 
     // Hamburger + menu overlay
@@ -546,7 +549,8 @@ document.addEventListener('DOMContentLoaded', () => {
     initKeyboardShortcuts();
 
     registerServiceWorker();
-    initInstallPrompt();
+    // PWA install prompt disabled until app is more stable
+    // initInstallPrompt();
     loadVersionInfo();
     initializePython();
 });

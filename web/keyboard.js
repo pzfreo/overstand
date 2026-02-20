@@ -65,11 +65,9 @@ export function initKeyboardShortcuts() {
             }
 
             const controlsPanel = document.getElementById('controls-panel');
-            const paramsDrawerOverlay = document.getElementById('params-drawer-overlay');
             if (controlsPanel && controlsPanel.classList.contains('mobile-open')) {
                 e.preventDefault();
                 controlsPanel.classList.remove('mobile-open');
-                if (paramsDrawerOverlay) paramsDrawerOverlay.classList.remove('open');
                 document.body.style.overflow = '';
             }
         }
