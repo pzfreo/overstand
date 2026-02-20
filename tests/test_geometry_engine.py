@@ -180,9 +180,8 @@ class TestCalculateStringAnglesGuitar:
             'bridge_height': 12,
             'overstand': 6
         }
-        # Create fret positions for 14 frets
+        # Create fret positions for 14 frets (0-indexed: index 0 = fret 1)
         fret_positions = calculate_fret_positions(650, 14)
-        fret_positions.insert(0, 0)  # Add nut position
 
         result = calculate_string_angles_guitar(
             params, vsl=650, fret_positions=fret_positions, fb_thickness_at_join=8.0
@@ -203,7 +202,6 @@ class TestCalculateStringAnglesGuitar:
             'overstand': 6
         }
         fret_positions = calculate_fret_positions(650, 14)
-        fret_positions.insert(0, 0)
 
         result = calculate_string_angles_guitar(
             params, vsl=650, fret_positions=fret_positions, fb_thickness_at_join=8.0

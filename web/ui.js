@@ -1,4 +1,7 @@
 import { state, elements } from './state.js';
+
+let _switchViewFn = null;
+export function setSwitchViewCallback(fn) { _switchViewFn = fn; }
 import { ParameterSection } from './components/parameter-section.js';
 import { OutputSection } from './components/output-section.js';
 import { ZOOM_CONFIG } from './constants.js';
@@ -530,7 +533,7 @@ export function updateTabStates(params) {
 
         // If currently viewing fret positions, switch to side view
         if (state.currentView === 'fret_positions') {
-            window.switchView('side');
+            if (_switchViewFn) _switchViewFn('side');
         }
     }
 }

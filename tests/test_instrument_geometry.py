@@ -35,6 +35,24 @@ def test_viol_derived_values():
     assert result['body_stop'] > 0
 
 
+def test_guitar_derived_values_with_low_fret_count():
+    """Test that guitar family works even when no_frets < fret_join.
+
+    Regression test: switching from violin (no_frets=7 default) to guitar
+    (fret_join=12 default) caused IndexError because fret_positions had
+    fewer entries than fret_join required.
+    """
+    params = get_default_values()
+    params['instrument_family'] = InstrumentFamily.GUITAR_MANDOLIN.name
+    params['no_frets'] = 7  # Less than fret_join default of 12
+    result = calculate_derived_values(params)
+
+    assert 'neck_stop' in result
+    assert 'body_stop' in result
+    assert result['neck_stop'] > 0
+    assert result['body_stop'] > 0
+
+
 def test_string_angle_calculation():
     """Test string angle calculations are in valid range"""
     params = get_default_values()

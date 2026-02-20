@@ -15,12 +15,13 @@ import {
     hideErrors,
     setStatus,
     createParameterControl,
-    updateTabStates
+    updateTabStates,
+    setSwitchViewCallback
 } from './ui.js';
 
 beforeEach(() => {
-    // Mock window.switchView which updateTabStates calls for Violin family
-    window.switchView = () => {};
+    // Set up switchView callback which updateTabStates calls for Violin family
+    setSwitchViewCallback(() => {});
     // DOM scaffold is set up by test-setup.js beforeEach
     initElements();
 });
@@ -338,7 +339,7 @@ describe('updateTabStates', () => {
 
     test('calls switchView when disabling currently active fret_positions', () => {
         const calls = [];
-        window.switchView = (view) => calls.push(view);
+        setSwitchViewCallback((view) => calls.push(view));
         state.currentView = 'fret_positions';
         updateTabStates({ instrument_family: 'VIOLIN' });
         expect(calls).toContain('side');
