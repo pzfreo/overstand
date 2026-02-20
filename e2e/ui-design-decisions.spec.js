@@ -284,10 +284,25 @@ test.describe('Mobile Params Drawer', () => {
 
   test('"Edit Profile" is first item in hamburger menu', async ({ page }) => {
     await page.click('#toolbar-hamburger');
-    // mm-params should be the first button in the menu
     const firstButton = page.locator('#app-menu button.app-menu-item').first();
     await expect(firstButton).toHaveAttribute('id', 'mm-params');
     await expect(firstButton).toContainText('Edit Profile');
+  });
+
+  test('"Sign In" is right after "Edit Profile" in hamburger menu', async ({ page }) => {
+    await page.click('#toolbar-hamburger');
+    const buttons = page.locator('#app-menu button.app-menu-item');
+    // mm-auth should be the second button (after mm-params)
+    const secondButton = buttons.nth(1);
+    await expect(secondButton).toHaveAttribute('id', 'mm-auth');
+    await expect(secondButton).toContainText('Sign In');
+  });
+
+  test('menu uses dvh for max-height (Android nav bar safe)', async ({ page }) => {
+    const menu = page.locator('#app-menu');
+    const maxHeight = await menu.evaluate(el => getComputedStyle(el).maxHeight);
+    // dvh should be resolved to a pixel value (not '100vh')
+    expect(maxHeight).toMatch(/px$/);
   });
 
   test('mobile params drawer has close button and header', async ({ page }) => {

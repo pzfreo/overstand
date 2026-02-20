@@ -549,7 +549,8 @@ document.addEventListener('DOMContentLoaded', () => {
     initKeyboardShortcuts();
 
     registerServiceWorker();
-    initInstallPrompt();
+    // PWA install prompt disabled until app is more stable
+    // initInstallPrompt();
     loadVersionInfo();
     initializePython();
 });
