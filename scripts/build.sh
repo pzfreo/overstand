@@ -141,10 +141,10 @@ echo "  ✓ about.md processed with version ${VERSION}"
 
 echo "📋 Copying web files..."
 
-# Copy all web files except service-worker.js, version.json, and about.md (already processed)
+# Copy all web files except processed files and dev-only artifacts
 for file in web/*; do
     filename=$(basename "$file")
-    if [ "$filename" != "service-worker.js" ] && [ "$filename" != "version.json" ] && [ "$filename" != "about.md" ]; then
+    if [ "$filename" != "service-worker.js" ] && [ "$filename" != "version.json" ] && [ "$filename" != "about.md" ] && [ "$filename" != "prototype.html" ]; then
         if [ -d "$file" ]; then
             cp -r "$file" "public/"
         else

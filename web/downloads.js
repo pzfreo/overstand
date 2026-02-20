@@ -2,6 +2,7 @@ import { state, elements } from './state.js';
 import * as ui from './ui.js';
 import * as analytics from './analytics.js';
 import { showErrorModal } from './modal.js';
+import { VIEW_FILENAME_PARTS } from './constants.js';
 import { collectParameters, applyParametersToForm, refreshAfterParameterLoad, confirmDiscardChanges, updateSaveIndicator } from './params.js';
 
 export function sanitizeFilename(name) { return name.replace(/[<>:"/\\|?*]/g, '_').replace(/\s+/g, '_'); }
@@ -21,8 +22,7 @@ export function downloadFile(content, filename, mimeType) {
 
 export function downloadSVG() {
     if (!state.views || !state.views[state.currentView]) return;
-    const viewNames = { 'side': 'side-view', 'top': 'top-view', 'cross_section': 'cross-section', 'radius_template': 'radius-template' };
-    const filename = `${getInstrumentFilename()}_${viewNames[state.currentView]}.svg`;
+    const filename = `${getInstrumentFilename()}_${VIEW_FILENAME_PARTS[state.currentView]}.svg`;
     downloadFile(state.views[state.currentView], filename, 'image/svg+xml');
     analytics.trackSVGDownloaded(state.currentView);
 }

@@ -3,7 +3,7 @@ import * as ui from './ui.js';
 import { downloadPDF } from './pdf_export.js';
 import { registerServiceWorker, initInstallPrompt } from './pwa_manager.js';
 import { closeModal, showErrorModal } from './modal.js';
-import { ZOOM_CONFIG } from './constants.js';
+import { ZOOM_CONFIG, IS_MAC } from './constants.js';
 import * as analytics from './analytics.js';
 import { initAuth, signOut, isAuthenticated, onAuthStateChange } from './auth.js';
 
@@ -285,9 +285,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     initElements();
 
-    const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
     const shortcut = document.getElementById('gen-btn-shortcut');
-    if (shortcut) shortcut.textContent = isMac ? '⌘ + Enter' : 'Ctrl + Enter';
+    if (shortcut) shortcut.textContent = IS_MAC ? '⌘ + Enter' : 'Ctrl + Enter';
 
     // Core controls
     if (elements.genBtn) elements.genBtn.addEventListener('click', generateNeck);
