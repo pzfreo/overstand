@@ -14,19 +14,25 @@
     var refreshToken = hashParams.get('refresh_token');
     var code = queryParams.get('code');
 
+    var result = null;
     if (accessToken && refreshToken) {
-        // Implicit flow — pass tokens to opener via localStorage
-        try {
-            localStorage.setItem('oauth-result', JSON.stringify({
-                access_token: accessToken,
-                refresh_token: refreshToken
-            }));
-        } catch(e) {}
+        result = { type: 'oauth-result', access_token: accessToken, refresh_token: refreshToken };
     } else if (code) {
-        // PKCE flow — pass code to opener via localStorage
-        try {
-            localStorage.setItem('oauth-result', JSON.stringify({ code: code }));
-        } catch(e) {}
+        result = { type: 'oauth-result', code: code };
+    }
+
+    if (result) {
+        if (window.opener) {
+            // Preferred: send via postMessage (tokens never touch storage)
+            try {
+                window.opener.postMessage(result, window.location.origin);
+            } catch(e) {}
+        } else {
+            // Fallback for redirect flow (not a popup) — brief localStorage use
+            try {
+                localStorage.setItem('oauth-result', JSON.stringify(result));
+            } catch(e) {}
+        }
     }
 
     // Strip tokens from URL before any redirect (prevents analytics from capturing them)
