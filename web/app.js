@@ -2,90 +2,23 @@ import { state, elements, initElements } from './state.js';
 import * as ui from './ui.js';
 import { downloadPDF } from './pdf_export.js';
 import { registerServiceWorker, initInstallPrompt } from './pwa_manager.js';
-import { showModal, closeModal, showErrorModal, escapeHtml } from './modal.js';
-import { DEBOUNCE_GENERATE, ZOOM_CONFIG } from './constants.js';
-import { markdownToHtml } from './markdown-parser.js';
+import { closeModal, showErrorModal } from './modal.js';
+import { ZOOM_CONFIG } from './constants.js';
 import * as analytics from './analytics.js';
-import { initAuth, signInWithProvider, sendSignInCode, verifySignInCode, signOut, isAuthenticated, getCurrentUser, onAuthStateChange } from './auth.js';
-import { saveToCloud, loadUserPresets, deleteCloudPreset, createShareLink, loadSharedPreset, copyToClipboard, cloudPresetExists, publishToCommunity, loadCommunityProfiles, unpublishFromCommunity, loadCommunityProfileParameters, getUserBookmarks, toggleBookmark } from './cloud_presets.js';
+import { initAuth, signOut, isAuthenticated, onAuthStateChange } from './auth.js';
 
-// Helper: Debounce
-function debounce(func, wait) {
-    let timeout;
-    return function executedFunction(...args) {
-        const later = () => {
-            clearTimeout(timeout);
-            func(...args);
-        };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-    };
-}
+// Extracted modules
+import { collectParameters, setGenerationCallbacks, handleParameterChange, markParametersModified, updateSaveIndicator, confirmDiscardChanges, applyParametersToForm, refreshAfterParameterLoad } from './params.js';
+import { generateNeck, updateDerivedValues, debouncedGenerate } from './generation.js';
+import { downloadSVG, saveParameters, handleLoadParameters, sanitizeFilename } from './downloads.js';
+import { showKeyboardShortcuts, showAbout, clearCacheAndReload } from './info-modals.js';
+import { updateAuthUI, showLoginModal, refreshCloudPresets } from './auth-ui.js';
+import { showLoadProfileModal, closeLoadProfileModal, switchProfileTab, setLoadPresetCallback } from './profile-modal.js';
+import { handleCloudSave, handleShare, handleShareURL, handleShareSave, closeShareModal, handleShareCopy, shareViaEmail, shareViaWhatsApp, shareViaFacebook } from './share.js';
+import { initKeyboardShortcuts, setKeyboardActions } from './keyboard.js';
 
-// Debounced generation
-const debouncedGenerate = debounce(() => {
-    generateNeck();
-}, DEBOUNCE_GENERATE);
-
-// Apply a set of parameters to the form elements
-function applyParametersToForm(parameters) {
-    for (const [name, value] of Object.entries(parameters)) {
-        const el = document.getElementById(name);
-        if (el) {
-            if (el.type === 'checkbox') el.checked = value;
-            else el.value = value;
-        }
-    }
-}
-
-// Common sequence after loading parameters from any source
-function refreshAfterParameterLoad() {
-    ui.hideErrors();
-    ui.updateParameterVisibility(collectParameters());
-    updateDerivedValues();
-    debouncedGenerate();
-}
-
-// Close an overlay and restore body scroll
-function closeOverlay(overlayId) {
-    const overlay = document.getElementById(overlayId);
-    if (overlay) overlay.classList.remove('active');
-    document.body.style.overflow = '';
-}
-
-function markParametersModified() {
-    state.parametersModified = true;
-    updateSaveIndicator();
-}
-
-function updateSaveIndicator() {
-    const el = document.getElementById('save-indicator');
-    if (!el) return;
-    if (!state.currentProfileName) {
-        el.textContent = '';
-        el.className = 'save-indicator';
-        return;
-    }
-    if (state.parametersModified) {
-        el.textContent = `— ${state.currentProfileName} (unsaved)`;
-        el.className = 'save-indicator unsaved';
-    } else {
-        el.textContent = `— ${state.currentProfileName}`;
-        el.className = 'save-indicator';
-    }
-}
-
-function confirmDiscardChanges(actionDescription) {
-    if (!state.parametersModified) return true;
-    return confirm(`You have unsaved changes. ${actionDescription}\n\nDo you want to continue?`);
-}
-
-// Handle parameter changes - update derived values immediately, debounce generation
-function handleParameterChange() {
-    markParametersModified();
-    updateDerivedValues();
-    debouncedGenerate();
-}
+// Wire up circular dependency callbacks
+setGenerationCallbacks({ updateDerivedValues, debouncedGenerate });
 
 const UI_CALLBACKS = {
     collectParameters,
@@ -144,6 +77,97 @@ async function loadVersionInfo() {
     }
 }
 
+async function loadPreset() {
+    const presetId = elements.presetSelect.value;
+    if (!presetId) return;
+
+    const presetDisplayName = state.uiMetadata?.presets?.[presetId]?.display_name || state.presets?.[presetId]?.name || presetId;
+    if (!confirmDiscardChanges(`Loading "${presetDisplayName}" will overwrite your current parameter values.`)) {
+        const previousValue = elements.presetSelect?.dataset.previousValue || '';
+        if (elements.presetSelect) elements.presetSelect.value = previousValue;
+        return;
+    }
+
+    let parameters = null;
+
+    const presetPaths = ['./presets/', '../presets/'];
+    const filename = `${presetId}.json`;
+
+    for (const basePath of presetPaths) {
+        try {
+            const response = await fetch(`${basePath}${filename}`);
+            if (response.ok) {
+                const presetData = await response.json();
+                if (presetData.parameters) {
+                    parameters = presetData.parameters;
+                    break;
+                }
+            }
+        } catch (e) {
+            console.warn(`Could not load preset from ${basePath}${filename}:`, e);
+        }
+    }
+
+    if (!parameters && state.presets && state.presets[presetId]) {
+        parameters = state.presets[presetId].parameters;
+    }
+
+    if (!parameters && state.uiMetadata && state.uiMetadata.presets && state.uiMetadata.presets[presetId]) {
+        parameters = state.uiMetadata.presets[presetId].basic_params;
+    }
+
+    if (!parameters) {
+        console.error(`Could not load preset: ${presetId}`);
+        return;
+    }
+
+    applyParametersToForm(parameters);
+
+    const descEl = document.getElementById('profile-description');
+    if (descEl) descEl.value = '';
+
+    state.parametersModified = false;
+    state.currentProfileName = state.uiMetadata?.presets?.[presetId]?.display_name || state.presets?.[presetId]?.name || presetId;
+    updateSaveIndicator();
+
+    if (elements.presetSelect) {
+        elements.presetSelect.dataset.previousValue = presetId;
+    }
+
+    refreshAfterParameterLoad();
+    analytics.trackPresetSelected(presetId, parameters.instrument_family || 'unknown');
+}
+
+// Wire up profile-modal's loadPreset callback
+setLoadPresetCallback(loadPreset);
+
+// View and zoom
+function switchView(viewName) {
+    if (!state.views) return;
+    state.currentView = viewName;
+    ui.displayCurrentView();
+    analytics.trackViewChanged(viewName);
+}
+
+function zoomIn() { if (state.svgCanvas) state.svgCanvas.zoom(state.svgCanvas.zoom() * ZOOM_CONFIG.factor); }
+function zoomOut() { if (state.svgCanvas) state.svgCanvas.zoom(state.svgCanvas.zoom() / ZOOM_CONFIG.factor); }
+function zoomReset() {
+    if (state.svgCanvas && state.initialViewBox) {
+        state.svgCanvas.viewbox(state.initialViewBox.x, state.initialViewBox.y, state.initialViewBox.width, state.initialViewBox.height);
+    }
+}
+
+// Menu
+function openMenu() {
+    const overlay = document.getElementById('app-menu-overlay');
+    if (overlay) overlay.classList.add('open');
+}
+
+function closeMenu() {
+    const overlay = document.getElementById('app-menu-overlay');
+    if (overlay) overlay.classList.remove('open');
+}
+
 async function initializePython() {
     try {
         ui.setStatus('loading', 'Loading Python engine...');
@@ -180,7 +204,7 @@ async function initializePython() {
             import os
             if '' not in sys.path:
                 sys.path.insert(0, '')
-            
+
             # Import dependencies first
             import constants, buildprimitives, dimension_helpers, parameter_registry, radius_template
             import geometry_engine, svg_renderer, view_generator
@@ -206,7 +230,6 @@ async function initializePython() {
         const derivedMetaResult = JSON.parse(derivedMetaJson);
         if (derivedMetaResult.success) state.derivedMetadata = derivedMetaResult.metadata;
 
-        // Load UI metadata bundle (sections, presets, parameters, derived values)
         const uiMetaJson = await state.pyodide.runPythonAsync(`instrument_generator.get_ui_metadata()`);
         const uiMetaResult = JSON.parse(uiMetaJson);
         if (uiMetaResult.success) {
@@ -220,26 +243,21 @@ async function initializePython() {
         ui.generateUI(UI_CALLBACKS);
         ui.populatePresets();
 
-        // Check for ?share= URL parameter (shared preset link)
         const loadedShared = await handleShareURL();
 
-        // Load the first preset's parameters (unless a shared preset was loaded)
         if (loadedShared) {
             // Shared preset already applied parameters
         } else if (elements.presetSelect && elements.presetSelect.value) {
             await loadPreset();
         } else {
-            // No presets available, just use defaults
             updateDerivedValues();
             generateNeck();
         }
 
-        // Initialize previousValue for preset selector
         if (elements.presetSelect && elements.presetSelect.value) {
             elements.presetSelect.dataset.previousValue = elements.presetSelect.value;
         }
 
-        // Parameters start unmodified (we just loaded a preset)
         state.parametersModified = false;
         updateSaveIndicator();
 
@@ -251,1414 +269,8 @@ async function initializePython() {
     }
 }
 
-async function loadPreset() {
-    const presetId = elements.presetSelect.value;
-    if (!presetId) return;
-
-    // Warn user if they have unsaved changes
-    const presetDisplayName = state.uiMetadata?.presets?.[presetId]?.display_name || state.presets?.[presetId]?.name || presetId;
-    if (!confirmDiscardChanges(`Loading "${presetDisplayName}" will overwrite your current parameter values.`)) {
-        // User cancelled - revert the dropdown selection
-        const previousValue = elements.presetSelect?.dataset.previousValue || '';
-        if (elements.presetSelect) elements.presetSelect.value = previousValue;
-        return;
-    }
-
-    let parameters = null;
-
-    // Try to load from JSON file in presets/ directory
-    const presetPaths = ['./presets/', '../presets/'];
-    const filename = `${presetId}.json`;
-
-    for (const basePath of presetPaths) {
-        try {
-            const response = await fetch(`${basePath}${filename}`);
-            if (response.ok) {
-                const presetData = await response.json();
-                if (presetData.parameters) {
-                    parameters = presetData.parameters;
-                    break;
-                }
-            }
-        } catch (e) {
-            console.warn(`Could not load preset from ${basePath}${filename}:`, e);
-        }
-    }
-
-    // Fallback to legacy file-based presets if JSON not found
-    if (!parameters && state.presets && state.presets[presetId]) {
-        parameters = state.presets[presetId].parameters;
-    }
-
-    // Fallback to ui_metadata basic_params (for backward compatibility)
-    if (!parameters && state.uiMetadata && state.uiMetadata.presets && state.uiMetadata.presets[presetId]) {
-        parameters = state.uiMetadata.presets[presetId].basic_params;
-    }
-
-    if (!parameters) {
-        console.error(`Could not load preset: ${presetId}`);
-        return;
-    }
-
-    // Apply preset parameters
-    applyParametersToForm(parameters);
-
-    // Clear description — standard presets don't have user notes
-    const descEl = document.getElementById('profile-description');
-    if (descEl) descEl.value = '';
-
-    // Reset modified flag and track profile name
-    state.parametersModified = false;
-    state.currentProfileName = state.uiMetadata?.presets?.[presetId]?.display_name || state.presets?.[presetId]?.name || presetId;
-    updateSaveIndicator();
-
-    // Store current preset selection for cancellation
-    if (elements.presetSelect) {
-        elements.presetSelect.dataset.previousValue = presetId;
-    }
-
-    refreshAfterParameterLoad();
-
-    // Track preset selection
-    analytics.trackPresetSelected(presetId, parameters.instrument_family || 'unknown');
-}
-
-function collectParameters() {
-    const params = {};
-    if (!state.parameterDefinitions) return params;
-    for (const [name, param] of Object.entries(state.parameterDefinitions.parameters)) {
-        const element = document.getElementById(name);
-        if (!element) continue;
-        if (param.type === 'number') {
-            const val = parseFloat(element.value);
-            params[name] = !isNaN(val) ? val : param.default;
-        } else if (param.type === 'boolean') params[name] = element.checked;
-        else params[name] = element.value;
-    }
-    return params;
-}
-
-function classifyErrors(errors) {
-    if (!errors || errors.length === 0) return 'transient';
-
-    const errorText = errors.join(' ').toLowerCase();
-
-    // Validation errors are transient
-    if (errorText.includes('validation') ||
-        errorText.includes('must be') ||
-        errorText.includes('invalid value')) {
-        return 'transient';
-    }
-
-    // Geometry/calculation failures are persistent
-    if (errorText.includes('geometry') ||
-        errorText.includes('calculation') ||
-        errorText.includes('failed')) {
-        return 'persistent';
-    }
-
-    return 'transient';
-}
-
-async function generateNeck() {
-    if (state.isGenerating) return;
-    ui.hideErrors();
-    state.isGenerating = true;
-    elements.genBtn.disabled = true;
-    ui.setStatus('generating', '⚙️ Updating preview...');
-
-    // Mobile panel auto-close removed - panel now only closes when user taps edit icon
-    // This allows users to batch-edit multiple parameters without the panel closing after each change
-
-    try {
-        const params = collectParameters();
-        params._generator_url = window.location.href;
-        const paramsJson = JSON.stringify(params);
-
-        state.pyodide.globals.set("_params_json", paramsJson);
-        const resultJson = await state.pyodide.runPythonAsync(`
-            from instrument_generator import generate_violin_neck
-            generate_violin_neck(_params_json)
-        `);
-        const result = JSON.parse(resultJson);
-
-        if (result.success) {
-            state.views = result.views;
-            state.fretPositions = result.fret_positions || null;
-            state.derivedValues = result.derived_values || {};
-            state.derivedFormatted = result.derived_formatted || {};
-            state.derivedMetadata = result.derived_metadata || state.derivedMetadata;
-
-            state.views.dimensions = ui.generateDimensionsTableHTML(params, state.derivedValues, state.derivedFormatted);
-            state.views.fret_positions = state.fretPositions;
-            ui.displayCurrentView();
-            ui.updateTabStates(params);
-            elements.preview.classList.add('has-content');
-            ui.setStatus('ready', '✅ Preview updated');
-
-            // Track successful generation
-            analytics.trackTemplateGenerated(params.instrument_family || 'unknown');
-        } else {
-            const errorType = classifyErrors(result.errors);
-            ui.showErrors(result.errors, errorType);
-            ui.setStatus('error', '❌ Generation failed - see errors below');
-            analytics.trackError('generation', result.errors?.[0] || 'Unknown error');
-        }
-    } catch (error) {
-        console.error('[Generate] Exception:', error);
-        console.error('[Generate] Error stack:', error.stack);
-        ui.showErrors([`Unexpected error: ${error.message}`], 'persistent');
-        ui.setStatus('error', '❌ Generation failed');
-        analytics.trackError('generation_exception', error.message);
-    } finally {
-        state.isGenerating = false;
-        elements.genBtn.disabled = false;
-    }
-}
-
-async function updateDerivedValues() {
-    if (!state.pyodide || state.isGenerating) return;
-    try {
-        const params = collectParameters();
-        const paramsJson = JSON.stringify(params);
-        const currentMode = params.instrument_family || 'VIOLIN';
-
-        state.pyodide.globals.set("_params_json", paramsJson);
-        const resultJson = await state.pyodide.runPythonAsync(`
-            from instrument_generator import get_derived_values
-            get_derived_values(_params_json)
-        `);
-        const result = JSON.parse(resultJson);
-        const container = elements.calculatedFields;
-
-        if (result.success && Object.keys(result.values).length > 0) {
-            // Update core metrics panel (always visible, prominent display)
-            updateCoreMetricsPanel(result.values, result.metadata, params);
-
-            // Update output sections if using component-based UI
-            if (state.uiSections && state.uiSections.output) {
-                for (const section of state.uiSections.output) {
-                    section.updateValues(result.values);
-                }
-                container.style.display = 'none'; // Hide old metrics display
-            } else {
-                // Legacy output display
-                container.style.display = 'grid';
-                container.innerHTML = '';
-
-                for (const [name, param] of Object.entries(state.parameterDefinitions.parameters)) {
-                    if (ui.isParameterOutput(param, currentMode)) {
-                        const input = document.getElementById(name);
-                        // Use 'name' (snake_case key) instead of param.label (display name)
-                        if (input && result.values[name] != null) {
-                            input.value = !isNaN(result.values[name]) ? result.values[name] : '';
-                        }
-                    }
-                }
-
-                for (const [label, value] of Object.entries(result.values)) {
-                    // Note: All keys now use snake_case from parameter registry
-                    // Visibility is controlled by metadata.visible flag, not key format
-                    const meta = (result.metadata || {})[label];
-                    if (!meta || !meta.visible) continue;
-
-                    const div = document.createElement('div');
-                    div.className = 'metric-card';
-                    let formattedValue = (value == null || isNaN(value)) ? '—' : (result.formatted && result.formatted[label]) || (meta ? `${value.toFixed(meta.decimals)} ${meta.unit}`.trim() : value);
-
-                    div.innerHTML = `<span class="metric-label" title="${meta ? meta.description : ''}">${meta ? meta.display_name : label}</span><span class="metric-value">${formattedValue}</span>`;
-                    container.appendChild(div);
-                }
-            }
-        } else container.style.display = 'none';
-    } catch (e) { console.error("Failed to update derived values:", e); }
-}
-
-function updateCoreMetricsPanel(values, metadata, params) {
-    const panel = document.getElementById('core-metrics-grid');
-    if (!panel) return;
-
-    // Get key measurements config from metadata, or use fallback
-    const keyMeasurementsConfig = state.uiMetadata?.key_measurements || [
-        { key: 'neck_angle', primary: true },
-        { key: 'neck_stop', key_conditional: { 'GUITAR_MANDOLIN': 'body_stop' } },
-        { key: 'nut_relative_to_ribs' },
-        { key: 'string_break_angle' }
-    ];
-
-    // Build metrics list, resolving conditional keys based on instrument family
-    const instrumentFamily = params?.instrument_family || 'VIOLIN';
-    const coreMetrics = keyMeasurementsConfig.map(metric => {
-        let key = metric.key;
-        // Check if there's a conditional override for this instrument family
-        if (metric.key_conditional && metric.key_conditional[instrumentFamily]) {
-            key = metric.key_conditional[instrumentFamily];
-        }
-        return { key, primary: metric.primary || false };
-    });
-
-    panel.innerHTML = '';
-
-    for (const metric of coreMetrics) {
-        const value = values[metric.key];
-        const meta = metadata ? metadata[metric.key] : null;
-
-        if (value === undefined || value === null) continue;
-
-        const item = document.createElement('div');
-        item.className = metric.primary ? 'core-metric-item primary' : 'core-metric-item';
-
-        const label = document.createElement('span');
-        label.className = 'core-metric-label';
-        label.textContent = meta ? meta.display_name : metric.key;
-        if (meta && meta.description) {
-            item.title = meta.description;
-        }
-
-        const valueSpan = document.createElement('span');
-        valueSpan.className = 'core-metric-value';
-
-        const formattedValue = meta ? value.toFixed(meta.decimals) : value.toFixed(1);
-        valueSpan.textContent = formattedValue;
-
-        if (meta && meta.unit) {
-            const unit = document.createElement('span');
-            unit.className = 'core-metric-unit';
-            unit.textContent = meta.unit;
-            valueSpan.appendChild(unit);
-        }
-
-        item.appendChild(valueSpan);
-        item.appendChild(label);
-        panel.appendChild(item);
-    }
-}
-
-function switchView(viewName) {
-    if (!state.views) return;
-    state.currentView = viewName;
-    ui.displayCurrentView();
-    analytics.trackViewChanged(viewName);
-}
-
-function zoomIn() { if (state.svgCanvas) state.svgCanvas.zoom(state.svgCanvas.zoom() * ZOOM_CONFIG.factor); }
-function zoomOut() { if (state.svgCanvas) state.svgCanvas.zoom(state.svgCanvas.zoom() / ZOOM_CONFIG.factor); }
-function zoomReset() {
-    if (state.svgCanvas && state.initialViewBox) {
-        state.svgCanvas.viewbox(state.initialViewBox.x, state.initialViewBox.y, state.initialViewBox.width, state.initialViewBox.height);
-    }
-}
-
-function sanitizeFilename(name) { return name.replace(/[<>:"/\\|?*]/g, '_').replace(/\s+/g, '_'); }
-function getInstrumentFilename() { return sanitizeFilename(collectParameters().instrument_name || 'instrument'); }
-
-function downloadFile(content, filename, mimeType) {
-    const blob = new Blob([content], { type: mimeType });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-}
-
-function downloadSVG() {
-    if (!state.views || !state.views[state.currentView]) return;
-    const viewNames = { 'side': 'side-view', 'top': 'top-view', 'cross_section': 'cross-section', 'radius_template': 'radius-template' };
-    const filename = `${getInstrumentFilename()}_${viewNames[state.currentView]}.svg`;
-    downloadFile(state.views[state.currentView], filename, 'image/svg+xml');
-    analytics.trackSVGDownloaded(state.currentView);
-}
-
-function saveParameters() {
-    const description = document.getElementById('profile-description')?.value || '';
-    const saveData = {
-        metadata: { version: '1.0', timestamp: new Date().toISOString(), description: description || 'Overstand Parameters' },
-        parameters: collectParameters()
-    };
-    const filename = `${getInstrumentFilename()}_params_${new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5)}.json`;
-    downloadFile(JSON.stringify(saveData, null, 2), filename, 'application/json');
-
-    // Reset modified flag - we just saved
-    state.parametersModified = false;
-    updateSaveIndicator();
-
-    analytics.trackParametersSaved();
-}
-
-function handleLoadParameters(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    if (!confirmDiscardChanges(`Importing "${file.name}" will overwrite your current parameter values.`)) {
-        event.target.value = '';
-        return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        try {
-            const saveData = JSON.parse(e.target.result);
-            if (!saveData.parameters) return;
-            applyParametersToForm(saveData.parameters);
-            elements.presetSelect.value = '';
-
-            // Restore description from file metadata
-            const descEl = document.getElementById('profile-description');
-            if (descEl) {
-                const desc = saveData.metadata?.description || '';
-                descEl.value = (desc === 'Overstand Parameters') ? '' : desc;
-            }
-
-            // Reset modified flag - we just loaded a file
-            state.parametersModified = false;
-            state.currentProfileName = file.name.replace(/\.json$/i, '');
-            updateSaveIndicator();
-
-            refreshAfterParameterLoad();
-            ui.setStatus('ready', '✅ Parameters loaded');
-
-            analytics.trackParametersLoaded();
-        } catch (err) {
-            showErrorModal('Load Failed', err.message);
-            analytics.trackError('load_parameters', err.message);
-        }
-    };
-    reader.readAsText(file);
-    event.target.value = '';
-}
-
-// Menu system functions (unified dropdown)
-function openMenu() {
-    const overlay = document.getElementById('app-menu-overlay');
-    if (overlay) overlay.classList.add('open');
-}
-
-function closeMenu() {
-    const overlay = document.getElementById('app-menu-overlay');
-    if (overlay) overlay.classList.remove('open');
-}
-
-// Modal Dialog Functions - imported from modal.js
-
-function showKeyboardShortcuts() {
-    const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-    const mod = isMac ? '⌘' : 'Ctrl';
-
-    const content = `
-        <div class="shortcuts-section">
-            <h3>File Operations</h3>
-            <ul class="shortcut-list">
-                <li class="shortcut-item">
-                    <span class="shortcut-description">Generate Template</span>
-                    <div class="shortcut-keys">
-                        <span class="key">${mod}</span>
-                        <span class="key-separator">+</span>
-                        <span class="key">Enter</span>
-                    </div>
-                </li>
-                <li class="shortcut-item">
-                    <span class="shortcut-description">Save Profile / Export JSON</span>
-                    <div class="shortcut-keys">
-                        <span class="key">${mod}</span>
-                        <span class="key-separator">+</span>
-                        <span class="key">S</span>
-                    </div>
-                </li>
-                <li class="shortcut-item">
-                    <span class="shortcut-description">Load Profile / Import JSON</span>
-                    <div class="shortcut-keys">
-                        <span class="key">${mod}</span>
-                        <span class="key-separator">+</span>
-                        <span class="key">O</span>
-                    </div>
-                </li>
-            </ul>
-        </div>
-
-        <div class="shortcuts-section">
-            <h3>Zoom Controls</h3>
-            <ul class="shortcut-list">
-                <li class="shortcut-item">
-                    <span class="shortcut-description">Zoom In</span>
-                    <div class="shortcut-keys">
-                        <span class="key">+</span>
-                    </div>
-                </li>
-                <li class="shortcut-item">
-                    <span class="shortcut-description">Zoom Out</span>
-                    <div class="shortcut-keys">
-                        <span class="key">-</span>
-                    </div>
-                </li>
-                <li class="shortcut-item">
-                    <span class="shortcut-description">Reset Zoom</span>
-                    <div class="shortcut-keys">
-                        <span class="key">0</span>
-                    </div>
-                </li>
-            </ul>
-        </div>
-
-        <div class="shortcuts-section">
-            <h3>Navigation</h3>
-            <ul class="shortcut-list">
-                <li class="shortcut-item">
-                    <span class="shortcut-description">Close Menu/Dialogs</span>
-                    <div class="shortcut-keys">
-                        <span class="key">Esc</span>
-                    </div>
-                </li>
-            </ul>
-        </div>
-    `;
-
-    showModal('Keyboard Shortcuts', content);
-}
-
-async function showAbout() {
-    analytics.trackAboutViewed();
-    try {
-        // Fetch about.md
-        const response = await fetch('about.md');
-        if (!response.ok) {
-            throw new Error('Failed to load about.md');
-        }
-        const markdown = await response.text();
-
-        // Convert markdown to HTML
-        const content = markdownToHtml(markdown);
-
-        // Extract title from first h1 (if exists)
-        const titleMatch = content.match(/<h1 class="about-title">(.*?)<\/h1>/);
-        const title = titleMatch ? titleMatch[1] : 'About';
-
-        showModal(title, content);
-    } catch (error) {
-        console.error('Error loading about:', error);
-        // Fallback content
-        showModal('About', '<p class="about-text">Unable to load about information.</p>');
-    }
-}
-
-async function clearCacheAndReload() {
-    const confirmed = confirm(
-        'This will clear all cached data and reload the app.\n\n' +
-        'Use this if you\'re experiencing issues with outdated code or data.\n\n' +
-        'Continue?'
-    );
-
-    if (!confirmed) return;
-
-    try {
-        // Show status
-        ui.setStatus('loading', 'Clearing cache...');
-
-        // 1. Clear all caches
-        if ('caches' in window) {
-            const cacheNames = await caches.keys();
-            await Promise.all(cacheNames.map(name => caches.delete(name)));
-            console.log('[ClearCache] Deleted caches:', cacheNames);
-        }
-
-        // 2. Unregister all service workers
-        if ('serviceWorker' in navigator) {
-            const registrations = await navigator.serviceWorker.getRegistrations();
-            await Promise.all(registrations.map(reg => reg.unregister()));
-            console.log('[ClearCache] Unregistered service workers:', registrations.length);
-        }
-
-        // 3. Clear localStorage (optional - preserves user preferences)
-        // localStorage.clear();
-
-        // 4. Force hard reload with cache-busting query param
-        // This works better than reload(true) which is deprecated
-        ui.setStatus('loading', 'Reloading...');
-        const baseUrl = window.location.href.split('?')[0].split('#')[0];
-        window.location.href = baseUrl + '?cache_bust=' + Date.now();
-
-    } catch (error) {
-        console.error('[ClearCache] Error:', error);
-        alert('Failed to clear cache: ' + error.message + '\n\nTry manually clearing your browser cache.');
-    }
-}
-
-// ============================================================================
-// Auth & Cloud Presets
-// ============================================================================
-
-function updateAuthUI(user) {
-    state.authUser = user;
-    const shareSaveBtn = document.getElementById('share-save-btn');
-    const toolbarSave = document.getElementById('toolbar-save');
-    const toolbarShare = document.getElementById('toolbar-share');
-    const toolbarAuth = document.getElementById('toolbar-auth');
-    const mmSave = document.getElementById('mm-save');
-    const mmShare = document.getElementById('mm-share');
-    const mmAuth = document.getElementById('mm-auth');
-    const mmUserEmail = document.getElementById('mm-user-email');
-
-    if (user) {
-        if (shareSaveBtn) shareSaveBtn.style.display = 'inline-block';
-        if (toolbarSave) toolbarSave.disabled = false;
-        if (toolbarShare) toolbarShare.disabled = false;
-        if (mmSave) mmSave.disabled = false;
-        if (mmShare) mmShare.disabled = false;
-
-        if (toolbarAuth) {
-            toolbarAuth.textContent = 'Sign Out';
-            toolbarAuth.classList.remove('btn-primary');
-            toolbarAuth.title = user.email || 'Sign Out';
-        }
-        if (mmAuth) mmAuth.innerHTML = '<span class="icon">👤</span> Sign Out';
-        if (mmUserEmail) {
-            mmUserEmail.textContent = user.email || '';
-            mmUserEmail.style.display = user.email ? '' : 'none';
-        }
-
-        const authStatus = document.getElementById('auth-status');
-        if (authStatus) authStatus.textContent = user.email;
-        refreshCloudPresets();
-    } else {
-        if (shareSaveBtn) shareSaveBtn.style.display = 'none';
-        if (toolbarSave) toolbarSave.disabled = true;
-        if (toolbarShare) toolbarShare.disabled = true;
-        if (mmSave) mmSave.disabled = true;
-        if (mmShare) mmShare.disabled = true;
-
-        if (toolbarAuth) {
-            toolbarAuth.textContent = 'Sign In';
-            toolbarAuth.classList.add('btn-primary');
-            toolbarAuth.title = 'Sign In';
-        }
-        if (mmAuth) mmAuth.innerHTML = '<span class="icon">👤</span> Sign In';
-        if (mmUserEmail) mmUserEmail.style.display = 'none';
-
-        const authStatus = document.getElementById('auth-status');
-        if (authStatus) authStatus.textContent = '';
-        state.cloudPresets = [];
-    }
-}
-
-function showLoginModal() {
-    const content = `
-        <div class="login-modal-content">
-            <p>Sign in or create an account to save instrument profiles to the cloud and share your designs.</p>
-            <button class="login-btn" id="login-google">
-                <span class="login-btn-icon">G</span>
-                Sign in / Sign up with Google
-            </button>
-            <div class="login-divider"><span>or</span></div>
-            <div id="email-step">
-                <form id="email-form" class="magic-link-form">
-                    <input type="email" id="magic-link-email" class="magic-link-input" placeholder="Enter your email" required />
-                    <button type="submit" class="login-btn magic-link-btn">
-                        <span class="login-btn-icon">&#9993;</span>
-                        Send sign-in code
-                    </button>
-                </form>
-            </div>
-            <div id="code-step" style="display:none;">
-                <p class="magic-link-status magic-link-success">Code sent! Check your email.</p>
-                <form id="code-form" class="magic-link-form">
-                    <input type="text" id="otp-code" class="magic-link-input otp-input" placeholder="Enter 6-digit code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" required />
-                    <button type="submit" class="login-btn magic-link-btn">Verify code</button>
-                </form>
-                <button id="otp-resend" class="otp-resend-btn">Resend code</button>
-            </div>
-            <p id="magic-link-status" class="magic-link-status" style="display:none;"></p>
-        </div>
-    `;
-    showModal('Sign In / Sign Up', content);
-
-    let pendingEmail = '';
-
-    document.getElementById('login-google')?.addEventListener('click', async () => {
-        closeModal();
-        try { await signInWithProvider('google'); } catch (e) { showErrorModal('Sign In Failed', e.message); }
-    });
-
-    document.getElementById('email-form')?.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const emailInput = document.getElementById('magic-link-email');
-        const statusEl = document.getElementById('magic-link-status');
-        const email = emailInput.value.trim();
-        if (!email) return;
-
-        emailInput.disabled = true;
-        e.target.querySelector('button').disabled = true;
-        statusEl.style.display = 'none';
-
-        try {
-            await sendSignInCode(email);
-            pendingEmail = email;
-            document.getElementById('email-step').style.display = 'none';
-            document.getElementById('code-step').style.display = 'block';
-            document.getElementById('otp-code')?.focus();
-        } catch (err) {
-            statusEl.textContent = err.message || 'Failed to send code. Please try again.';
-            statusEl.className = 'magic-link-status magic-link-error';
-            statusEl.style.display = 'block';
-            emailInput.disabled = false;
-            e.target.querySelector('button').disabled = false;
-        }
-    });
-
-    document.getElementById('code-form')?.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const codeInput = document.getElementById('otp-code');
-        const statusEl = document.getElementById('magic-link-status');
-        const code = codeInput.value.trim();
-        if (!code || !pendingEmail) return;
-
-        codeInput.disabled = true;
-        e.target.querySelector('button').disabled = true;
-        statusEl.style.display = 'none';
-
-        try {
-            await verifySignInCode(pendingEmail, code);
-            closeModal();
-        } catch (err) {
-            statusEl.textContent = err.message || 'Invalid or expired code. Please try again.';
-            statusEl.className = 'magic-link-status magic-link-error';
-            statusEl.style.display = 'block';
-            codeInput.disabled = false;
-            codeInput.value = '';
-            codeInput.focus();
-            e.target.querySelector('button').disabled = false;
-        }
-    });
-
-    document.getElementById('otp-resend')?.addEventListener('click', async () => {
-        const statusEl = document.getElementById('magic-link-status');
-        const resendBtn = document.getElementById('otp-resend');
-        resendBtn.disabled = true;
-
-        try {
-            await sendSignInCode(pendingEmail);
-            statusEl.textContent = 'New code sent!';
-            statusEl.className = 'magic-link-status magic-link-success';
-            statusEl.style.display = 'block';
-        } catch (err) {
-            statusEl.textContent = err.message || 'Failed to resend code.';
-            statusEl.className = 'magic-link-status magic-link-error';
-            statusEl.style.display = 'block';
-        } finally {
-            resendBtn.disabled = false;
-        }
-    });
-}
-
-async function refreshCloudPresets() {
-    try {
-        state.cloudPresets = await loadUserPresets();
-    } catch (e) {
-        console.error('[Cloud] Failed to load presets:', e);
-        state.cloudPresets = [];
-    }
-}
-
-// ============================================================================
-// Load Profile Modal
-// ============================================================================
-
-function showLoadProfileModal() {
-    const overlay = document.getElementById('load-profile-overlay');
-    if (!overlay) return;
-
-    // Populate standard presets tab
-    populateStandardProfilesTab();
-    // Populate my profiles tab
-    populateMyProfilesTab();
-    // Populate community tab
-    populateCommunityTab();
-
-    // Reset to standard tab
-    switchProfileTab('standard');
-
-    overlay.classList.add('active');
-    document.body.style.overflow = 'hidden';
-}
-
-function closeLoadProfileModal() {
-    closeOverlay('load-profile-overlay');
-}
-
-function switchProfileTab(tabName) {
-    // Update tab buttons
-    document.querySelectorAll('.profile-tab').forEach(tab => {
-        tab.classList.toggle('active', tab.dataset.tab === tabName);
-    });
-
-    // Show/hide tab content
-    document.getElementById('standard-profiles-list').style.display = tabName === 'standard' ? '' : 'none';
-    document.getElementById('my-profiles-list').style.display = tabName === 'my-profiles' ? '' : 'none';
-    document.getElementById('community-profiles-list').style.display = tabName === 'community' ? '' : 'none';
-}
-
-function populateStandardProfilesTab() {
-    const list = document.getElementById('standard-profiles-list');
-    if (!list) return;
-    list.innerHTML = '';
-
-    const presetIds = Object.keys(state.presets || {});
-    if (presetIds.length === 0) {
-        list.innerHTML = '<div class="profile-empty-message">No standard presets found.</div>';
-        return;
-    }
-
-    for (const presetId of presetIds) {
-        const preset = state.presets[presetId];
-        const row = document.createElement('div');
-        row.className = 'profile-row';
-        row.innerHTML = `
-            <span class="profile-row-name">${escapeHtml(preset.name)}</span>
-            <div class="profile-row-actions">
-                <button class="profile-action-btn load-btn" data-preset-id="${escapeHtml(presetId)}">Load</button>
-            </div>
-        `;
-        row.querySelector('.load-btn').addEventListener('click', () => {
-            loadStandardPreset(presetId);
-        });
-        list.appendChild(row);
-    }
-}
-
-function populateMyProfilesTab() {
-    const list = document.getElementById('my-profiles-list');
-    if (!list) return;
-    list.innerHTML = '';
-
-    if (!isAuthenticated()) {
-        list.innerHTML = '<div class="profile-empty-message">Sign in to access your cloud profiles.</div>';
-        return;
-    }
-
-    if (state.cloudPresets.length === 0) {
-        list.innerHTML = '<div class="profile-empty-message">No saved profiles yet. Use Save Profile to create one.</div>';
-        return;
-    }
-
-    for (const preset of state.cloudPresets) {
-        const row = document.createElement('div');
-        row.className = 'profile-row';
-        const descHtml = preset.description ? `<div class="profile-row-description">${escapeHtml(preset.description)}</div>` : '';
-        row.innerHTML = `
-            <div class="profile-row-info">
-                <span class="profile-row-name">${escapeHtml(preset.preset_name)}</span>
-                ${descHtml}
-            </div>
-            <div class="profile-row-actions">
-                <button class="profile-action-btn load-btn">Load</button>
-                <button class="profile-action-btn share-btn">Share</button>
-                <button class="profile-action-btn delete-btn">Del</button>
-            </div>
-        `;
-        row.querySelector('.load-btn').addEventListener('click', () => {
-            loadCloudPreset(preset);
-        });
-        row.querySelector('.share-btn').addEventListener('click', () => {
-            handleShareFromProfile(preset);
-        });
-        row.querySelector('.delete-btn').addEventListener('click', async () => {
-            if (!confirm(`Delete profile "${preset.preset_name}"?`)) return;
-            try {
-                await deleteCloudPreset(preset.id);
-                await refreshCloudPresets();
-                populateMyProfilesTab();
-                ui.setStatus('ready', `Deleted "${preset.preset_name}"`);
-            } catch (e) {
-                showErrorModal('Delete Failed', e.message);
-            }
-        });
-        list.appendChild(row);
-    }
-}
-
-async function loadStandardPreset(presetId) {
-    // Set the hidden select and use existing loadPreset logic
-    if (elements.presetSelect) elements.presetSelect.value = presetId;
-    closeLoadProfileModal();
-    await loadPreset();
-}
-
-function loadCloudPreset(preset) {
-    if (!preset || !preset.parameters) return;
-
-    if (!confirmDiscardChanges(`Loading "${preset.preset_name}" will overwrite your current parameter values.`)) return;
-
-    // Apply parameters
-    applyParametersToForm(preset.parameters);
-
-    // Restore description
-    const descEl = document.getElementById('profile-description');
-    if (descEl) descEl.value = preset.description || '';
-
-    // Clear the standard preset selector
-    if (elements.presetSelect) elements.presetSelect.value = '';
-    state.parametersModified = false;
-    state.currentProfileName = preset.preset_name;
-    updateSaveIndicator();
-
-    refreshAfterParameterLoad();
-    ui.setStatus('ready', `☁️ Loaded "${preset.preset_name}"`);
-
-    closeLoadProfileModal();
-}
-
-// ============================================================================
-// Share Profile Modal
-// ============================================================================
-
-function isMobileDevice() {
-    return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) &&
-        window.matchMedia('(pointer: coarse)').matches;
-}
-
-async function handleShareFromProfile(preset) {
-    if (!preset || !preset.parameters) return;
-
-    try {
-        ui.setStatus('loading', 'Creating share link...');
-        const url = await createShareLink(preset.preset_name, preset.parameters);
-
-        // Use Web Share API only on actual mobile devices (not Mac desktop)
-        if (navigator.share && isMobileDevice()) {
-            try {
-                await navigator.share({
-                    title: `Overstand: ${preset.preset_name}`,
-                    text: `Check out my instrument profile "${preset.preset_name}" on Overstand`,
-                    url: url
-                });
-                ui.setStatus('ready', 'Shared successfully!');
-                return;
-            } catch (e) {
-                if (e.name === 'AbortError') {
-                    ui.setStatus('ready', 'Share cancelled');
-                    return;
-                }
-            }
-        }
-
-        // Desktop or fallback: show share modal
-        showShareModal(preset.preset_name, url);
-        ui.setStatus('ready', 'Share link created');
-    } catch (e) {
-        console.error('[Share] Failed:', e);
-        showErrorModal('Share Failed', e.message);
-        ui.setStatus('error', 'Share link creation failed');
-    }
-}
-
-function showShareModal(profileName, shareUrl) {
-    const overlay = document.getElementById('share-profile-overlay');
-    if (!overlay) return;
-
-    document.getElementById('share-profile-name').textContent = `"${profileName}"`;
-    document.getElementById('share-url-input').value = shareUrl;
-
-    // Reset copy button
-    const copyBtn = document.getElementById('share-copy-btn');
-    copyBtn.textContent = '📋';
-    copyBtn.classList.remove('copied');
-
-    overlay.classList.add('active');
-    document.body.style.overflow = 'hidden';
-}
-
-function closeShareModal() {
-    closeOverlay('share-profile-overlay');
-}
-
-async function handleShareCopy() {
-    const urlInput = document.getElementById('share-url-input');
-    const copyBtn = document.getElementById('share-copy-btn');
-    if (!urlInput) return;
-
-    const copied = await copyToClipboard(urlInput.value);
-    if (copied) {
-        copyBtn.textContent = 'Copied!';
-        copyBtn.classList.add('copied');
-        setTimeout(() => {
-            copyBtn.textContent = '📋';
-            copyBtn.classList.remove('copied');
-        }, 2000);
-    }
-}
-
-function shareViaEmail() {
-    const url = document.getElementById('share-url-input')?.value;
-    if (!url) return;
-    const name = document.getElementById('share-profile-name')?.textContent || 'an instrument profile';
-    const subject = encodeURIComponent(`Check out my Overstand instrument profile`);
-    const body = encodeURIComponent(`I created ${name} on Overstand. Take a look:\n\n${url}`);
-    window.open(`mailto:?subject=${subject}&body=${body}`, '_blank');
-}
-
-function shareViaWhatsApp() {
-    const url = document.getElementById('share-url-input')?.value;
-    if (!url) return;
-    const name = document.getElementById('share-profile-name')?.textContent || 'an instrument profile';
-    const text = encodeURIComponent(`Check out my Overstand instrument profile ${name}: ${url}`);
-    window.open(`https://wa.me/?text=${text}`, '_blank');
-}
-
-function shareViaFacebook() {
-    const url = document.getElementById('share-url-input')?.value;
-    if (!url) return;
-    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
-}
-
-async function handleCloudSave() {
-    if (!isAuthenticated()) { showLoginModal(); return; }
-
-    const params = collectParameters();
-    const defaultName = params.instrument_name || 'My Preset';
-
-    const presetName = prompt('Profile name:', defaultName);
-    if (!presetName) return;
-
-    try {
-        // Check if name exists and confirm overwrite
-        const exists = await cloudPresetExists(presetName);
-        if (exists) {
-            if (!confirm(`A profile named "${presetName}" already exists. Overwrite it?`)) return;
-        }
-
-        const description = document.getElementById('profile-description')?.value || '';
-        await saveToCloud(presetName, description, params);
-        await refreshCloudPresets();
-        ui.setStatus('ready', `☁️ Saved "${presetName}" to cloud`);
-        state.parametersModified = false;
-        state.currentProfileName = presetName;
-        updateSaveIndicator();
-    } catch (e) {
-        console.error('[Cloud] Save failed:', e);
-        showErrorModal('Save Failed', e.message);
-    }
-}
-
-async function handleShare() {
-    if (!isAuthenticated()) { showLoginModal(); return; }
-
-    const params = collectParameters();
-    const presetName = params.instrument_name || 'Shared Preset';
-
-    try {
-        ui.setStatus('loading', 'Creating share link...');
-        const url = await createShareLink(presetName, params);
-
-        // Use Web Share API only on actual mobile devices
-        if (navigator.share && isMobileDevice()) {
-            try {
-                await navigator.share({
-                    title: `Overstand: ${presetName}`,
-                    text: `Check out my instrument profile "${presetName}" on Overstand`,
-                    url: url
-                });
-                ui.setStatus('ready', 'Shared successfully!');
-                return;
-            } catch (e) {
-                if (e.name === 'AbortError') {
-                    ui.setStatus('ready', 'Share cancelled');
-                    return;
-                }
-            }
-        }
-
-        // Desktop or fallback: show share modal
-        showShareModal(presetName, url);
-        ui.setStatus('ready', 'Share link created');
-    } catch (e) {
-        console.error('[Share] Failed:', e);
-        showErrorModal('Share Failed', e.message);
-        ui.setStatus('error', 'Share link creation failed');
-    }
-}
-
-async function handleMenuPublish() {
-    if (!isAuthenticated()) { showLoginModal(); return; }
-
-    const params = collectParameters();
-    const defaultName = state.currentProfileName || params.instrument_name || 'My Profile';
-
-    const presetName = prompt('Publish to community as:', defaultName);
-    if (!presetName) return;
-
-    try {
-        // Save to cloud first (upserts if name exists)
-        const exists = await cloudPresetExists(presetName);
-        if (exists) {
-            if (!confirm(`A profile named "${presetName}" already exists. Overwrite and publish?`)) return;
-        }
-
-        ui.setStatus('loading', 'Saving and publishing...');
-
-        const description = document.getElementById('profile-description')?.value || '';
-        await saveToCloud(presetName, description, params);
-        await refreshCloudPresets();
-
-        // Now publish
-        const user = getCurrentUser();
-        const authorName = user.user_metadata?.full_name || user.email || 'Anonymous';
-        const instrumentFamily = params.instrument_family || '';
-
-        await publishToCommunity(presetName, description, params, authorName, instrumentFamily);
-
-        state.parametersModified = false;
-        state.currentProfileName = presetName;
-        updateSaveIndicator();
-        ui.setStatus('ready', `📢 Published "${presetName}" to community`);
-    } catch (e) {
-        console.error('[Publish] Failed:', e);
-        showErrorModal('Publish Failed', e.message);
-        ui.setStatus('error', 'Publish failed');
-    }
-}
-
-async function handleShareURL() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const shareToken = urlParams.get('share');
-    if (!shareToken) return false;
-
-    try {
-        const shared = await loadSharedPreset(shareToken);
-        if (!shared || !shared.parameters) {
-            console.warn('[Share] Shared preset not found:', shareToken);
-            // Clean up URL
-            window.history.replaceState({}, document.title,
-                window.location.origin + window.location.pathname);
-            return false;
-        }
-
-        state.sharedPreset = shared;
-
-        // Apply parameters
-        applyParametersToForm(shared.parameters);
-
-        // Restore description from shared preset
-        const descEl = document.getElementById('profile-description');
-        if (descEl) descEl.value = shared.description || '';
-
-        // Show share banner
-        const banner = document.getElementById('share-banner');
-        const bannerText = document.getElementById('share-banner-text');
-        if (banner && bannerText) {
-            bannerText.textContent = `Viewing shared preset: "${shared.preset_name}"`;
-            banner.style.display = 'flex';
-        }
-
-        // Clear standard preset selector
-        if (elements.presetSelect) elements.presetSelect.value = '';
-        state.parametersModified = false;
-        state.currentProfileName = shared.preset_name;
-        updateSaveIndicator();
-
-        // Clean up URL
-        window.history.replaceState({}, document.title,
-            window.location.origin + window.location.pathname);
-
-        refreshAfterParameterLoad();
-
-        return true;
-    } catch (e) {
-        console.error('[Share] Failed to load shared preset:', e);
-        return false;
-    }
-}
-
-async function handleShareSave() {
-    if (!isAuthenticated() || !state.sharedPreset) return;
-
-    const presetName = prompt('Save profile as:', state.sharedPreset.preset_name);
-    if (!presetName) return;
-
-    try {
-        const description = document.getElementById('profile-description')?.value || '';
-        await saveToCloud(presetName, description, state.sharedPreset.parameters);
-        await refreshCloudPresets();
-        ui.setStatus('ready', `☁️ Saved "${presetName}" to cloud`);
-
-        // Dismiss banner
-        const banner = document.getElementById('share-banner');
-        if (banner) banner.style.display = 'none';
-        state.sharedPreset = null;
-    } catch (e) {
-        showErrorModal('Save Failed', e.message);
-    }
-}
-
-// ============================================================================
-// Community Profiles
-// ============================================================================
-
-const INSTRUMENT_FAMILY_DISPLAY = {
-    'VIOLIN': 'Violin',
-    'VIOLA': 'Viola',
-    'CELLO': 'Cello',
-    'VIOL': 'Viol',
-    'GUITAR_MANDOLIN': 'Guitar/Mandolin'
-};
-
-function buildCommunityControls() {
-    const controls = document.createElement('div');
-    controls.className = 'community-controls';
-
-    const searchInput = document.createElement('input');
-    searchInput.type = 'text';
-    searchInput.className = 'community-search-input';
-    searchInput.placeholder = 'Search profiles...';
-    searchInput.id = 'community-search';
-
-    const filterSelect = document.createElement('select');
-    filterSelect.className = 'community-filter-select';
-    filterSelect.id = 'community-filter';
-
-    const allOption = document.createElement('option');
-    allOption.value = '';
-    allOption.textContent = 'All Instruments';
-    filterSelect.appendChild(allOption);
-
-    for (const [value, label] of Object.entries(INSTRUMENT_FAMILY_DISPLAY)) {
-        const option = document.createElement('option');
-        option.value = value;
-        option.textContent = label;
-        filterSelect.appendChild(option);
-    }
-
-    const debouncedSearch = debounce(() => populateCommunityTab(), 300);
-    searchInput.addEventListener('input', debouncedSearch);
-    filterSelect.addEventListener('change', () => populateCommunityTab());
-
-    controls.appendChild(searchInput);
-    controls.appendChild(filterSelect);
-    return controls;
-}
-
-async function populateCommunityTab() {
-    const list = document.getElementById('community-profiles-list');
-    if (!list) return;
-
-    // Preserve or create controls
-    let controls = list.querySelector('.community-controls');
-    if (!controls) {
-        list.innerHTML = '';
-        controls = buildCommunityControls();
-        list.appendChild(controls);
-    }
-
-    // Remove old results (everything after controls)
-    while (controls.nextSibling) {
-        list.removeChild(controls.nextSibling);
-    }
-
-    const searchQuery = document.getElementById('community-search')?.value || '';
-    const instrumentFamily = document.getElementById('community-filter')?.value || '';
-
-    // Show loading
-    const loadingMsg = document.createElement('div');
-    loadingMsg.className = 'profile-empty-message';
-    loadingMsg.textContent = 'Loading community profiles...';
-    list.appendChild(loadingMsg);
-
-    const isLoggedIn = isAuthenticated();
-
-    try {
-        // Fetch profiles and user bookmarks in parallel
-        const [profiles, bookmarkedIds] = await Promise.all([
-            loadCommunityProfiles(searchQuery, instrumentFamily),
-            isLoggedIn ? getUserBookmarks() : Promise.resolve([])
-        ]);
-        list.removeChild(loadingMsg);
-
-        if (profiles.length === 0) {
-            const empty = document.createElement('div');
-            empty.className = 'profile-empty-message';
-            empty.textContent = searchQuery || instrumentFamily
-                ? 'No profiles match your search.'
-                : 'No community profiles yet. Be the first to publish!';
-            list.appendChild(empty);
-            return;
-        }
-
-        const userBookmarks = new Set(bookmarkedIds);
-        const currentUserId = getCurrentUser()?.id;
-
-        // Sort: user's bookmarks first, then by bookmark_count (DB already orders by bookmark_count, created_at)
-        profiles.sort((a, b) => {
-            const aBookmarked = userBookmarks.has(a.id) ? 1 : 0;
-            const bBookmarked = userBookmarks.has(b.id) ? 1 : 0;
-            if (bBookmarked !== aBookmarked) return bBookmarked - aBookmarked;
-            return 0; // preserve DB ordering for the rest
-        });
-
-        for (const profile of profiles) {
-            const row = document.createElement('div');
-            row.className = 'profile-row';
-
-            const familyDisplay = INSTRUMENT_FAMILY_DISPLAY[profile.instrument_family] || profile.instrument_family || '';
-            const descHtml = profile.description
-                ? `<div class="profile-row-description">${escapeHtml(profile.description)}</div>`
-                : '';
-            const bookmarkInfo = profile.bookmark_count ? ` · ${profile.bookmark_count} bookmarks` : '';
-            const metaHtml = `<div class="profile-row-meta">${escapeHtml(profile.author_name || 'Anonymous')}${familyDisplay ? ' · ' + escapeHtml(familyDisplay) : ''}${profile.view_count ? ' · ' + profile.view_count + ' views' : ''}${bookmarkInfo}</div>`;
-
-            const isOwner = currentUserId && profile.owner_id === currentUserId;
-            const unpublishBtn = isOwner
-                ? `<button class="profile-action-btn unpublish-btn">Unpublish</button>`
-                : '';
-
-            const isBookmarked = userBookmarks.has(profile.id);
-            const starBtn = isLoggedIn
-                ? `<button class="profile-action-btn star-btn${isBookmarked ? ' bookmarked' : ''}" title="${isBookmarked ? 'Remove bookmark' : 'Bookmark this profile'}">${isBookmarked ? '★' : '☆'}</button>`
-                : '';
-
-            row.innerHTML = `
-                <div class="profile-row-info">
-                    <span class="profile-row-name">${escapeHtml(profile.preset_name)}</span>
-                    ${descHtml}
-                    ${metaHtml}
-                </div>
-                <div class="profile-row-actions">
-                    ${starBtn}
-                    <button class="profile-action-btn load-btn">Load</button>
-                    ${unpublishBtn}
-                </div>
-            `;
-
-            row.querySelector('.load-btn').addEventListener('click', () => {
-                loadCommunityPreset(profile);
-            });
-
-            const starEl = row.querySelector('.star-btn');
-            if (starEl) {
-                starEl.addEventListener('click', async () => {
-                    const wasBookmarked = userBookmarks.has(profile.id);
-                    try {
-                        const nowBookmarked = await toggleBookmark(profile.id, wasBookmarked);
-                        if (nowBookmarked) {
-                            userBookmarks.add(profile.id);
-                            starEl.textContent = '★';
-                            starEl.classList.add('bookmarked');
-                            starEl.title = 'Remove bookmark';
-                        } else {
-                            userBookmarks.delete(profile.id);
-                            starEl.textContent = '☆';
-                            starEl.classList.remove('bookmarked');
-                            starEl.title = 'Bookmark this profile';
-                        }
-                    } catch (e) {
-                        console.error('[Bookmark] Toggle failed:', e);
-                    }
-                });
-            }
-
-            const unpublishEl = row.querySelector('.unpublish-btn');
-            if (unpublishEl) {
-                unpublishEl.addEventListener('click', async () => {
-                    if (!confirm(`Remove "${profile.preset_name}" from community profiles?`)) return;
-                    try {
-                        await unpublishFromCommunity(profile.id);
-                        populateCommunityTab();
-                        ui.setStatus('ready', `Unpublished "${profile.preset_name}"`);
-                    } catch (e) {
-                        showErrorModal('Unpublish Failed', e.message);
-                    }
-                });
-            }
-
-            list.appendChild(row);
-        }
-    } catch (e) {
-        list.removeChild(loadingMsg);
-        const errMsg = document.createElement('div');
-        errMsg.className = 'profile-empty-message';
-        errMsg.textContent = 'Failed to load community profiles.';
-        list.appendChild(errMsg);
-        console.error('[Community] Load failed:', e);
-    }
-}
-
-async function loadCommunityPreset(profile) {
-    if (!confirmDiscardChanges(`Loading "${profile.preset_name}" will overwrite your current parameter values.`)) return;
-
-    try {
-        ui.setStatus('loading', 'Loading community profile...');
-        const full = await loadCommunityProfileParameters(profile.id);
-        if (!full || !full.parameters) {
-            showErrorModal('Load Failed', 'Could not load profile parameters.');
-            ui.setStatus('error', 'Failed to load community profile');
-            return;
-        }
-
-        applyParametersToForm(full.parameters);
-
-        // Restore description
-        const descEl = document.getElementById('profile-description');
-        if (descEl) descEl.value = full.description || '';
-
-        // Clear standard preset selector
-        if (elements.presetSelect) elements.presetSelect.value = '';
-        state.parametersModified = false;
-        state.currentProfileName = full.preset_name;
-        updateSaveIndicator();
-
-        refreshAfterParameterLoad();
-        ui.setStatus('ready', `Loaded "${full.preset_name}" by ${full.author_name || 'Anonymous'}`);
-        closeLoadProfileModal();
-    } catch (e) {
-        console.error('[Community] Load preset failed:', e);
-        showErrorModal('Load Failed', e.message);
-        ui.setStatus('error', 'Failed to load community profile');
-    }
-}
-
-async function handlePublish(preset) {
-    if (!preset || !preset.parameters) return;
-
-    const user = getCurrentUser();
-    if (!user) { showLoginModal(); return; }
-
-    const authorName = user.user_metadata?.full_name || user.email || 'Anonymous';
-    const instrumentFamily = preset.parameters.instrument_family || '';
-
-    const confirmed = confirm(
-        `Publish "${preset.preset_name}" to the community?\n\n` +
-        `Author: ${authorName}\n` +
-        `This will be visible to all Overstand users.`
-    );
-    if (!confirmed) return;
-
-    try {
-        ui.setStatus('loading', 'Publishing to community...');
-        await publishToCommunity(
-            preset.preset_name,
-            preset.description || '',
-            preset.parameters,
-            authorName,
-            instrumentFamily
-        );
-        ui.setStatus('ready', `Published "${preset.preset_name}" to community`);
-    } catch (e) {
-        console.error('[Community] Publish failed:', e);
-        showErrorModal('Publish Failed', e.message);
-        ui.setStatus('error', 'Publish failed');
-    }
-}
-
-// Warn before closing tab with unsaved changes
-window.addEventListener('beforeunload', (e) => {
-    if (state.parametersModified) {
-        e.preventDefault();
-        e.returnValue = '';
-    }
-});
-
 // Initialize on load
 document.addEventListener('DOMContentLoaded', () => {
-    // Start engagement time tracking
     analytics.startEngagementTracking();
 
     // CRITICAL: Set up Clear Cache FIRST so it always works, even if everything else fails
@@ -1670,19 +282,19 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error('[Init] Menu setup failed:', e);
     }
 
-    // Initialize DOM element references
     initElements();
 
     const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
     const shortcut = document.getElementById('gen-btn-shortcut');
     if (shortcut) shortcut.textContent = isMac ? '⌘ + Enter' : 'Ctrl + Enter';
 
-    // Hook up event listeners
+    // Core controls
     if (elements.genBtn) elements.genBtn.addEventListener('click', generateNeck);
     if (elements.presetSelect) elements.presetSelect.addEventListener('change', loadPreset);
     if (elements.saveParamsBtn) elements.saveParamsBtn.addEventListener('click', saveParameters);
     if (elements.loadParamsBtn) elements.loadParamsBtn.addEventListener('click', () => elements.loadParamsInput.click());
     if (elements.loadParamsInput) elements.loadParamsInput.addEventListener('change', handleLoadParameters);
+
     // Zoom controls
     if (elements.zoomInBtn) elements.zoomInBtn.addEventListener('click', zoomIn);
     if (elements.zoomOutBtn) elements.zoomOutBtn.addEventListener('click', zoomOut);
@@ -1693,44 +305,31 @@ document.addEventListener('DOMContentLoaded', () => {
         tab.addEventListener('click', () => switchView(tab.dataset.view));
     });
 
-    // ========================================================================
-    // Toolbar button handlers
-    // ========================================================================
+    // Toolbar buttons
     const controlsPanel = document.getElementById('controls-panel');
     const mainContainer = document.querySelector('.main-container');
-    const isMobile = () => window.innerWidth <= 767;
 
-    // Toolbar: Load Profile
     const toolbarLoad = document.getElementById('toolbar-load');
     if (toolbarLoad) toolbarLoad.addEventListener('click', showLoadProfileModal);
 
-    // Toolbar: Save Profile
     const toolbarSave = document.getElementById('toolbar-save');
     if (toolbarSave) toolbarSave.addEventListener('click', handleCloudSave);
 
-    // Toolbar: Import from File
     const toolbarImport = document.getElementById('toolbar-import');
     if (toolbarImport) toolbarImport.addEventListener('click', () => elements.loadParamsInput.click());
 
-    // Toolbar: Export to File
     const toolbarExport = document.getElementById('toolbar-export');
     if (toolbarExport) toolbarExport.addEventListener('click', saveParameters);
 
-    // Toolbar: Download SVG
     if (elements.dlSvg) elements.dlSvg.addEventListener('click', downloadSVG);
-
-    // Toolbar: Download PDF
     if (elements.dlPdf) elements.dlPdf.addEventListener('click', () => downloadPDF(collectParameters, sanitizeFilename));
 
-    // Toolbar: Share
     const toolbarShare = document.getElementById('toolbar-share');
     if (toolbarShare) toolbarShare.addEventListener('click', handleShare);
 
-    // Toolbar: Menu button (opens slide-in menu panel)
     const toolbarMenuBtn = document.getElementById('toolbar-menu');
     if (toolbarMenuBtn) toolbarMenuBtn.addEventListener('click', openMenu);
 
-    // Toolbar: Auth/Sign In or Sign Out
     const toolbarAuth = document.getElementById('toolbar-auth');
     if (toolbarAuth) toolbarAuth.addEventListener('click', () => {
         if (isAuthenticated()) {
@@ -1740,9 +339,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // ========================================================================
     // Theme toggle
-    // ========================================================================
     function toggleTheme() {
         const html = document.documentElement;
         const isDark = html.getAttribute('data-theme') === 'dark';
@@ -1750,7 +347,6 @@ document.addEventListener('DOMContentLoaded', () => {
         html.setAttribute('data-theme', newTheme);
         try { localStorage.setItem('overstand-theme', newTheme); } catch(e) {}
 
-        // Update icon in toolbar and mobile menu
         const icon = isDark ? '🌙' : '☀️';
         const toolbarThemeIcon = document.querySelector('#toolbar-theme .icon');
         if (toolbarThemeIcon) toolbarThemeIcon.textContent = icon;
@@ -1761,9 +357,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const toolbarTheme = document.getElementById('toolbar-theme');
     if (toolbarTheme) toolbarTheme.addEventListener('click', toggleTheme);
 
-    // ========================================================================
     // Params collapse/expand (desktop)
-    // ========================================================================
     const paramsCollapseBtn = document.getElementById('params-collapse-btn');
     const expandParamsBtn = document.getElementById('expand-params-btn');
 
@@ -1791,9 +385,7 @@ document.addEventListener('DOMContentLoaded', () => {
         expandParamsBtn.addEventListener('click', expandParams);
     }
 
-    // ========================================================================
     // Mobile params drawer
-    // ========================================================================
     const paramsDrawerOverlay = document.getElementById('params-drawer-overlay');
 
     function openMobileParams() {
@@ -1812,15 +404,12 @@ document.addEventListener('DOMContentLoaded', () => {
         paramsDrawerOverlay.addEventListener('click', closeMobileParams);
     }
 
-    // ========================================================================
-    // Hamburger + toolbar menu — opens unified dropdown
-    // ========================================================================
+    // Hamburger + menu overlay
     const toolbarHamburger = document.getElementById('toolbar-hamburger');
     const appMenuOverlay = document.getElementById('app-menu-overlay');
 
     if (toolbarHamburger) toolbarHamburger.addEventListener('click', openMenu);
 
-    // Close menu when clicking overlay background
     if (appMenuOverlay) {
         appMenuOverlay.addEventListener('click', (e) => {
             if (e.target === appMenuOverlay) closeMenu();
@@ -1861,9 +450,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // ========================================================================
     // Zoom keyboard shortcuts (+, -, 0)
-    // ========================================================================
     document.addEventListener('keydown', (e) => {
         if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'SELECT') {
             if (e.key === '+' || e.key === '=') {
@@ -1879,8 +466,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-
-    // Share banner event listeners
+    // Share banner
     const shareDismissBtn = document.getElementById('share-dismiss-btn');
     const shareSaveBtn = document.getElementById('share-save-btn');
 
@@ -1926,98 +512,36 @@ document.addEventListener('DOMContentLoaded', () => {
     if (shareViaWhatsAppBtn) shareViaWhatsAppBtn.addEventListener('click', shareViaWhatsApp);
     if (shareViaFacebookBtn) shareViaFacebookBtn.addEventListener('click', shareViaFacebook);
 
-    // Initialize auth (non-blocking — cloud features activate when ready)
+    // Auth
     onAuthStateChange(updateAuthUI);
     initAuth();
 
-    // Modal dialog
+    // Modal close
     const modalCloseBtn = document.getElementById('modal-close-btn');
     const modalOverlay = document.getElementById('modal-overlay');
     if (modalCloseBtn) modalCloseBtn.addEventListener('click', closeModal);
     if (modalOverlay) modalOverlay.addEventListener('click', (e) => {
-        // Close modal when clicking the overlay background (not the dialog itself)
         if (e.target === modalOverlay) closeModal();
     });
 
-    // Mark parameters as modified when description changes
+    // Description changes mark parameters modified
     const profileDescription = document.getElementById('profile-description');
     if (profileDescription) profileDescription.addEventListener('input', markParametersModified);
+
+    // Keyboard shortcuts
+    setKeyboardActions({
+        generateNeck,
+        handleCloudSave,
+        saveParameters,
+        showLoadProfileModal,
+        closeShareModal,
+        closeLoadProfileModal,
+        closeMenu
+    });
+    initKeyboardShortcuts();
 
     registerServiceWorker();
     initInstallPrompt();
     loadVersionInfo();
     initializePython();
-});
-
-document.addEventListener('keydown', (e) => {
-    // Generate template: ⌘/Ctrl + Enter
-    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
-        e.preventDefault();
-        if (!elements.genBtn.disabled && !state.isGenerating) generateNeck();
-    }
-
-    // Save: ⌘/Ctrl + S — cloud save if logged in, JSON export if not
-    if ((e.metaKey || e.ctrlKey) && e.key === 's') {
-        e.preventDefault();
-        if (isAuthenticated()) {
-            handleCloudSave();
-        } else {
-            saveParameters();
-        }
-    }
-
-    // Load Profile: ⌘/Ctrl + O — open Load Profile modal if signed in, else file import
-    if ((e.metaKey || e.ctrlKey) && e.key === 'o') {
-        e.preventDefault();
-        if (isAuthenticated()) {
-            showLoadProfileModal();
-        } else {
-            elements.loadParamsInput.click();
-        }
-    }
-
-    // Close dialogs: Escape
-    if (e.key === 'Escape') {
-        // Check share modal first
-        const shareOverlay = document.getElementById('share-profile-overlay');
-        if (shareOverlay && shareOverlay.classList.contains('active')) {
-            e.preventDefault();
-            closeShareModal();
-            return;
-        }
-
-        // Check load profile modal
-        const loadOverlay = document.getElementById('load-profile-overlay');
-        if (loadOverlay && loadOverlay.classList.contains('active')) {
-            e.preventDefault();
-            closeLoadProfileModal();
-            return;
-        }
-
-        // Check generic modal
-        const modalOverlay = document.getElementById('modal-overlay');
-        if (modalOverlay && modalOverlay.classList.contains('active')) {
-            e.preventDefault();
-            closeModal();
-            return;
-        }
-
-        // Check app menu overlay
-        const appMenuOverlay = document.getElementById('app-menu-overlay');
-        if (appMenuOverlay && appMenuOverlay.classList.contains('open')) {
-            e.preventDefault();
-            closeMenu();
-            return;
-        }
-
-        // Check mobile params drawer
-        const controlsPanel = document.getElementById('controls-panel');
-        const paramsDrawerOverlay = document.getElementById('params-drawer-overlay');
-        if (controlsPanel && controlsPanel.classList.contains('mobile-open')) {
-            e.preventDefault();
-            controlsPanel.classList.remove('mobile-open');
-            if (paramsDrawerOverlay) paramsDrawerOverlay.classList.remove('open');
-            document.body.style.overflow = '';
-        }
-    }
 });

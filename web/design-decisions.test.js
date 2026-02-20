@@ -40,8 +40,8 @@ describe('Design decisions: no alert() dialogs', () => {
             lines.forEach((line, i) => {
                 // Match alert( but not in comments or string definitions mentioning alert
                 if (/\balert\s*\(/.test(line) && !/\/\//.test(line.split('alert')[0]) && !/replaces.*alert|Replace.*alert/i.test(line)) {
-                    // Allow the single cache-clear fallback in app.js
-                    if (file === 'app.js' && /cache/i.test(line)) return;
+                    // Allow the single cache-clear fallback in app.js or info-modals.js
+                    if ((file === 'app.js' || file === 'info-modals.js') && /cache/i.test(line)) return;
                     violations.push(`${file}:${i + 1}: ${line.trim()}`);
                 }
             });
