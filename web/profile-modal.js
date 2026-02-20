@@ -5,7 +5,6 @@ import { isAuthenticated, getCurrentUser } from './auth.js';
 import { deleteCloudPreset, publishToCommunity, loadCommunityProfiles, unpublishFromCommunity, loadCommunityProfileParameters, getUserBookmarks, toggleBookmark } from './cloud_presets.js';
 import { debounce, collectParameters, applyParametersToForm, refreshAfterParameterLoad, confirmDiscardChanges, updateSaveIndicator, closeOverlay } from './params.js';
 import { showLoginModal, refreshCloudPresets } from './auth-ui.js';
-import { handleShareFromProfile } from './share.js';
 
 // Forward declaration for loadPreset — injected by app.js to avoid circular dependency
 let _loadPreset = null;
@@ -96,15 +95,11 @@ function populateMyProfilesTab() {
             </div>
             <div class="profile-row-actions">
                 <button class="profile-action-btn load-btn">Load</button>
-                <button class="profile-action-btn share-btn">Share</button>
                 <button class="profile-action-btn delete-btn">Del</button>
             </div>
         `;
         row.querySelector('.load-btn').addEventListener('click', () => {
             loadCloudPreset(preset);
-        });
-        row.querySelector('.share-btn').addEventListener('click', () => {
-            handleShareFromProfile(preset);
         });
         row.querySelector('.delete-btn').addEventListener('click', async () => {
             if (!await showConfirmModal('Delete Profile', `Delete profile "${preset.preset_name}"?`)) return;
