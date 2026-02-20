@@ -275,3 +275,55 @@ test.describe('Params Panel', () => {
     await expect(page.locator('#params-collapse-btn')).toBeAttached();
   });
 });
+
+test.describe('Mobile Params Drawer', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 812 });
+    await page.goto('/');
+  });
+
+  test('"Edit Profile" is first item in hamburger menu', async ({ page }) => {
+    await page.click('#toolbar-hamburger');
+    // mm-params should be the first button in the menu
+    const firstButton = page.locator('#app-menu button.app-menu-item').first();
+    await expect(firstButton).toHaveAttribute('id', 'mm-params');
+    await expect(firstButton).toContainText('Edit Profile');
+  });
+
+  test('mobile params drawer has close button and header', async ({ page }) => {
+    const closeHeader = page.locator('#mobile-params-close');
+    await expect(closeHeader).toBeAttached();
+    await expect(closeHeader.locator('.close-label')).toHaveText('Edit Profile');
+    await expect(page.locator('#mobile-params-close-btn')).toBeAttached();
+  });
+
+  test('mobile params drawer opens and closes', async ({ page }) => {
+    const controlsPanel = page.locator('#controls-panel');
+
+    // Open via hamburger menu
+    await page.click('#toolbar-hamburger');
+    await page.click('#mm-params');
+    await expect(controlsPanel).toHaveClass(/mobile-open/);
+
+    // Close via ✕ button
+    await page.click('#mobile-params-close-btn');
+    await expect(controlsPanel).not.toHaveClass(/mobile-open/);
+  });
+
+  test('mobile params drawer is full-width', async ({ page }) => {
+    await page.click('#toolbar-hamburger');
+    await page.click('#mm-params');
+    const panel = page.locator('#controls-panel');
+    const box = await panel.boundingBox();
+    // Full-width: should be at least 90% of viewport
+    expect(box.width).toBeGreaterThanOrEqual(375 * 0.9);
+  });
+
+  test('mobile params drawer is scrollable', async ({ page }) => {
+    await page.click('#toolbar-hamburger');
+    await page.click('#mm-params');
+    const panel = page.locator('#controls-panel');
+    const overflow = await panel.evaluate(el => getComputedStyle(el).overflowY);
+    expect(overflow).toBe('auto');
+  });
+});

@@ -287,24 +287,60 @@ h1 {
         border: none;
     }
 
-    /* Controls-panel becomes a left drawer on mobile */
+    /* Controls-panel becomes a full-screen left drawer on mobile */
     .controls-panel {
         position: fixed !important;
-        top: 52px !important; /* Below toolbar */
+        top: 44px !important; /* Below toolbar */
         left: 0 !important;
         bottom: 0 !important;
-        width: min(85vw, 380px) !important;
-        max-width: 400px !important;
-        height: auto !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        height: calc(100vh - 44px) !important;
         transform: translateX(-100%) !important;
         transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
         z-index: 160 !important;
-        box-shadow: var(--shadow-xl) !important;
+        box-shadow: none !important;
         background: var(--color-surface) !important;
+        overflow-y: auto !important;
     }
 
     .controls-panel.mobile-open {
         transform: translateX(0) !important;
+    }
+
+    /* Close button shown at top of mobile params drawer */
+    .mobile-params-close {
+        display: flex !important;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.6rem 0.75rem;
+        background: var(--color-surface);
+        border-bottom: 1px solid var(--color-gray-200);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    .mobile-params-close .close-label {
+        font-weight: 600;
+        font-size: 1rem;
+        color: var(--color-gray-800);
+    }
+
+    .mobile-params-close .close-btn {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: var(--color-gray-600);
+        padding: 0.25rem 0.5rem;
+        border-radius: var(--radius-sm);
+        line-height: 1;
+    }
+
+    .mobile-params-close .close-btn:hover {
+        background: var(--color-gray-100);
+        color: var(--color-gray-800);
     }
 
     .preview-panel {
@@ -316,6 +352,11 @@ h1 {
     .status-bar {
         font-size: 0.7rem;
     }
+}
+
+/* Hidden on desktop, shown only inside mobile media query */
+.mobile-params-close {
+    display: none;
 }
 
 .controls-panel {
