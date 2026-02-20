@@ -265,8 +265,12 @@ def calculate_string_angles_guitar(params: Dict[str, Any], vsl: float, fret_posi
     bridge_height = params.get('bridge_height') or 0
     overstand = params.get('overstand') or 0
 
-    string_height_at_join = ((string_height_12th_fret - string_height_nut) * (fret_positions[fret_join] / fret_positions[12])) + string_height_nut
-    hypotenuse = vsl - fret_positions[fret_join]
+    # fret_positions is 0-indexed: index 0 = fret 1, index N-1 = fret N
+    fret_join_idx = fret_join - 1
+    fret_12_idx = 11  # 12th fret
+
+    string_height_at_join = ((string_height_12th_fret - string_height_nut) * (fret_positions[fret_join_idx] / fret_positions[fret_12_idx])) + string_height_nut
+    hypotenuse = vsl - fret_positions[fret_join_idx]
     opposite = arching_height + bridge_height - overstand - fb_thickness_at_join - string_height_at_join
 
     # Validate that the angle calculation is geometrically possible
@@ -280,11 +284,11 @@ def calculate_string_angles_guitar(params: Dict[str, Any], vsl: float, fret_posi
 
     string_angle_to_ribs_rad = math.asin(sin_value)
     string_angle_to_ribs = string_angle_to_ribs_rad * 180 / math.pi
-    string_nut_to_join = fret_positions[fret_join]
+    string_nut_to_join = fret_positions[fret_join_idx]
     neck_stop = math.cos(string_angle_to_ribs_rad) * string_nut_to_join
     body_stop = math.cos(string_angle_to_ribs_rad) * hypotenuse
     opposite_string_to_join = string_height_at_join - string_height_nut
-    string_angle_to_fb = math.atan(opposite_string_to_join / fret_positions[fret_join]) * 180 / math.pi
+    string_angle_to_fb = math.atan(opposite_string_to_join / fret_positions[fret_join_idx]) * 180 / math.pi
 
     result['body_stop'] = body_stop
     result['neck_stop'] = neck_stop

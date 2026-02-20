@@ -43,6 +43,12 @@ def calculate_derived_values(params: Dict[str, Any]) -> Dict[str, Any]:
     else:
         no_frets = DEFAULT_FRETS_VIOLIN
 
+    # For guitar family, ensure we calculate enough frets for fret_join and
+    # the 12th fret reference used in string height interpolation
+    fret_join = params.get('fret_join') or 12
+    if instrument_family == InstrumentFamily.GUITAR_MANDOLIN.name:
+        no_frets = max(no_frets, fret_join, 12)
+
     fret_positions = geometry_engine.calculate_fret_positions(vsl, no_frets)
 
     fb_result = geometry_engine.calculate_fingerboard_thickness(params)
