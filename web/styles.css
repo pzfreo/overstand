@@ -635,8 +635,8 @@ h1 {
 
 .param-help-tooltip {
     position: fixed;
-    background: var(--color-gray-800);
-    color: #fff;
+    background: #1e1e2e;
+    color: #f0f0f0;
     font-size: 0.75rem;
     font-weight: 400;
     padding: 0.4rem 0.6rem;
