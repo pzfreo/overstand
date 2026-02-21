@@ -209,7 +209,11 @@ function createLabelDiv(name, param, isOutput) {
             const tooltip = document.createElement('div');
             tooltip.className = 'param-help-tooltip';
             tooltip.textContent = param.description;
-            helpIcon.appendChild(tooltip);
+            // Position fixed to escape overflow:hidden on accordion
+            const rect = helpIcon.getBoundingClientRect();
+            tooltip.style.top = (rect.bottom + 4) + 'px';
+            tooltip.style.left = rect.left + 'px';
+            document.body.appendChild(tooltip);
             // Close on click outside
             const close = () => { tooltip.remove(); document.removeEventListener('click', close); };
             setTimeout(() => document.addEventListener('click', close), 0);
