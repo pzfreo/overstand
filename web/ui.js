@@ -197,6 +197,15 @@ function createLabelDiv(name, param, isOutput) {
     }
 
     labelDiv.appendChild(label);
+
+    if (param.description && !isOutput) {
+        const helpIcon = document.createElement('span');
+        helpIcon.className = 'param-help-icon';
+        helpIcon.textContent = '\u24D8';
+        helpIcon.title = param.description;
+        labelDiv.appendChild(helpIcon);
+    }
+
     return labelDiv;
 }
 
