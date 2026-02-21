@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-179.47352919129125 -95.469446 570.6824219912912 178.02778" width="570.6824219912912mm" height="178.02778mm">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-179.47352919129125 -95.469446 570.6824219912912 178.02778">
 <defs>
     <pattern id="diagonalHatch" patternUnits="userSpaceOnUse" width="2" height="2">
         <path d="M0,2 L2,0" stroke="black" stroke-width="0.3" />
