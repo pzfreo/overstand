@@ -1,0 +1,123 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-179.47352919129125 -95.469446 570.6824219912912 178.02778" width="570.6824219912912mm" height="178.02778mm">
+<defs>
+    <pattern id="diagonalHatch" patternUnits="userSpaceOnUse" width="2" height="2">
+        <path d="M0,2 L2,0" stroke="black" stroke-width="0.3" />
+    </pattern>
+</defs>
+<g transform="scale(1,-1)">
+<path d="M 0.0,0.0 L 355.0,0.0 L 355.0,3.5 L 0.0,3.5 Z" stroke="rgb(0,0,0)" stroke-width="0.5" fill="none"/>
+<path d="M 0.0,-26.5 L 355.0,-26.5 L 355.0,3.5 L 0.0,3.5 Z" stroke="rgb(0,0,0)" stroke-width="0.5" fill="none"/>
+<path d="M 0,3.5 Q 212.5,26.5 355.0,3.5" stroke="rgb(0,0,0)" stroke-width="0.5" fill="none" stroke-dasharray="5,3"/>
+<path d="M 195.0,15.0 L 195.0,48.0" stroke="rgb(0,0,0)" stroke-width="0.5" fill="none"/>
+<path d="M 0,0 L 0,12.0" stroke="rgb(0,0,0)" stroke-width="0.5" fill="none"/>
+<path d="M 0,12.0 L -129.93170817275845,-2.0214572758450817" stroke="rgb(0,0,0)" stroke-width="0.5" fill="none"/>
+<path d="M -130.5320458951069,3.5416524787775066 A 5.595408432174682,5.595408432174682 0 0 1 -135.49481792738104,-2.6217949981935376" stroke="rgb(100,100,100)" stroke-width="0.5" fill="none" stroke-dasharray="1,2"/>
+<path d="M -129.93170817275845,-2.0214572758450817 L -130.5320458951069,3.5416524787775066" stroke="rgb(100,100,100)" stroke-width="0.5" fill="none" stroke-dasharray="1,2"/>
+<path d="M -129.93170817275845,-2.0214572758450817 L -135.49481792738104,-2.6217949981935376" stroke="rgb(100,100,100)" stroke-width="0.5" fill="none" stroke-dasharray="1,2"/>
+<path d="M 0,12.0 L 0.0,-5.0" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none"/>
+<path d="M 0,12.0 L -134.9028464033777,-2.5579129516241674" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none"/>
+<path d="M -14.913414691857785,10.390632972662742 A 15,15 0 0 1 9.18485099360515e-16,-3.0" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none" stroke-dasharray="5,3"/>
+<text x="0" y="0" font-family="Roboto, Arial, sans-serif" font-size="2.822224" fill="rgb(255,0,0)" text-anchor="middle" dominant-baseline="middle" transform="translate(-7.239775298663345 7.240556662833282) scale(1 -1)">83.8°</text>
+<path d="M -129.93170817275845,-2.0214572758450817 L 138.50975628068167,26.947149216225547 L 138.05913351302723,31.122905329945727 L -130.27503980525705,1.1600711917512463 Z" stroke="rgb(0,0,0)" stroke-width="0.5" fill="url(#diagonalHatch)"/>
+<path d="M -130.27503980525705,1.1600711917512463 L -130.46767121401342,2.945115891103196" stroke="rgb(0,0,0)" stroke-width="0.5" fill="none"/>
+<path d="M 138.05913351302723,31.122905329945727 L 137.5192820804188,36.12551079515377" stroke="rgb(0,0,0)" stroke-width="0.5" fill="none"/>
+<path d="M -130.46767121401342,2.945115891103196 L 137.5192820804188,36.12551079515377" stroke="rgb(0,0,0)" stroke-width="0.5" fill="none"/>
+<path d="M 0,0 L -150.46856474082352,0" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none"/>
+<path d="M -130.46856474082352,3.475137669518091 L 195.0,48.0" stroke="rgb(0,0,0)" stroke-width="0.5" fill="none"/>
+<text x="0" y="0" font-family="Roboto, Arial, sans-serif" font-size="4.938892" fill="rgb(0,0,255)" text-anchor="middle" dominant-baseline="middle" transform="translate(177.5 73.0) scale(1 -1)">Basic Violin</text>
+<text x="0" y="0" font-family="Roboto, Arial, sans-serif" font-size="2.1166679999999998" fill="rgb(0,0,255)" text-anchor="middle" dominant-baseline="middle" transform="translate(-129.93170817275845 -61.5) scale(1 -1)">https://github.com/pzfreo/diagram-creator</text>
+<path d="M -150.46856474082352,0 L -155.46856474082352,0" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none"/>
+<path d="M -150.46856474082352,3.475137669518091 L -155.46856474082352,3.475137669518091" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none"/>
+<path d="M -158.46856474082352,0 L -158.46856474082352,3.475137669518091" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none" stroke-dasharray="5,3"/>
+<path d="M -158.46856474082352,0 L -159.47352919129125,-2.8266670220059744" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none"/>
+<path d="M -158.46856474082352,0 L -157.4636002903558,-2.8266670220059744" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none"/>
+<path d="M -158.46856474082352,3.475137669518091 L -157.4636002903558,6.301804691524065" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none"/>
+<path d="M -158.46856474082352,3.475137669518091 L -159.47352919129125,6.301804691524065" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none"/>
+<text x="0" y="0" font-family="Roboto, Arial, sans-serif" font-size="2.822224" fill="rgb(255,0,0)" text-anchor="middle" dominant-baseline="middle" transform="translate(-155.64634074082352 1.7375688347590454) scale(1 -1)">3.5</text>
+<path d="M -130.46856474082352,3.475137669518091 L -132.230583645835,16.355172195030136" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none"/>
+<path d="M 195.0,48.0 L 193.23798109498853,60.88003452551204" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none"/>
+<path d="M -131.82396389852465,13.382856535296586 L 193.64460084229887,57.90771886577849" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none" stroke-dasharray="5,3"/>
+<path d="M -131.82396389852465,13.382856535296586 L -134.76075891361324,13.995420849757313" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none"/>
+<path d="M -131.82396389852465,13.382856535296586 L -134.48833331967654,12.004039800690173" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none"/>
+<path d="M 193.64460084229887,57.90771886577849 L 196.58139585738746,57.295154551317765" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none"/>
+<path d="M 193.64460084229887,57.90771886577849 L 196.30897026345076,59.28653560038491" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none"/>
+<text x="0" y="0" font-family="Roboto, Arial, sans-serif" font-size="2.822224" fill="rgb(255,0,0)" text-anchor="middle" dominant-baseline="middle" transform="translate(30.719056470264913 37.04337779895018) scale(1 -1) rotate(-7.789841750916935)">328.5</text>
+<path d="M -130.46856474082352,3.475137669518091 L -133.58598280353613,26.26289106080863" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none"/>
+<path d="M -0.9915038540937644,21.187903003791767 L -4.108921916806349,43.975656395082304" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none"/>
+<path d="M -133.17936305622578,23.29057540107508 L -3.702302169496012,41.00334073534876" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none" stroke-dasharray="5,3"/>
+<path d="M -133.17936305622578,23.29057540107508 L -136.11615807131437,23.903139715535808" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none"/>
+<path d="M -133.17936305622578,23.29057540107508 L -135.84373247737767,21.911758666468668" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none"/>
+<path d="M -3.702302169496012,41.00334073534876 L -0.7655071544074104,40.39077642088803" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none"/>
+<path d="M -3.702302169496012,41.00334073534876 L -1.037932748344113,42.382157469955175" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none"/>
+<text x="0" y="0" font-family="Roboto, Arial, sans-serif" font-size="2.822224" fill="rgb(255,0,0)" text-anchor="middle" dominant-baseline="middle" transform="translate(-68.6320946144831 33.54504816662456) scale(1 -1) rotate(-7.789841750916936)">130.7</text>
+<path d="M 138.4021573848169,36.220785447774034 L 149.4021573848169,36.220785447774034" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none"/>
+<path d="M 138.4021573848169,40.19855904847744 L 149.4021573848169,40.19855904847744" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none"/>
+<path d="M 146.4021573848169,36.220785447774034 L 146.4021573848169,40.19855904847744" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none" stroke-dasharray="5,3"/>
+<path d="M 146.4021573848169,36.220785447774034 L 145.39719293434916,33.394118425768056" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none"/>
+<path d="M 146.4021573848169,36.220785447774034 L 147.4071218352846,33.394118425768056" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none"/>
+<path d="M 146.4021573848169,40.19855904847744 L 147.4071218352846,43.02522607048341" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none"/>
+<path d="M 146.4021573848169,40.19855904847744 L 145.39719293434916,43.02522607048341" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none"/>
+<text x="0" y="0" font-family="Roboto, Arial, sans-serif" font-size="2.822224" fill="rgb(255,0,0)" text-anchor="middle" dominant-baseline="middle" transform="translate(149.2243813848169 38.20967224812574) scale(1 -1)">4.0</text>
+<path d="M -129.93170817275845,-2.0214572758450817 L -129.93170817275845,-9.021457275845082" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none"/>
+<path d="M 0,-2.0214572758450817 L 0,-9.021457275845082" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none"/>
+<path d="M -129.93170817275845,-12.021457275845082 L 0,-12.021457275845082" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none" stroke-dasharray="5,3"/>
+<path d="M -129.93170817275845,-12.021457275845082 L -132.75837519476443,-11.016492825377366" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none"/>
+<path d="M -129.93170817275845,-12.021457275845082 L -132.75837519476443,-13.026421726312797" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none"/>
+<path d="M 0,-12.021457275845082 L 2.8266670220059744,-13.026421726312797" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none"/>
+<path d="M 0,-12.021457275845082 L 2.8266670220059744,-11.016492825377366" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none"/>
+<text x="0" y="0" font-family="Roboto, Arial, sans-serif" font-size="2.822224" fill="rgb(255,0,0)" text-anchor="middle" dominant-baseline="middle" transform="translate(-74.96585408637922 -14.843681275845082) scale(1 -1)">129.9</text>
+<path d="M 0,0 L 11,0" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none"/>
+<path d="M 0,12.0 L 11,12.0" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none"/>
+<path d="M 8,0 L 8,12.0" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none" stroke-dasharray="5,3"/>
+<path d="M 8,0 L 6.995035549532284,-2.8266670220059744" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none"/>
+<path d="M 8,0 L 9.004964450467714,-2.8266670220059744" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none"/>
+<path d="M 8,12.0 L 9.004964450467716,14.826667022005974" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none"/>
+<path d="M 8,12.0 L 6.995035549532285,14.826667022005974" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none"/>
+<text x="0" y="0" font-family="Roboto, Arial, sans-serif" font-size="2.822224" fill="rgb(255,0,0)" text-anchor="middle" dominant-baseline="middle" transform="translate(10.822224 6.0) scale(1 -1)">12.0</text>
+<path d="M 195.0,0 L 206.0,0" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none"/>
+<path d="M 195.0,15.0 L 206.0,15.0" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none"/>
+<path d="M 203.0,0 L 203.0,15.0" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none" stroke-dasharray="5,3"/>
+<path d="M 203.0,0 L 201.99503554953228,-2.8266670220059744" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none"/>
+<path d="M 203.0,0 L 204.00496445046772,-2.8266670220059744" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none"/>
+<path d="M 203.0,15.0 L 204.00496445046772,17.826667022005974" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none"/>
+<path d="M 203.0,15.0 L 201.99503554953228,17.826667022005974" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none"/>
+<text x="0" y="0" font-family="Roboto, Arial, sans-serif" font-size="2.822224" fill="rgb(255,0,0)" text-anchor="middle" dominant-baseline="middle" transform="translate(205.822224 7.5) scale(1 -1)">15.0</text>
+<path d="M 195.0,15.0 L 206.0,15.0" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none"/>
+<path d="M 195.0,48.0 L 206.0,48.0" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none"/>
+<path d="M 203.0,15.0 L 203.0,48.0" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none" stroke-dasharray="5,3"/>
+<path d="M 203.0,15.0 L 201.99503554953228,12.173332977994026" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none"/>
+<path d="M 203.0,15.0 L 204.00496445046772,12.173332977994026" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none"/>
+<path d="M 203.0,48.0 L 204.00496445046772,50.82666702200598" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none"/>
+<path d="M 203.0,48.0 L 201.99503554953228,50.82666702200598" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none"/>
+<text x="0" y="0" font-family="Roboto, Arial, sans-serif" font-size="2.822224" fill="rgb(255,0,0)" text-anchor="middle" dominant-baseline="middle" transform="translate(205.822224 31.5) scale(1 -1)">33.0</text>
+<path d="M 0,-26.5 L 0,-38.5" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none"/>
+<path d="M 195.0,-26.5 L 195.0,-38.5" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none"/>
+<path d="M 0,-41.5 L 195.0,-41.5" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none" stroke-dasharray="5,3"/>
+<path d="M 0,-41.5 L -2.8266670220059744,-40.49503554953228" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none"/>
+<path d="M 0,-41.5 L -2.8266670220059744,-42.50496445046772" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none"/>
+<path d="M 195.0,-41.5 L 197.82666702200598,-42.50496445046772" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none"/>
+<path d="M 195.0,-41.5 L 197.82666702200598,-40.49503554953228" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none"/>
+<text x="0" y="0" font-family="Roboto, Arial, sans-serif" font-size="2.822224" fill="rgb(255,0,0)" text-anchor="middle" dominant-baseline="middle" transform="translate(87.5 -44.322224) scale(1 -1)">195.0</text>
+<path d="M 0,-26.5 L 0,-53.5" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none"/>
+<path d="M 355.0,-26.5 L 355.0,-53.5" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none"/>
+<path d="M 0,-56.5 L 355.0,-56.5" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none" stroke-dasharray="5,3"/>
+<path d="M 0,-56.5 L -2.8266670220059744,-55.49503554953228" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none"/>
+<path d="M 0,-56.5 L -2.8266670220059744,-57.50496445046772" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none"/>
+<path d="M 355.0,-56.5 L 357.82666702200595,-57.50496445046772" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none"/>
+<path d="M 355.0,-56.5 L 357.82666702200595,-55.49503554953228" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none"/>
+<text x="0" y="0" font-family="Roboto, Arial, sans-serif" font-size="2.822224" fill="rgb(255,0,0)" text-anchor="middle" dominant-baseline="middle" transform="translate(167.5 -59.322224) scale(1 -1)">355.0</text>
+<path d="M 365.0,3.5 L 365.0,-26.5" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none" stroke-dasharray="5,3"/>
+<path d="M 365.0,3.5 L 366.0049644504677,6.326667022005974" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none"/>
+<path d="M 365.0,3.5 L 363.9950355495323,6.326667022005974" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none"/>
+<path d="M 365.0,-26.5 L 363.9950355495323,-29.326667022005974" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none"/>
+<path d="M 365.0,-26.5 L 366.0049644504677,-29.326667022005974" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none"/>
+<text x="0" y="0" font-family="Roboto, Arial, sans-serif" font-size="2.822224" fill="rgb(0,0,255)" text-anchor="middle" dominant-baseline="middle" transform="translate(367.822224 -11.5) scale(1 -1)">30.0</text>
+<path d="M 355.0,3.5 L 195.0,48.0" stroke="rgb(100,100,100)" stroke-width="0.5" fill="none" stroke-dasharray="1,2"/>
+<path d="M 181.1291935879101,46.102441179218424 A 14,14 0 0 1 208.48804229393903,44.248638236998204" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none" stroke-dasharray="5,3"/>
+<text x="0" y="0" font-family="Roboto, Arial, sans-serif" font-size="2.822224" fill="rgb(255,0,0)" text-anchor="middle" dominant-baseline="middle" transform="translate(189.63606087646903 42.398496563471824) scale(1 -1)">156.7°</text>
+<path d="M 180.0,39.75 L 180.0,23.25" stroke="rgb(255,0,0)" stroke-width="0.5" fill="none"/>
+<path d="M 180.0,23.25 L 178.0,26.25 L 182.0,26.25 Z" stroke="rgb(255,0,0)" stroke-width="0.5" fill="rgb(255,0,0)"/>
+<text x="0" y="0" font-family="Roboto, Arial, sans-serif" font-size="2.822224" fill="rgb(255,0,0)" text-anchor="middle" dominant-baseline="middle" transform="translate(171.9199968 33.1933344) scale(1 -1)">40%</text>
+<text x="0" y="0" font-family="Roboto, Arial, sans-serif" font-size="2.822224" fill="rgb(255,0,0)" text-anchor="middle" dominant-baseline="middle" transform="translate(167.122216 29.8066656) scale(1 -1)">downforce</text>
+</g>
+</svg>
