@@ -197,6 +197,30 @@ function createLabelDiv(name, param, isOutput) {
     }
 
     labelDiv.appendChild(label);
+
+    if (param.description && !isOutput) {
+        const helpIcon = document.createElement('span');
+        helpIcon.className = 'param-help-icon';
+        helpIcon.innerHTML = '<svg viewBox="0 0 16 16" width="12" height="12"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.5"/><text x="8" y="12" text-anchor="middle" fill="currentColor" font-size="10" font-weight="600" font-style="italic" font-family="serif">i</text></svg>';
+        helpIcon.addEventListener('click', (e) => {
+            e.stopPropagation();
+            // Close any other open tooltip
+            document.querySelectorAll('.param-help-tooltip').forEach(t => t.remove());
+            const tooltip = document.createElement('div');
+            tooltip.className = 'param-help-tooltip';
+            tooltip.textContent = param.description;
+            // Position fixed to escape overflow:hidden on accordion
+            const rect = helpIcon.getBoundingClientRect();
+            tooltip.style.top = (rect.bottom + 4) + 'px';
+            tooltip.style.left = rect.left + 'px';
+            document.body.appendChild(tooltip);
+            // Close on click outside
+            const close = () => { tooltip.remove(); document.removeEventListener('click', close); };
+            setTimeout(() => document.addEventListener('click', close), 0);
+        });
+        labelDiv.appendChild(helpIcon);
+    }
+
     return labelDiv;
 }
 
@@ -335,11 +359,6 @@ export function createParameterControl(name, param, isOutput, callbacks) {
         group = document.createElement('div');
         group.className = 'param-group';
         group.dataset.paramName = name;
-    }
-
-    // Add description as tooltip (common to all types)
-    if (param.description) {
-        group.title = param.description;
     }
 
     return group;

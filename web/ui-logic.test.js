@@ -284,14 +284,16 @@ describe('createParameterControl', () => {
         expect(input.maxLength).toBe(50);
     });
 
-    test('adds description as tooltip when present', () => {
+    test('adds help icon with click tooltip when description present', () => {
         const param = {
             type: 'number', label: 'Test', unit: 'mm',
             default: 10, min: 0, max: 100, step: 1,
             description: 'A helpful description'
         };
         const el = createParameterControl('test', param, false, noopCallbacks);
-        expect(el.title).toBe('A helpful description');
+        const helpIcon = el.querySelector('.param-help-icon');
+        expect(helpIcon).not.toBeNull();
+        expect(helpIcon.querySelector('svg')).not.toBeNull();
     });
 });
 
