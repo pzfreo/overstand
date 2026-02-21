@@ -13,6 +13,12 @@
 export function markdownToHtml(markdown) {
     let html = markdown;
 
+    // Sanitize HTML entities to prevent XSS
+    html = html.replace(/&/g, '&amp;');
+    html = html.replace(/</g, '&lt;');
+    html = html.replace(/>/g, '&gt;');
+    html = html.replace(/"/g, '&quot;');
+
     // Unescape characters
     html = html.replace(/\\!/g, '!');
     html = html.replace(/\\\*/g, '*');

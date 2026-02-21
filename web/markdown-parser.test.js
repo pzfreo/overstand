@@ -120,6 +120,25 @@ describe('markdownToHtml', () => {
         expect(result).toContain('5 * 3');
     });
 
+    // ---- XSS prevention ----
+
+    test('escapes HTML tags in text content', () => {
+        const result = markdownToHtml('<script>alert("xss")</script>');
+        expect(result).not.toContain('<script>');
+        expect(result).toContain('&lt;script&gt;');
+    });
+
+    test('escapes HTML tags inside markdown structures', () => {
+        const result = markdownToHtml('- <img src=x onerror=alert(1)>');
+        expect(result).not.toContain('<img');
+        expect(result).toContain('&lt;img');
+    });
+
+    test('escapes HTML in bold text', () => {
+        const result = markdownToHtml('**<b>bold</b>**');
+        expect(result).toContain('<strong>&lt;b&gt;bold&lt;/b&gt;</strong>');
+    });
+
     // ---- Mixed content ----
 
     test('handles a realistic about page', () => {
