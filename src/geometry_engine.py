@@ -448,6 +448,47 @@ def calculate_fret_positions(vsl: float, no_frets: int) -> List[float]:
     return fret_positions
 
 
+def calculate_fingerboard_thickness_at_fret(params: Dict[str, Any], fret_number: int) -> Dict[str, Any]:
+    """
+    Calculate fingerboard thickness at a given fret number.
+
+    Interpolates between the already-defined nut and join thicknesses using
+    the fret's position along the fingerboard.
+
+    Args:
+        params: Parameter dictionary
+        fret_number: Fret number (1-based)
+
+    Returns:
+        Dictionary with:
+        - fret_distance_from_nut: Distance from nut to fret (mm)
+        - position_ratio: Fractional position along fingerboard (0=nut, 1=join)
+        - fb_thickness_at_fret: Total fingerboard thickness at fret
+    """
+    vsl = params.get('vsl') or 0
+    fingerboard_length = params.get('fingerboard_length') or 0
+
+    fret_positions = calculate_fret_positions(vsl, fret_number)
+    fret_distance = fret_positions[fret_number - 1]
+
+    fb = calculate_fingerboard_thickness(params)
+    fb_thickness_at_nut = fb['fb_thickness_at_nut']
+    fb_thickness_at_join = fb['fb_thickness_at_join']
+
+    if fingerboard_length > 0:
+        t = min(fret_distance / fingerboard_length, 1.0)
+    else:
+        t = 0.0
+
+    fb_thickness_at_fret = fb_thickness_at_nut + (fb_thickness_at_join - fb_thickness_at_nut) * t
+
+    return {
+        'fret_distance_from_nut': fret_distance,
+        'position_ratio': t,
+        'fb_thickness_at_fret': fb_thickness_at_fret,
+    }
+
+
 def calculate_viol_back_break(params: Dict[str, Any]) -> Dict[str, Any]:
     """
     Calculate viol back break geometry.

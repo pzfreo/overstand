@@ -20,6 +20,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
 from geometry_engine import (
     calculate_sagitta,
     calculate_fingerboard_thickness,
+    calculate_fingerboard_thickness_at_fret,
     calculate_string_angles_violin,
     calculate_string_angles_guitar,
     calculate_neck_geometry,
@@ -337,6 +338,74 @@ class TestCalculateFretPositions:
         # First fret should be at vsl - vsl/2^(1/12)
         expected_first = vsl - (vsl / (2 ** (1/12)))
         assert abs(result[0] - expected_first) < 0.001
+
+
+class TestCalculateFingerboadThicknessAtFret:
+    """Tests for calculate_fingerboard_thickness_at_fret function"""
+
+    def _violin_params(self):
+        return {
+            'vsl': 330,
+            'fingerboard_length': 270,
+            'fingerboard_radius': 41,
+            'fb_visible_height_at_nut': 4.0,
+            'fb_visible_height_at_join': 6.0,
+            'fingerboard_width_at_nut': 24,
+            'fingerboard_width_at_end': 40,
+        }
+
+    def test_returns_expected_keys(self):
+        result = calculate_fingerboard_thickness_at_fret(self._violin_params(), 1)
+        assert 'fret_distance_from_nut' in result
+        assert 'position_ratio' in result
+        assert 'fb_thickness_at_fret' in result
+
+    def test_fret_1_close_to_nut(self):
+        """Fret 1 is near the nut so thickness should be close to nut thickness"""
+        params = self._violin_params()
+        result = calculate_fingerboard_thickness_at_fret(params, 1)
+        fb = calculate_fingerboard_thickness(params)
+        assert result['fb_thickness_at_fret'] > fb['fb_thickness_at_nut']
+        assert result['fb_thickness_at_fret'] < fb['fb_thickness_at_join']
+        assert result['position_ratio'] < 0.1
+
+    def test_position_ratio_increases_with_fret(self):
+        """Higher frets have higher position ratios"""
+        params = self._violin_params()
+        r1 = calculate_fingerboard_thickness_at_fret(params, 1)
+        r7 = calculate_fingerboard_thickness_at_fret(params, 7)
+        r12 = calculate_fingerboard_thickness_at_fret(params, 12)
+        assert r1['position_ratio'] < r7['position_ratio'] < r12['position_ratio']
+
+    def test_thickness_increases_with_fret(self):
+        """Thickness should increase toward the join end"""
+        params = self._violin_params()
+        t1 = calculate_fingerboard_thickness_at_fret(params, 1)['fb_thickness_at_fret']
+        t12 = calculate_fingerboard_thickness_at_fret(params, 12)['fb_thickness_at_fret']
+        assert t12 > t1
+
+    def test_fret_distance_uses_equal_temperament(self):
+        """Fret distance should match calculate_fret_positions"""
+        params = self._violin_params()
+        vsl = params['vsl']
+        result = calculate_fingerboard_thickness_at_fret(params, 12)
+        expected = calculate_fret_positions(vsl, 12)[11]
+        assert abs(result['fret_distance_from_nut'] - expected) < 0.001
+
+    def test_position_ratio_clamped_beyond_fingerboard(self):
+        """Fret beyond fingerboard end clamps position ratio to 1.0"""
+        params = self._violin_params()
+        params['fingerboard_length'] = 100  # Short fingerboard so fret 12 (165mm) is beyond it
+        result = calculate_fingerboard_thickness_at_fret(params, 12)
+        assert result['position_ratio'] == 1.0
+
+    def test_zero_fingerboard_length_returns_nut_thickness(self):
+        """Zero fingerboard length should not divide by zero"""
+        params = self._violin_params()
+        params['fingerboard_length'] = 0
+        result = calculate_fingerboard_thickness_at_fret(params, 7)
+        fb = calculate_fingerboard_thickness(params)
+        assert result['fb_thickness_at_fret'] == fb['fb_thickness_at_nut']
 
 
 class TestIntegration:
