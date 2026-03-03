@@ -1043,6 +1043,16 @@ PARAMETER_REGISTRY: Dict[str, UnifiedParameter] = {
         )
     ),
 
+    'fb_fret_1_distance': UnifiedParameter(
+        key='fb_fret_1_distance',
+        display_name='1st Fret Location',
+        param_type=ParameterType.NUMERIC,
+        unit='mm',
+        description='Distance from nut to 1st fret position',
+        role=ParameterRole.OUTPUT_ONLY,
+        output_config=OutputConfig(decimals=1, visible=True, category='Geometry', order=24)
+    ),
+
     'fb_thickness_at_fret_1': UnifiedParameter(
         key='fb_thickness_at_fret_1',
         display_name='FB Thickness at Fret 1',
@@ -1050,27 +1060,37 @@ PARAMETER_REGISTRY: Dict[str, UnifiedParameter] = {
         unit='mm',
         description='Total fingerboard thickness at the 1st fret position',
         role=ParameterRole.OUTPUT_ONLY,
-        output_config=OutputConfig(decimals=2, visible=True, category='Geometry', order=24)
+        output_config=OutputConfig(decimals=2, visible=True, category='Geometry', order=25)
+    ),
+
+    'fb_ref_fret_distance': UnifiedParameter(
+        key='fb_ref_fret_distance',
+        display_name='Reference Point',
+        param_type=ParameterType.NUMERIC,
+        unit='mm',
+        description='Distance from nut to reference measurement point',
+        role=ParameterRole.OUTPUT_ONLY,
+        output_config=OutputConfig(decimals=1, visible=True, category='Geometry', order=26)
     ),
 
     'fb_thickness_at_ref_fret': UnifiedParameter(
         key='fb_thickness_at_ref_fret',
-        display_name='FB Thickness at Reference Fret',
+        display_name='FB Thickness at Reference',
         param_type=ParameterType.NUMERIC,
         unit='mm',
-        description='Total fingerboard thickness at reference fret (7th for violin/viol, fret_join-2 for guitar)',
+        description='Total fingerboard thickness at reference point (7th fret position for violin/viol, fret_join-2 for guitar)',
         role=ParameterRole.OUTPUT_ONLY,
-        output_config=OutputConfig(decimals=2, visible=True, category='Geometry', order=25)
+        output_config=OutputConfig(decimals=2, visible=True, category='Geometry', order=27)
     ),
 
     'fb_ref_fret_number': UnifiedParameter(
         key='fb_ref_fret_number',
-        display_name='Reference Fret',
+        display_name='Reference Fret Number',
         param_type=ParameterType.NUMERIC,
         unit='fret #',
-        description='The reference fret used for FB thickness measurement',
+        description='The reference fret used for FB thickness measurement (internal)',
         role=ParameterRole.OUTPUT_ONLY,
-        output_config=OutputConfig(decimals=0, visible=True, category='Geometry', order=26)
+        output_config=OutputConfig(decimals=0, visible=False, category='Geometry', order=28)
     ),
 
     # Internal calculation values (visible=False)

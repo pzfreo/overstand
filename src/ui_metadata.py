@@ -270,9 +270,10 @@ SECTIONS = {
         default_expanded=False,
         order=11,
         parameter_names=[
+            'fb_fret_1_distance',
             'fb_thickness_at_fret_1',
+            'fb_ref_fret_distance',
             'fb_thickness_at_ref_fret',
-            'fb_ref_fret_number',
             'sagitta_at_nut',
             'sagitta_at_join',
             'string_angle_to_ribs',

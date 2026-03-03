@@ -34,8 +34,8 @@ def test_registry_validates_on_import():
 
 def test_registry_has_expected_count():
     """Test registry contains expected number of parameters"""
-    # Should have ~61 parameters total (21 input + ~38 output + 2 conditional)
-    assert 55 <= len(PARAMETER_REGISTRY) <= 70
+    # Should have ~72 parameters total (21 input + ~49 output + 2 conditional)
+    assert 55 <= len(PARAMETER_REGISTRY) <= 80
 
 
 def test_all_keys_are_snake_case():
