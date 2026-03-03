@@ -282,7 +282,7 @@ def add_document_text(exporter: ExportSVG, instrument_name: str, generator_url: 
     exporter.add_shape(footer_text, layer="text")
 
 def add_fb_thickness_dimensions(exporter: ExportSVG, show_measurements: bool,
-                                neck_end_x: float, neck_end_y: float,
+                                nut_top_x: float, nut_top_y: float,
                                 fb_direction_angle: float,
                                 fret_1_distance: float, fret_1_thickness: float,
                                 ref_fret_distance: float, ref_fret_thickness: float) -> None:
@@ -296,11 +296,9 @@ def add_fb_thickness_dimensions(exporter: ExportSVG, show_measurements: bool,
         (fret_1_distance, fret_1_thickness, 40),
         (ref_fret_distance, ref_fret_thickness, 60),
     ]:
-        # Top of fingerboard at this fret position
-        fb_x = neck_end_x + distance * math.cos(fb_direction_angle)
-        fb_y = neck_end_y + distance * math.sin(fb_direction_angle)
-        top_x = fb_x + thickness * math.cos(perp_angle)
-        top_y = fb_y + thickness * math.sin(perp_angle)
+        # Top of fingerboard at this fret position (trace along playing surface from nut top)
+        top_x = nut_top_x + distance * math.cos(fb_direction_angle)
+        top_y = nut_top_y + distance * math.sin(fb_direction_angle)
         # Annotation point above FB (dotted leader)
         ext_x = top_x + offset * math.cos(perp_angle)
         ext_y = top_y + offset * math.sin(perp_angle)
