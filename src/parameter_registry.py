@@ -393,6 +393,21 @@ PARAMETER_REGISTRY: Dict[str, UnifiedParameter] = {
         )
     ),
 
+    'fret_join_position': UnifiedParameter(
+        key='fret_join_position',
+        display_name='Effective Fret at Join',
+        param_type=ParameterType.NUMERIC,
+        unit='fret',
+        description='Effective fret position of the body join (violin/viol family only)',
+        role=ParameterRole.OUTPUT_ONLY,
+        output_config=OutputConfig(
+            decimals=2,
+            visible=True,
+            category='Geometry',
+            order=4
+        )
+    ),
+
     'neck_angle': UnifiedParameter(
         key='neck_angle',
         display_name='Neck Angle',

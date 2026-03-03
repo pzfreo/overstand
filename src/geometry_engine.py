@@ -242,9 +242,11 @@ def calculate_string_angles_violin(params: Dict[str, Any], vsl: float, fb_thickn
     neck_stop = math.cos(string_angle_to_ribs_rad) * string_nut_to_join
     opposite_string_to_fb = string_height_eof - string_height_nut
     string_angle_to_fb = math.atan(opposite_string_to_fb / fingerboard_length) * 180 / math.pi
+    fret_join_position = 12 * math.log2(vsl / string_to_join) if string_to_join > 0 and vsl > 0 else None
 
     result['body_stop'] = body_stop
     result['neck_stop'] = neck_stop
+    result['fret_join_position'] = fret_join_position
     result['string_angle_to_ribs_rad'] = string_angle_to_ribs_rad
     result['string_angle_to_fb'] = string_angle_to_fb
     result['string_angle_to_ribs'] = string_angle_to_ribs
