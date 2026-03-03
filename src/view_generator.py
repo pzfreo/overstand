@@ -5,7 +5,7 @@ This module handles the generation of HTML-based views like fret position tables
 """
 
 from typing import Dict, Any
-from geometry_engine import calculate_fret_positions, calculate_fingerboard_thickness
+from geometry_engine import calculate_fret_positions
 from parameter_registry import InstrumentFamily
 
 def generate_fret_positions_view(params: Dict[str, Any]) -> Dict[str, Any]:
@@ -27,14 +27,9 @@ def generate_fret_positions_view(params: Dict[str, Any]) -> Dict[str, Any]:
 
     fret_positions = calculate_fret_positions(vsl, no_frets)
 
-    fb = calculate_fingerboard_thickness(params)
-    fb_thickness_at_nut = fb['fb_thickness_at_nut']
-    fb_thickness_at_join = fb['fb_thickness_at_join']
-    fingerboard_length = params.get('fingerboard_length') or 0
-
     html = '<div class="fret-table-container">'
     html += '<table class="fret-table">'
-    html += '<thead><tr><th>Fret</th><th>Distance from Nut (mm)</th><th>Distance from Previous Fret (mm)</th><th>FB Thickness (mm)</th></tr></thead>'
+    html += '<thead><tr><th>Fret</th><th>Distance from Nut (mm)</th><th>Distance from Previous Fret (mm)</th></tr></thead>'
     html += '<tbody>'
 
     prev_pos = 0
@@ -42,12 +37,7 @@ def generate_fret_positions_view(params: Dict[str, Any]) -> Dict[str, Any]:
         fret_num = i + 1
         from_nut = pos
         from_prev = pos - prev_pos
-        if fingerboard_length > 0:
-            t = min(pos / fingerboard_length, 1.0)
-        else:
-            t = 0.0
-        fb_thickness = fb_thickness_at_nut + (fb_thickness_at_join - fb_thickness_at_nut) * t
-        html += f'<tr><td>{fret_num}</td><td>{from_nut:.1f}</td><td>{from_prev:.1f}</td><td>{fb_thickness:.2f}</td></tr>'
+        html += f'<tr><td>{fret_num}</td><td>{from_nut:.1f}</td><td>{from_prev:.1f}</td></tr>'
         prev_pos = pos
 
     html += '</tbody></table></div>'

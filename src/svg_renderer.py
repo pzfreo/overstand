@@ -27,8 +27,9 @@ def setup_exporter(show_measurements: bool) -> ExportSVG:
 
     dim_color = (255,0,0) if show_measurements else None
     exporter.add_layer("dimensions", fill_color=dim_color, line_color=dim_color, line_type=LineType.DASHED)
-    exporter.add_layer("extensions", fill_color=None, line_color=dim_color, line_type=LineType.CONTINUOUS)
+    exporter.add_layer("extensions", fill_color=dim_color, line_color=dim_color, line_type=LineType.CONTINUOUS)
     exporter.add_layer("arrows", fill_color=dim_color, line_color=dim_color, line_type=LineType.CONTINUOUS)
+    exporter.add_layer("dimension_leader", fill_color=dim_color, line_color=dim_color, line_type=LineType.DOTTED)
 
     return exporter
 
@@ -279,6 +280,64 @@ def add_document_text(exporter: ExportSVG, instrument_name: str, generator_url: 
     footer_x = neck_end_x
     footer_text = footer_text.move(Location((footer_x, footer_y)))
     exporter.add_shape(footer_text, layer="text")
+
+def add_fb_thickness_dimensions(exporter: ExportSVG, show_measurements: bool,
+                                neck_end_x: float, neck_end_y: float,
+                                fb_direction_angle: float,
+                                fb_thickness_at_nut: float, fb_thickness_at_join: float,
+                                neck_stop: float,
+                                fret_1_distance: float,
+                                ref_fret_distance: float) -> None:
+    """Draw fingerboard thickness callout annotations at fret 1 and the reference fret."""
+    if not show_measurements:
+        return
+
+    perp_angle = fb_direction_angle + math.pi / 2
+
+    for distance, offset in [
+        (fret_1_distance, 40),
+        (ref_fret_distance, 60),
+    ]:
+        # Bottom of fingerboard at fret position
+        fb_x = neck_end_x + distance * math.cos(fb_direction_angle)
+        fb_y = neck_end_y + distance * math.sin(fb_direction_angle)
+        # Thickness using the same interpolation as draw_fingerboard (distance / neck_stop)
+        thickness = fb_thickness_at_nut + (distance / neck_stop) * (fb_thickness_at_join - fb_thickness_at_nut)
+        # Top of fingerboard (playing surface)
+        top_x = fb_x + thickness * math.cos(perp_angle)
+        top_y = fb_y + thickness * math.sin(perp_angle)
+        # Annotation point above FB (dotted leader)
+        ext_x = top_x + offset * math.cos(perp_angle)
+        ext_y = top_y + offset * math.sin(perp_angle)
+
+        ext_line = Edge.make_line((top_x, top_y), (ext_x, ext_y))
+        exporter.add_shape(ext_line, layer="dimension_leader")
+
+        # Arrowhead: tip at FB surface, wings toward ext so it reads as ↓
+        # With Y-up coords (scale(1,-1) in SVG), wings going toward ext (upward)
+        # produce a V that opens upward — tip at bottom, pointing at FB surface
+        arrow_size = 3.0
+        dx = ext_x - top_x
+        dy = ext_y - top_y
+        length = math.sqrt(dx**2 + dy**2)
+        bx = dx / length  # unit vector toward ext (away from FB)
+        by = dy / length
+        wx = -by  # perpendicular
+        wy = bx
+        wing1 = Edge.make_line((top_x, top_y),
+                               (top_x + bx * arrow_size + wx * arrow_size,
+                                top_y + by * arrow_size + wy * arrow_size))
+        wing2 = Edge.make_line((top_x, top_y),
+                               (top_x + bx * arrow_size - wx * arrow_size,
+                                top_y + by * arrow_size - wy * arrow_size))
+        exporter.add_shape(wing1, layer="arrows")
+        exporter.add_shape(wing2, layer="arrows")
+
+        label = f"{thickness:.2f}mm at {distance:.1f}mm"
+        text = Text(label, DIMENSION_FONT_SIZE, font=FONT_NAME)
+        text = text.move(Location((ext_x + 2, ext_y)))
+        exporter.add_shape(text, layer="extensions")
+
 
 def add_dimensions(exporter: ExportSVG, show_measurements: bool,
                   reference_line_end_x: float, nut_top_x: float, nut_top_y: float,
