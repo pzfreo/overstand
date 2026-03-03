@@ -280,6 +280,44 @@ def add_document_text(exporter: ExportSVG, instrument_name: str, generator_url: 
     footer_text = footer_text.move(Location((footer_x, footer_y)))
     exporter.add_shape(footer_text, layer="text")
 
+def add_fb_thickness_dimensions(exporter: ExportSVG, show_measurements: bool,
+                                neck_end_x: float, neck_end_y: float,
+                                fb_direction_angle: float,
+                                fret_1_distance: float, fret_1_thickness: float,
+                                ref_fret_distance: float, ref_fret_thickness: float) -> None:
+    """Draw fingerboard thickness callout annotations at fret 1 and the reference fret."""
+    if not show_measurements:
+        return
+
+    perp_angle = fb_direction_angle + math.pi / 2
+
+    for distance, thickness, offset in [
+        (fret_1_distance, fret_1_thickness, 15),
+        (ref_fret_distance, ref_fret_thickness, 25),
+    ]:
+        # Top of fingerboard at this fret position
+        fb_x = neck_end_x + distance * math.cos(fb_direction_angle)
+        fb_y = neck_end_y + distance * math.sin(fb_direction_angle)
+        top_x = fb_x + thickness * math.cos(perp_angle)
+        top_y = fb_y + thickness * math.sin(perp_angle)
+        # Annotation point above FB
+        ext_x = top_x + offset * math.cos(perp_angle)
+        ext_y = top_y + offset * math.sin(perp_angle)
+
+        ext_line = Edge.make_line((top_x, top_y), (ext_x, ext_y))
+        exporter.add_shape(ext_line, layer="extensions")
+
+        # Arrow at tip only (pointing toward FB surface)
+        arrows = create_dimension_arrows((top_x, top_y), (ext_x, ext_y))
+        for arrow in arrows[:2]:
+            exporter.add_shape(arrow, layer="arrows")
+
+        label = f"{thickness:.2f}mm at {distance:.1f}mm"
+        text = Text(label, DIMENSION_FONT_SIZE, font=FONT_NAME)
+        text = text.move(Location((ext_x + 2, ext_y)))
+        exporter.add_shape(text, layer="extensions")
+
+
 def add_dimensions(exporter: ExportSVG, show_measurements: bool,
                   reference_line_end_x: float, nut_top_x: float, nut_top_y: float,
                   bridge_top_x: float, bridge_top_y: float, string_line,

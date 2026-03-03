@@ -56,6 +56,19 @@ def calculate_derived_values(params: Dict[str, Any]) -> Dict[str, Any]:
     fb_thickness_at_nut = fb_result['fb_thickness_at_nut']
     fb_thickness_at_join = fb_result['fb_thickness_at_join']
 
+    # FB thickness at fret 1 and reference fret
+    if instrument_family == InstrumentFamily.GUITAR_MANDOLIN.name:
+        fb_ref_fret = max(1, fret_join - 2)
+    else:
+        fb_ref_fret = 7
+    fret_1_result = geometry_engine.calculate_fingerboard_thickness_at_fret(params, 1)
+    derived['fb_thickness_at_fret_1'] = fret_1_result['fb_thickness_at_fret']
+    derived['fb_fret_1_distance'] = fret_1_result['fret_distance_from_nut']
+    ref_result = geometry_engine.calculate_fingerboard_thickness_at_fret(params, fb_ref_fret)
+    derived['fb_thickness_at_ref_fret'] = ref_result['fb_thickness_at_fret']
+    derived['fb_ref_fret_distance'] = ref_result['fret_distance_from_nut']
+    derived['fb_ref_fret_number'] = fb_ref_fret
+
     if instrument_family in (InstrumentFamily.VIOLIN.name, InstrumentFamily.VIOL.name):
         angle_result = geometry_engine.calculate_string_angles_violin(params, vsl, fb_thickness_at_join)
     elif instrument_family == InstrumentFamily.GUITAR_MANDOLIN.name:
@@ -279,6 +292,14 @@ def generate_side_view_svg(params: Dict[str, Any], show_measurements: bool = Tru
         tailpiece_height=params.get('tailpiece_height', 0),
         string_break_angle=derived['string_break_angle'],
         downward_force_percent=derived['downward_force_percent']
+    )
+
+    svg_renderer.add_fb_thickness_dimensions(
+        exporter, show_measurements,
+        derived['neck_end_x'], derived['neck_end_y'],
+        derived['fb_direction_angle'],
+        derived['fb_fret_1_distance'], derived['fb_thickness_at_fret_1'],
+        derived['fb_ref_fret_distance'], derived['fb_thickness_at_ref_fret']
     )
 
     # Add viol-specific back break dimensions

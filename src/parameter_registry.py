@@ -1043,6 +1043,36 @@ PARAMETER_REGISTRY: Dict[str, UnifiedParameter] = {
         )
     ),
 
+    'fb_thickness_at_fret_1': UnifiedParameter(
+        key='fb_thickness_at_fret_1',
+        display_name='FB Thickness at Fret 1',
+        param_type=ParameterType.NUMERIC,
+        unit='mm',
+        description='Total fingerboard thickness at the 1st fret position',
+        role=ParameterRole.OUTPUT_ONLY,
+        output_config=OutputConfig(decimals=2, visible=True, category='Geometry', order=24)
+    ),
+
+    'fb_thickness_at_ref_fret': UnifiedParameter(
+        key='fb_thickness_at_ref_fret',
+        display_name='FB Thickness at Reference Fret',
+        param_type=ParameterType.NUMERIC,
+        unit='mm',
+        description='Total fingerboard thickness at reference fret (7th for violin/viol, fret_join-2 for guitar)',
+        role=ParameterRole.OUTPUT_ONLY,
+        output_config=OutputConfig(decimals=2, visible=True, category='Geometry', order=25)
+    ),
+
+    'fb_ref_fret_number': UnifiedParameter(
+        key='fb_ref_fret_number',
+        display_name='Reference Fret',
+        param_type=ParameterType.NUMERIC,
+        unit='fret #',
+        description='The reference fret used for FB thickness measurement',
+        role=ParameterRole.OUTPUT_ONLY,
+        output_config=OutputConfig(decimals=0, visible=True, category='Geometry', order=26)
+    ),
+
     # Internal calculation values (visible=False)
     'neck_angle_rad': UnifiedParameter(
         key='neck_angle_rad',
