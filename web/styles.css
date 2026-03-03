@@ -2755,6 +2755,15 @@ input[type="checkbox"] {
     color: var(--color-primary-light);
 }
 
+[data-theme="dark"] .dimensions-table .param-name {
+    color: var(--color-gray-800);
+}
+
+[data-theme="dark"] .dimensions-table .param-value {
+    color: #e2e8f0;
+    font-weight: 600;
+}
+
 /* ============================================
    MOBILE MENU OVERLAY (hamburger menu)
    ============================================ */
