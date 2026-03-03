@@ -2751,6 +2751,10 @@ input[type="checkbox"] {
     color: var(--color-gray-800);
 }
 
+[data-theme="dark"] .output-value {
+    color: var(--color-primary-light);
+}
+
 /* ============================================
    MOBILE MENU OVERLAY (hamburger menu)
    ============================================ */
