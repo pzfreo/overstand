@@ -25,10 +25,11 @@ def setup_exporter(show_measurements: bool) -> ExportSVG:
     exporter.add_layer("schematic", fill_color=None, line_color=(0,0,0), line_type=LineType.DASHED)
     exporter.add_layer("schematic_dotted", fill_color=None, line_color=(100,100,100), line_type=LineType.DOTTED)
 
-    dim_color = (255,0,0) if show_measurements else None
+    dim_color = (0,0,0) if show_measurements else None
     exporter.add_layer("dimensions", fill_color=dim_color, line_color=dim_color, line_type=LineType.DASHED)
-    exporter.add_layer("extensions", fill_color=None, line_color=dim_color, line_type=LineType.CONTINUOUS)
+    exporter.add_layer("extensions", fill_color=dim_color, line_color=dim_color, line_type=LineType.CONTINUOUS)
     exporter.add_layer("arrows", fill_color=dim_color, line_color=dim_color, line_type=LineType.CONTINUOUS)
+    exporter.add_layer("dimension_leader", fill_color=dim_color, line_color=dim_color, line_type=LineType.DOTTED)
 
     return exporter
 
@@ -292,24 +293,24 @@ def add_fb_thickness_dimensions(exporter: ExportSVG, show_measurements: bool,
     perp_angle = fb_direction_angle + math.pi / 2
 
     for distance, thickness, offset in [
-        (fret_1_distance, fret_1_thickness, 15),
-        (ref_fret_distance, ref_fret_thickness, 25),
+        (fret_1_distance, fret_1_thickness, 40),
+        (ref_fret_distance, ref_fret_thickness, 60),
     ]:
         # Top of fingerboard at this fret position
         fb_x = neck_end_x + distance * math.cos(fb_direction_angle)
         fb_y = neck_end_y + distance * math.sin(fb_direction_angle)
         top_x = fb_x + thickness * math.cos(perp_angle)
         top_y = fb_y + thickness * math.sin(perp_angle)
-        # Annotation point above FB
+        # Annotation point above FB (dotted leader)
         ext_x = top_x + offset * math.cos(perp_angle)
         ext_y = top_y + offset * math.sin(perp_angle)
 
         ext_line = Edge.make_line((top_x, top_y), (ext_x, ext_y))
-        exporter.add_shape(ext_line, layer="extensions")
+        exporter.add_shape(ext_line, layer="dimension_leader")
 
-        # Arrow at tip only (pointing toward FB surface)
+        # Arrow at annotation end, pointing toward FB surface
         arrows = create_dimension_arrows((top_x, top_y), (ext_x, ext_y))
-        for arrow in arrows[:2]:
+        for arrow in arrows[2:4]:
             exporter.add_shape(arrow, layer="arrows")
 
         label = f"{thickness:.2f}mm at {distance:.1f}mm"

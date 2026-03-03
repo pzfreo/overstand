@@ -257,8 +257,6 @@ SECTIONS = {
             'downward_force_percent',
             'fb_thickness_at_nut',
             'fb_thickness_at_join',
-            'fb_thickness_at_fret_1',
-            'fb_thickness_at_ref_fret',
             'neck_block_max_width'
         ],
         description='Primary calculated values'
@@ -272,6 +270,9 @@ SECTIONS = {
         default_expanded=False,
         order=11,
         parameter_names=[
+            'fb_thickness_at_fret_1',
+            'fb_thickness_at_ref_fret',
+            'fb_ref_fret_number',
             'sagitta_at_nut',
             'sagitta_at_join',
             'string_angle_to_ribs',
