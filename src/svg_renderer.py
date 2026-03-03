@@ -25,7 +25,7 @@ def setup_exporter(show_measurements: bool) -> ExportSVG:
     exporter.add_layer("schematic", fill_color=None, line_color=(0,0,0), line_type=LineType.DASHED)
     exporter.add_layer("schematic_dotted", fill_color=None, line_color=(100,100,100), line_type=LineType.DOTTED)
 
-    dim_color = (0,0,0) if show_measurements else None
+    dim_color = (255,0,0) if show_measurements else None
     exporter.add_layer("dimensions", fill_color=dim_color, line_color=dim_color, line_type=LineType.DASHED)
     exporter.add_layer("extensions", fill_color=dim_color, line_color=dim_color, line_type=LineType.CONTINUOUS)
     exporter.add_layer("arrows", fill_color=dim_color, line_color=dim_color, line_type=LineType.CONTINUOUS)
@@ -308,10 +308,25 @@ def add_fb_thickness_dimensions(exporter: ExportSVG, show_measurements: bool,
         ext_line = Edge.make_line((top_x, top_y), (ext_x, ext_y))
         exporter.add_shape(ext_line, layer="dimension_leader")
 
-        # Arrow at FB surface end, pointing toward FB
-        arrows = create_dimension_arrows((top_x, top_y), (ext_x, ext_y))
-        for arrow in arrows[:2]:
-            exporter.add_shape(arrow, layer="arrows")
+        # Arrowhead: tip at FB surface, wings toward ext so it reads as ↓
+        # With Y-up coords (scale(1,-1) in SVG), wings going toward ext (upward)
+        # produce a V that opens upward — tip at bottom, pointing at FB surface
+        arrow_size = 3.0
+        dx = ext_x - top_x
+        dy = ext_y - top_y
+        length = math.sqrt(dx**2 + dy**2)
+        bx = dx / length  # unit vector toward ext (away from FB)
+        by = dy / length
+        wx = -by  # perpendicular
+        wy = bx
+        wing1 = Edge.make_line((top_x, top_y),
+                               (top_x + bx * arrow_size + wx * arrow_size,
+                                top_y + by * arrow_size + wy * arrow_size))
+        wing2 = Edge.make_line((top_x, top_y),
+                               (top_x + bx * arrow_size - wx * arrow_size,
+                                top_y + by * arrow_size - wy * arrow_size))
+        exporter.add_shape(wing1, layer="arrows")
+        exporter.add_shape(wing2, layer="arrows")
 
         label = f"{thickness:.2f}mm at {distance:.1f}mm"
         text = Text(label, DIMENSION_FONT_SIZE, font=FONT_NAME)
