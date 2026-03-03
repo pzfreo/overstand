@@ -296,10 +296,12 @@ def generate_side_view_svg(params: Dict[str, Any], show_measurements: bool = Tru
 
     svg_renderer.add_fb_thickness_dimensions(
         exporter, show_measurements,
-        derived['nut_top_x'], derived['nut_top_y'],
+        derived['neck_end_x'], derived['neck_end_y'],
         derived['fb_direction_angle'],
-        derived['fb_fret_1_distance'], derived['fb_thickness_at_fret_1'],
-        derived['fb_ref_fret_distance'], derived['fb_thickness_at_ref_fret']
+        derived['fb_thickness_at_nut'], derived['fb_thickness_at_join'],
+        derived['neck_stop'],
+        derived['fb_fret_1_distance'],
+        derived['fb_ref_fret_distance']
     )
 
     # Add viol-specific back break dimensions

@@ -282,23 +282,30 @@ def add_document_text(exporter: ExportSVG, instrument_name: str, generator_url: 
     exporter.add_shape(footer_text, layer="text")
 
 def add_fb_thickness_dimensions(exporter: ExportSVG, show_measurements: bool,
-                                nut_top_x: float, nut_top_y: float,
+                                neck_end_x: float, neck_end_y: float,
                                 fb_direction_angle: float,
-                                fret_1_distance: float, fret_1_thickness: float,
-                                ref_fret_distance: float, ref_fret_thickness: float) -> None:
+                                fb_thickness_at_nut: float, fb_thickness_at_join: float,
+                                neck_stop: float,
+                                fret_1_distance: float,
+                                ref_fret_distance: float) -> None:
     """Draw fingerboard thickness callout annotations at fret 1 and the reference fret."""
     if not show_measurements:
         return
 
     perp_angle = fb_direction_angle + math.pi / 2
 
-    for distance, thickness, offset in [
-        (fret_1_distance, fret_1_thickness, 40),
-        (ref_fret_distance, ref_fret_thickness, 60),
+    for distance, offset in [
+        (fret_1_distance, 40),
+        (ref_fret_distance, 60),
     ]:
-        # Top of fingerboard at this fret position (trace along playing surface from nut top)
-        top_x = nut_top_x + distance * math.cos(fb_direction_angle)
-        top_y = nut_top_y + distance * math.sin(fb_direction_angle)
+        # Bottom of fingerboard at fret position
+        fb_x = neck_end_x + distance * math.cos(fb_direction_angle)
+        fb_y = neck_end_y + distance * math.sin(fb_direction_angle)
+        # Thickness using the same interpolation as draw_fingerboard (distance / neck_stop)
+        thickness = fb_thickness_at_nut + (distance / neck_stop) * (fb_thickness_at_join - fb_thickness_at_nut)
+        # Top of fingerboard (playing surface)
+        top_x = fb_x + thickness * math.cos(perp_angle)
+        top_y = fb_y + thickness * math.sin(perp_angle)
         # Annotation point above FB (dotted leader)
         ext_x = top_x + offset * math.cos(perp_angle)
         ext_y = top_y + offset * math.sin(perp_angle)
