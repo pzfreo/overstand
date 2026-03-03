@@ -250,6 +250,7 @@ SECTIONS = {
         parameter_names=[
             'neck_angle',
             'neck_stop',
+            'fret_join_position',
             'body_stop',
             'nut_relative_to_ribs',
             'string_break_angle',
