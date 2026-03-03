@@ -308,9 +308,9 @@ def add_fb_thickness_dimensions(exporter: ExportSVG, show_measurements: bool,
         ext_line = Edge.make_line((top_x, top_y), (ext_x, ext_y))
         exporter.add_shape(ext_line, layer="dimension_leader")
 
-        # Arrow at annotation end, pointing toward FB surface
+        # Arrow at FB surface end, pointing toward FB
         arrows = create_dimension_arrows((top_x, top_y), (ext_x, ext_y))
-        for arrow in arrows[2:4]:
+        for arrow in arrows[:2]:
             exporter.add_shape(arrow, layer="arrows")
 
         label = f"{thickness:.2f}mm at {distance:.1f}mm"
