@@ -38,6 +38,19 @@ import type { Params, DerivedValues } from './types'
 import { getNumParam, getNumParamNullish, getStringParam, getBoolParam, toDegrees, magnitude } from './utils'
 
 // ============================================================================
+// Dimension helper
+// ============================================================================
+
+type ShapeLayerPair = [Edge | Arc | Text, string]
+
+/** Add an array of dimension shapes to the exporter (eliminates repeated for-of loops). */
+function addDimensionShapes(exporter: ExportSVG, shapes: ShapeLayerPair[]): void {
+  for (const [shape, layer] of shapes) {
+    exporter.add_shape(shape, layer)
+  }
+}
+
+// ============================================================================
 // setupExporter
 // ============================================================================
 
@@ -188,29 +201,25 @@ export function addViolBackDimensions(
     [break_end_x, back_y],
     [body_length, back_y],
   )
-  for (const [shape, layer] of createHorizontalDimension(
+  addDimensionShapes(exporter, createHorizontalDimension(
     break_length_line,
     `${back_break_length.toFixed(1)}`,
     -45,
     3,
     DIMENSION_FONT_SIZE,
-  )) {
-    exporter.add_shape(shape, layer)
-  }
+  ))
 
   const top_block_line = Edge.make_line(
     [0, belly_edge_thickness],
     [0, break_start_y],
   )
-  for (const [shape, layer] of createVerticalDimension(
+  addDimensionShapes(exporter, createVerticalDimension(
     top_block_line,
     `${_top_block_height.toFixed(1)}`,
     -12,
     3,
     DIMENSION_FONT_SIZE,
-  )) {
-    exporter.add_shape(shape, layer)
-  }
+  ))
 
   const horizontal_ref = Edge.make_line(
     [break_end_x, break_end_y],
@@ -220,7 +229,7 @@ export function addViolBackDimensions(
     [break_end_x, break_end_y],
     [break_start_x, break_start_y],
   )
-  for (const [shape, layer] of createAngleDimension(
+  addDimensionShapes(exporter, createAngleDimension(
     horizontal_ref,
     break_line,
     `${break_angle_deg.toFixed(1)}°`,
@@ -229,9 +238,7 @@ export function addViolBackDimensions(
     0,
     false,
     true,
-  )) {
-    exporter.add_shape(shape, layer)
-  }
+  ))
 }
 
 // ============================================================================
@@ -293,7 +300,7 @@ export function drawNeck(
     'schematic_dotted',
   )
 
-  for (const [shape, layer] of createAngleDimension(
+  addDimensionShapes(exporter, createAngleDimension(
     neck_vertical_line,
     neck_angled_line,
     `${neck_angle_deg.toFixed(1)}°`,
@@ -301,9 +308,7 @@ export function drawNeck(
     DIMENSION_FONT_SIZE,
     5,
     true,
-  )) {
-    exporter.add_shape(shape, layer)
-  }
+  ))
 
   return [neck_vertical_line, neck_angled_line]
 }
@@ -561,141 +566,121 @@ export function addDimensions(
       [reference_line_end_x, 0],
       [reference_line_end_x, nut_top_y],
     )
-    for (const [shape, layer] of createVerticalDimension(
+    addDimensionShapes(exporter, createVerticalDimension(
       rib_to_nut_feature_line,
       `${nut_top_y.toFixed(1)}`,
       -8,
       3,
       DIMENSION_FONT_SIZE,
-    )) {
-      exporter.add_shape(shape, layer)
-    }
+    ))
   }
 
-  for (const [shape, layer] of createDiagonalDimension(
+  addDimensionShapes(exporter, createDiagonalDimension(
     string_line,
     `${string_length.toFixed(1)}`,
     10,
     3,
     DIMENSION_FONT_SIZE,
-  )) {
-    exporter.add_shape(shape, layer)
-  }
+  ))
 
   if (nut_to_perp_distance > 0) {
     const nut_to_perp_line = Edge.make_line(
       [nut_top_x, nut_top_y],
       [intersect_x, intersect_y],
     )
-    for (const [shape, layer] of createDiagonalDimension(
+    addDimensionShapes(exporter, createDiagonalDimension(
       nut_to_perp_line,
       `${nut_to_perp_distance.toFixed(1)}`,
       20,
       3,
       DIMENSION_FONT_SIZE,
-    )) {
-      exporter.add_shape(shape, layer)
-    }
+    ))
   }
 
   const string_height_feature_line = Edge.make_line(
     [fb_surface_point_x, fb_surface_point_y],
     [string_x_at_fb_end, string_y_at_fb_end],
   )
-  for (const [shape, layer] of createVerticalDimension(
+  addDimensionShapes(exporter, createVerticalDimension(
     string_height_feature_line,
     `${string_height_at_fb_end.toFixed(1)}`,
     8,
     3,
     DIMENSION_FONT_SIZE,
-  )) {
-    exporter.add_shape(shape, layer)
-  }
+  ))
 
   const nut_x_distance = Math.abs(neck_end_x)
   const nut_feature_line = Edge.make_line(
     [neck_end_x, neck_end_y],
     [0, neck_end_y],
   )
-  for (const [shape, layer] of createHorizontalDimension(
+  addDimensionShapes(exporter, createHorizontalDimension(
     nut_feature_line,
     `${nut_x_distance.toFixed(1)}`,
     -10,
     3,
     DIMENSION_FONT_SIZE,
-  )) {
-    exporter.add_shape(shape, layer)
-  }
+  ))
 
   if (overstand > 0) {
     const overstand_feature_line = Edge.make_line([0, 0], [0, overstand])
-    for (const [shape, layer] of createVerticalDimension(
+    addDimensionShapes(exporter, createVerticalDimension(
       overstand_feature_line,
       `${overstand.toFixed(1)}`,
       8,
       3,
       DIMENSION_FONT_SIZE,
-    )) {
-      exporter.add_shape(shape, layer)
-    }
+    ))
   }
 
   const arch_feature_line = Edge.make_line(
     [body_stop, 0],
     [body_stop, arching_height],
   )
-  for (const [shape, layer] of createVerticalDimension(
+  addDimensionShapes(exporter, createVerticalDimension(
     arch_feature_line,
     `${arching_height.toFixed(1)}`,
     8,
     3,
     DIMENSION_FONT_SIZE,
-  )) {
-    exporter.add_shape(shape, layer)
-  }
+  ))
 
   const bridge_feature_line = Edge.make_line(
     [body_stop, arching_height],
     [body_stop, arching_height + bridge_height],
   )
-  for (const [shape, layer] of createVerticalDimension(
+  addDimensionShapes(exporter, createVerticalDimension(
     bridge_feature_line,
     `${bridge_height.toFixed(1)}`,
     8,
     3,
     DIMENSION_FONT_SIZE,
-  )) {
-    exporter.add_shape(shape, layer)
-  }
+  ))
 
   const bottom_y = belly_edge_thickness - rib_height
   const body_stop_feature_line = Edge.make_line(
     [0, bottom_y],
     [body_stop, bottom_y],
   )
-  for (const [shape, layer] of createHorizontalDimension(
+  addDimensionShapes(exporter, createHorizontalDimension(
     body_stop_feature_line,
     `${body_stop.toFixed(1)}`,
     -15,
     3,
     DIMENSION_FONT_SIZE,
-  )) {
-    exporter.add_shape(shape, layer)
-  }
+  ))
 
   const body_length_feature_line = Edge.make_line(
     [0, bottom_y],
     [body_length, bottom_y],
   )
-  for (const [shape, layer] of createHorizontalDimension(
+  addDimensionShapes(exporter, createHorizontalDimension(
     body_length_feature_line,
     `${body_length.toFixed(1)}`,
     -30,
     3,
     DIMENSION_FONT_SIZE,
-  )) {
-    exporter.add_shape(shape, layer)
-  }
+  ))
 
   const rib_dim_x = body_length + 10
   const dim_p1: [number, number] = [rib_dim_x, belly_edge_thickness]
@@ -720,7 +705,7 @@ export function addDimensions(
   exporter.add_shape(tailpiece_to_bridge_line, 'schematic_dotted')
 
   if (string_break_angle > 0) {
-    for (const [shape, layer] of createAngleDimension(
+    addDimensionShapes(exporter, createAngleDimension(
       string_line,
       tailpiece_to_bridge_line,
       `${string_break_angle.toFixed(1)}°`,
@@ -728,9 +713,7 @@ export function addDimensions(
       DIMENSION_FONT_SIZE,
       0,
       true,
-    )) {
-      exporter.add_shape(shape, layer)
-    }
+    ))
   }
 
   if (tailpiece_height > 0) {
@@ -1048,15 +1031,13 @@ export function addCrossSectionDimensions(
     [half_button_width, y_button],
   )
   const button_width = half_button_width * 2
-  for (const [shape, layer] of createHorizontalDimension(
+  addDimensionShapes(exporter, createHorizontalDimension(
     button_line,
     `${button_width.toFixed(1)}`,
     dim_offset_y,
     0,
     DIMENSION_FONT_SIZE,
-  )) {
-    exporter.add_shape(shape, layer)
-  }
+  ))
 
   // 2. Neck width at top of ribs
   const neck_line = Edge.make_line(
@@ -1064,28 +1045,24 @@ export function addCrossSectionDimensions(
     [half_neck_width_at_ribs, y_top_of_block],
   )
   const neck_width = half_neck_width_at_ribs * 2
-  for (const [shape, layer] of createHorizontalDimension(
+  addDimensionShapes(exporter, createHorizontalDimension(
     neck_line,
     `${neck_width.toFixed(1)}`,
     dim_offset_y - 8,
     0,
     DIMENSION_FONT_SIZE,
-  )) {
-    exporter.add_shape(shape, layer)
-  }
+  ))
 
   // 3. Fingerboard width
   const fb_line = Edge.make_line([-half_fb_width, y_fb_top], [half_fb_width, y_fb_top])
   const fb_width = half_fb_width * 2
-  for (const [shape, layer] of createHorizontalDimension(
+  addDimensionShapes(exporter, createHorizontalDimension(
     fb_line,
     `${fb_width.toFixed(1)}`,
     8,
     0,
     DIMENSION_FONT_SIZE,
-  )) {
-    exporter.add_shape(shape, layer)
-  }
+  ))
 
   // 4. Neck block max width (when blend > 0 and different from fb_width)
   if (fb_blend_percent > 0.1 && neck_block_max_width != null) {
@@ -1095,15 +1072,13 @@ export function addCrossSectionDimensions(
         [-half_block_width, y_fb_bottom],
         [half_block_width, y_fb_bottom],
       )
-      for (const [shape, layer] of createHorizontalDimension(
+      addDimensionShapes(exporter, createHorizontalDimension(
         block_width_line,
         `${neck_block_max_width.toFixed(1)}`,
         dim_offset_y,
         0,
         DIMENSION_FONT_SIZE,
-      )) {
-        exporter.add_shape(shape, layer)
-      }
+      ))
     }
   }
 
@@ -1114,15 +1089,13 @@ export function addCrossSectionDimensions(
     [dim_offset_x, y_button],
     [dim_offset_x, y_top_of_block],
   )
-  for (const [shape, layer] of createVerticalDimension(
+  addDimensionShapes(exporter, createVerticalDimension(
     block_line,
     `${block_height.toFixed(1)}`,
     5,
     3,
     DIMENSION_FONT_SIZE,
-  )) {
-    exporter.add_shape(shape, layer)
-  }
+  ))
 
   // 6. Overstand
   const overstand = y_fb_bottom - y_top_of_block
@@ -1130,15 +1103,13 @@ export function addCrossSectionDimensions(
     [dim_offset_x + 15, y_top_of_block],
     [dim_offset_x + 15, y_fb_bottom],
   )
-  for (const [shape, layer] of createVerticalDimension(
+  addDimensionShapes(exporter, createVerticalDimension(
     overstand_line,
     `${overstand.toFixed(1)}`,
     5,
     3,
     DIMENSION_FONT_SIZE,
-  )) {
-    exporter.add_shape(shape, layer)
-  }
+  ))
 }
 
 // ============================================================================
