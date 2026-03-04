@@ -13,6 +13,7 @@ import {
   generateRadiusTemplateSvg,
   loadStencilFont,
   textToSvgPath,
+  mirrorPathDataX,
   FONT_URL,
 } from '../radius_template'
 import {
@@ -205,5 +206,45 @@ describe('textToSvgPath', () => {
     }
     const result = textToSvgPath('41mm', 0.0, 0.0, 5.0, badFont)
     expect(result).toBeNull()
+  })
+})
+
+// ============================================================================
+// mirrorPathDataX
+// ============================================================================
+
+describe('mirrorPathDataX', () => {
+  it('negates X in M command', () => {
+    expect(mirrorPathDataX('M 10 20')).toBe('M -10 20')
+  })
+
+  it('negates X in L command', () => {
+    expect(mirrorPathDataX('L 5.5 3.2')).toBe('L -5.5 3.2')
+  })
+
+  it('negates X in C command (3 pairs)', () => {
+    expect(mirrorPathDataX('C 1 2 3 4 5 6')).toBe('C -1 2 -3 4 -5 6')
+  })
+
+  it('negates X in Q command (2 pairs)', () => {
+    expect(mirrorPathDataX('Q 1 2 3 4')).toBe('Q -1 2 -3 4')
+  })
+
+  it('passes Z unchanged', () => {
+    expect(mirrorPathDataX('Z')).toBe('Z')
+  })
+
+  it('handles a compound path', () => {
+    const d = 'M 5 0 L 10 0 Z M -5 3 L 5 3 Z'
+    const mirrored = mirrorPathDataX(d)
+    expect(mirrored).toBe('M -5 0 L -10 0 Z M 5 3 L -5 3 Z')
+  })
+
+  it('double mirror restores original path', () => {
+    const d = 'M 5 10 L -3 4 Z'
+    const mirrored = mirrorPathDataX(d)
+    expect(mirrored).toBe('M -5 10 L 3 4 Z')
+    const restored = mirrorPathDataX(mirrored)
+    expect(restored).toBe('M 5 10 L -3 4 Z')
   })
 })

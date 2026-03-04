@@ -43,6 +43,39 @@ export async function loadStencilFont(url = FONT_URL): Promise<void> {
 }
 
 // ============================================================================
+// mirrorPathDataX
+// ============================================================================
+
+/**
+ * Negate all X coordinates in an SVG absolute path data string.
+ *
+ * Mirrors the path around the Y axis (x → -x). Used to pre-mirror text paths
+ * so that the subsequent rotate(180) transform on the compound path produces
+ * readable text (double negation = readable). This matches the Python version
+ * which does `-(vertices[0] + x)` when converting matplotlib TextPath to SVG.
+ *
+ * Only handles absolute commands (M, L, C, Q, Z) as output by opentype.js.
+ */
+export function mirrorPathDataX(d: string): string {
+  const tokens = d.match(/[MLCQZmlcqz]|[-+]?[0-9]*\.?[0-9]+/g) ?? []
+  const out: string[] = []
+  const coordCounts: Record<string, number> = { M: 2, L: 2, C: 6, Q: 4, m: 2, l: 2, c: 6, q: 4 }
+  let i = 0
+  while (i < tokens.length) {
+    const t = tokens[i++]
+    out.push(t)
+    if (t === 'Z' || t === 'z') continue
+    const n = coordCounts[t] ?? 0
+    for (let j = 0; j < n; j++) {
+      const val = parseFloat(tokens[i++])
+      // Even indices (0, 2, 4...) are X coords → negate; odd are Y → keep
+      out.push(j % 2 === 0 ? `${-val}` : `${val}`)
+    }
+  }
+  return out.join(' ')
+}
+
+// ============================================================================
 // textToSvgPath
 // ============================================================================
 
@@ -221,7 +254,9 @@ export function generateRadiusTemplateSvg(
 
   if (text_path_d) {
     // Compound path with evenodd fill-rule (text creates cutout holes)
-    const combined_path_d = `${rect_path_d} ${text_path_d}`
+    // Pre-mirror text X coords to match Python's -(vertices[0] + x) negation,
+    // so that the rotate(180) transform produces readable text (double flip).
+    const combined_path_d = `${rect_path_d} ${mirrorPathDataX(text_path_d)}`
 
     const center_x = (min_x + max_x) / 2
     const center_y = (min_y + max_y) / 2
