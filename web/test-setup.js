@@ -1,5 +1,5 @@
 /**
- * Jest test setup file
+ * Test setup file (Vitest)
  * Sets up the DOM environment and mocks for testing
  */
 

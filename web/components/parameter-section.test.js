@@ -5,7 +5,7 @@
  * using createParameterControl from ui.js.
  */
 
-import { jest } from '@jest/globals';
+import { vi } from 'vitest';
 import { state } from '../state.js';
 import { ParameterSection } from './parameter-section.js';
 
@@ -146,7 +146,7 @@ describe('ParameterSection', () => {
     });
 
     test('warns and skips unknown parameter names', () => {
-        const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+        const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
         const section = new ParameterSection({
             sectionDef: makeSectionDef({ parameter_names: ['nonexistent'] }),

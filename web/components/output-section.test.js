@@ -5,7 +5,7 @@
  * with formatting, units, and descriptions.
  */
 
-import { jest } from '@jest/globals';
+import { vi } from 'vitest';
 import { OutputSection } from './output-section.js';
 
 // Minimal section definition matching ui_metadata.py shape
@@ -157,7 +157,7 @@ describe('OutputSection', () => {
     });
 
     test('warns and skips unknown parameter names', () => {
-        const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+        const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
         const section = new OutputSection({
             sectionDef: makeSectionDef({ parameter_names: ['unknown_param'] }),

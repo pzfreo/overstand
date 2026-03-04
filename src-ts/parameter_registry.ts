@@ -131,7 +131,7 @@ export class UnifiedParameter {
         throw new Error(`ENUM parameter ${this.key} must have enum_values`)
       }
       // Default: use the enum name (value field) as the default string
-      let defaultVal = this.input_config.default
+      const defaultVal = this.input_config.default
       result['options'] = this.enum_values
       result['default'] = defaultVal
     } else if (this.param_type === ParameterType.BOOLEAN) {

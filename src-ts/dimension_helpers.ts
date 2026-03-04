@@ -176,7 +176,7 @@ export function createDiagonalDimension(
   const text_x = center_x + perp_x * text_offset
   const text_y = center_y + perp_y * text_offset
 
-  let angle_rad = Math.atan2(-dy, dx)
+  const angle_rad = Math.atan2(-dy, dx)
   let angle_deg = toDegrees(angle_rad)
   if (angle_deg > 90) angle_deg -= 180
   else if (angle_deg < -90) angle_deg += 180

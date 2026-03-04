@@ -95,7 +95,7 @@ export function markdownToHtml(markdown) {
                 output.push('<ul class="about-list">');
                 inList = true;
             }
-            const itemText = line.replace(/^[•\-]\s*/, '');
+            const itemText = line.replace(/^[•-]\s*/, '');
             output.push('<li>' + itemText + '</li>');
             continue;
         }
