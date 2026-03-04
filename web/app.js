@@ -16,6 +16,7 @@ import { updateAuthUI, showLoginModal, refreshCloudPresets } from './auth-ui.js'
 import { showLoadProfileModal, closeLoadProfileModal, switchProfileTab, setLoadPresetCallback } from './profile-modal.js';
 import { handleCloudSave, handleShare, handleMenuPublish, handleShareURL, handleShareSave, closeShareModal, handleShareCopy, shareViaEmail, shareViaWhatsApp, shareViaFacebook } from './share.js';
 import { initKeyboardShortcuts, setKeyboardActions } from './keyboard.js';
+import { getParameterDefinitions, getDerivedValueMetadata, getUiMetadata } from '/dist/instrument_generator.js';
 
 // Wire up circular dependency callbacks
 setGenerationCallbacks({ updateDerivedValues, debouncedGenerate });
@@ -169,69 +170,18 @@ function closeMenu() {
     if (overlay) overlay.classList.remove('open');
 }
 
-async function initializePython() {
+async function initializeEngine() {
     try {
-        ui.setStatus('loading', 'Loading Python engine...');
-        state.pyodide = await loadPyodide();
+        ui.setStatus('loading', 'Initializing...');
 
-        ui.setStatus('loading', 'Installing package manager...');
-        await state.pyodide.loadPackage('micropip');
-
-        ui.setStatus('loading', 'Installing Python libraries...');
-        await state.pyodide.runPythonAsync(`
-            import micropip
-            await micropip.install(["numpy", "svgpathtools", "matplotlib"])
-        `);
-
-        ui.setStatus('loading', 'Loading instrument neck modules...');
-        const modules = [
-            'constants.py', 'buildprimitives.py', 'dimension_helpers.py',
-            'parameter_registry.py', 'ui_metadata.py', 'preset_loader.py',
-            'radius_template.py', 'instrument_geometry.py', 'instrument_generator.py',
-            'geometry_engine.py', 'svg_renderer.py', 'view_generator.py'
-        ];
-
-        for (const moduleName of modules) {
-            const timestamp = new Date().getTime();
-            let response = await fetch(`./${moduleName}?t=${timestamp}`);
-            if (!response.ok) response = await fetch(`../src/${moduleName}?t=${timestamp}`);
-            if (!response.ok) throw new Error(`Could not find ${moduleName}`);
-            const code = await response.text();
-            state.pyodide.FS.writeFile(moduleName, code);
-        }
-
-        await state.pyodide.runPythonAsync(`
-            import sys
-            import os
-            if '' not in sys.path:
-                sys.path.insert(0, '')
-
-            # Import dependencies first
-            import constants, buildprimitives, dimension_helpers, parameter_registry, radius_template
-            import geometry_engine, svg_renderer, view_generator
-            # Then orchestrators
-            import instrument_geometry, instrument_generator
-        `);
-
-        ui.setStatus('loading', 'Loading fonts...');
-        try {
-            let fontResponse = await fetch('fonts/AllertaStencil-Regular.ttf');
-            if (!fontResponse.ok) fontResponse = await fetch('../fonts/AllertaStencil-Regular.ttf');
-            if (fontResponse.ok) {
-                const fontData = await fontResponse.arrayBuffer();
-                state.pyodide.FS.writeFile('/tmp/AllertaStencil-Regular.ttf', new Uint8Array(fontData));
-            }
-        } catch (e) { console.warn('Could not pre-load font file:', e); }
-
-        ui.setStatus('loading', 'Building interface...');
-        const paramDefsJson = await state.pyodide.runPythonAsync(`instrument_generator.get_parameter_definitions()`);
+        const paramDefsJson = getParameterDefinitions();
         state.parameterDefinitions = JSON.parse(paramDefsJson);
 
-        const derivedMetaJson = await state.pyodide.runPythonAsync(`instrument_generator.get_derived_value_metadata()`);
+        const derivedMetaJson = getDerivedValueMetadata();
         const derivedMetaResult = JSON.parse(derivedMetaJson);
         if (derivedMetaResult.success) state.derivedMetadata = derivedMetaResult.metadata;
 
-        const uiMetaJson = await state.pyodide.runPythonAsync(`instrument_generator.get_ui_metadata()`);
+        const uiMetaJson = getUiMetadata();
         const uiMetaResult = JSON.parse(uiMetaJson);
         if (uiMetaResult.success) {
             state.uiMetadata = uiMetaResult.metadata;
@@ -239,6 +189,7 @@ async function initializePython() {
             console.error('Failed to load UI metadata:', uiMetaResult.error);
         }
 
+        ui.setStatus('loading', 'Building interface...');
         state.presets = await loadPresetsFromDirectory();
 
         ui.generateUI(UI_CALLBACKS);
@@ -246,13 +197,13 @@ async function initializePython() {
 
         const loadedShared = await handleShareURL();
 
-        if (loadedShared) {
-            // Shared preset already applied parameters
-        } else if (elements.presetSelect && elements.presetSelect.value) {
-            await loadPreset();
-        } else {
-            updateDerivedValues();
-            generateNeck();
+        if (!loadedShared) {
+            if (elements.presetSelect && elements.presetSelect.value) {
+                await loadPreset();
+            } else {
+                updateDerivedValues();
+                generateNeck();
+            }
         }
 
         if (elements.presetSelect && elements.presetSelect.value) {
@@ -264,7 +215,7 @@ async function initializePython() {
 
         elements.genBtn.disabled = false;
     } catch (error) {
-        ui.setStatus('error', '❌ Initialization failed');
+        ui.setStatus('error', 'Initialization failed');
         ui.showErrors([`Failed to initialize: ${error.message}`], 'critical');
         console.error('Initialization error:', error);
     }
@@ -552,5 +503,5 @@ document.addEventListener('DOMContentLoaded', () => {
     // PWA install prompt disabled until app is more stable
     // initInstallPrompt();
     loadVersionInfo();
-    initializePython();
+    initializeEngine();
 });

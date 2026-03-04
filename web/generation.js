@@ -3,6 +3,7 @@ import * as ui from './ui.js';
 import * as analytics from './analytics.js';
 import { DEBOUNCE_GENERATE } from './constants.js';
 import { debounce, collectParameters } from './params.js';
+import { generateViolinNeck, getDerivedValues } from '/dist/instrument_generator.js';
 
 export function classifyErrors(errors) {
     if (!errors || errors.length === 0) return 'transient';
@@ -26,7 +27,7 @@ export function classifyErrors(errors) {
     return 'transient';
 }
 
-export async function generateNeck() {
+export function generateNeck() {
     if (state.isGenerating) return;
     ui.hideErrors();
     state.isGenerating = true;
@@ -38,11 +39,7 @@ export async function generateNeck() {
         params._generator_url = window.location.href;
         const paramsJson = JSON.stringify(params);
 
-        state.pyodide.globals.set("_params_json", paramsJson);
-        const resultJson = await state.pyodide.runPythonAsync(`
-            from instrument_generator import generate_violin_neck
-            generate_violin_neck(_params_json)
-        `);
+        const resultJson = generateViolinNeck(paramsJson);
         const result = JSON.parse(resultJson);
 
         if (result.success) {
@@ -78,18 +75,14 @@ export async function generateNeck() {
     }
 }
 
-export async function updateDerivedValues() {
-    if (!state.pyodide || state.isGenerating) return;
+export function updateDerivedValues() {
+    if (state.isGenerating) return;
     try {
         const params = collectParameters();
         const paramsJson = JSON.stringify(params);
         const currentMode = params.instrument_family || 'VIOLIN';
 
-        state.pyodide.globals.set("_params_json", paramsJson);
-        const resultJson = await state.pyodide.runPythonAsync(`
-            from instrument_generator import get_derived_values
-            get_derived_values(_params_json)
-        `);
+        const resultJson = getDerivedValues(paramsJson);
         const result = JSON.parse(resultJson);
         const container = elements.calculatedFields;
 

@@ -136,6 +136,14 @@ sed "s/{{version}}/${VERSION}/g" web/about.md > public/about.md
 echo "  ✓ about.md processed with version ${VERSION}"
 
 # ============================================================================
+# BUILD TYPESCRIPT ENGINE
+# ============================================================================
+
+echo "🔨 Building TypeScript geometry engine..."
+npm run build:ts
+echo "  ✓ TypeScript engine built"
+
+# ============================================================================
 # COPY WEB FILES
 # ============================================================================
 
@@ -154,6 +162,14 @@ for file in web/*; do
 done
 
 echo "  ✓ Web files copied"
+
+# ============================================================================
+# COPY TYPESCRIPT ENGINE BUNDLE
+# ============================================================================
+
+echo "📦 Copying TypeScript engine bundle..."
+cp -r dist/ public/dist/
+echo "  ✓ TypeScript bundle copied"
 
 # ============================================================================
 # GENERATE SUPABASE CONFIG
@@ -184,12 +200,9 @@ EOF
 fi
 
 # ============================================================================
-# COPY PYTHON MODULES
+# PYTHON MODULES (no longer copied - engine is now TypeScript)
 # ============================================================================
-
-echo "🐍 Copying Python modules..."
-cp src/*.py public/
-echo "  ✓ Python modules copied"
+# cp src/*.py public/  # Removed: Python engine replaced by TypeScript bundle
 
 # ============================================================================
 # COPY PRESETS

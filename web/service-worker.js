@@ -3,7 +3,6 @@
  *
  * Implements intelligent caching strategies for offline functionality:
  * - App Shell: Cache-first for HTML, CSS, JS, fonts
- * - Pyodide Runtime: Cache-first for large Python runtime (~20-30MB)
  * - CDN Libraries: Stale-while-revalidate for external dependencies
  * - Presets: Network-first with cache fallback
  *
@@ -11,7 +10,6 @@
  */
 
 const CACHE_NAME = 'overstand-v__BUILD_ID__';
-const PYODIDE_CACHE = 'pyodide-runtime-v2';
 const CDN_CACHE = 'cdn-libraries-v2';
 const ENVIRONMENT = '__ENVIRONMENT__';
 
@@ -36,30 +34,8 @@ const APP_SHELL = [
   `${BASE_PATH}fonts/AllertaStencil-Regular.ttf`,
   `${BASE_PATH}manifest.json`,
   `${BASE_PATH}privacy.html`,
-  `${BASE_PATH}terms.html`
-];
-
-// Python modules
-const PYTHON_MODULES = [
-  `${BASE_PATH}constants.py`,
-  `${BASE_PATH}buildprimitives.py`,
-  `${BASE_PATH}dimension_helpers.py`,
-  `${BASE_PATH}parameter_registry.py`,
-  `${BASE_PATH}ui_metadata.py`,
-  `${BASE_PATH}preset_loader.py`,
-  `${BASE_PATH}radius_template.py`,
-  `${BASE_PATH}instrument_geometry.py`,
-  `${BASE_PATH}instrument_generator.py`,
-  `${BASE_PATH}geometry_engine.py`,
-  `${BASE_PATH}svg_renderer.py`,
-  `${BASE_PATH}view_generator.py`
-];
-
-// Pyodide runtime (large, cache separately)
-const PYODIDE_URLS = [
-  'https://cdn.jsdelivr.net/pyodide/v0.29.1/full/pyodide.js',
-  'https://cdn.jsdelivr.net/pyodide/v0.29.1/full/pyodide.asm.js',
-  'https://cdn.jsdelivr.net/pyodide/v0.29.1/full/pyodide.asm.wasm'
+  `${BASE_PATH}terms.html`,
+  `${BASE_PATH}dist/instrument_generator.js`
 ];
 
 // CDN libraries
@@ -81,8 +57,8 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
-        console.log('[ServiceWorker] Caching app shell and Python modules');
-        return cache.addAll([...APP_SHELL, ...PYTHON_MODULES]);
+        console.log('[ServiceWorker] Caching app shell');
+        return cache.addAll([...APP_SHELL]);
       })
       .then(() => {
         console.log('[ServiceWorker] Installation complete');
@@ -114,7 +90,6 @@ self.addEventListener('activate', (event) => {
           cacheNames.map((cacheName) => {
             // Delete caches that don't match current version
             if (cacheName !== CACHE_NAME &&
-              cacheName !== PYODIDE_CACHE &&
               cacheName !== CDN_CACHE) {
               console.log('[ServiceWorker] Deleting old cache:', cacheName);
               return caches.delete(cacheName);
@@ -136,9 +111,9 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Strategy 1: App Shell & Python Modules - Cache First
+  // Strategy 1: App Shell - Cache First
   // These files are essential and rarely change, so serve from cache for speed
-  if (APP_SHELL.includes(url.pathname) || PYTHON_MODULES.includes(url.pathname)) {
+  if (APP_SHELL.includes(url.pathname)) {
     event.respondWith(
       caches.match(request)
         .then((response) => {
@@ -161,33 +136,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Strategy 2: Pyodide Runtime - Cache First (large files)
-  // Cache these large files permanently to avoid re-downloading
-  if (PYODIDE_URLS.some(pyUrl => request.url.startsWith(pyUrl))) {
-    event.respondWith(
-      caches.open(PYODIDE_CACHE)
-        .then((cache) => {
-          return cache.match(request).then((response) => {
-            if (response) {
-              console.log('[ServiceWorker] Serving Pyodide from cache');
-              return response;
-            }
-            // Not cached yet, fetch and cache
-            console.log('[ServiceWorker] Downloading Pyodide runtime...');
-            return fetch(request).then((fetchResponse) => {
-              // Only cache successful responses
-              if (fetchResponse.ok) {
-                cache.put(request, fetchResponse.clone());
-              }
-              return fetchResponse;
-            });
-          });
-        })
-    );
-    return;
-  }
-
-  // Strategy 3: CDN Libraries - Stale While Revalidate
+  // Strategy 2: CDN Libraries - Stale While Revalidate
   // Return cached version immediately, but update cache in background
   if (CDN_URLS.some(cdnUrl => request.url.startsWith(cdnUrl))) {
     event.respondWith(
@@ -210,7 +159,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Strategy 4: Presets - Network First, fallback to cache
+  // Strategy 3: Presets - Network First, fallback to cache
   // Presets may update, so try network first but have offline fallback
   if (url.pathname.includes('/presets/')) {
     event.respondWith(
@@ -236,7 +185,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Strategy 5: Supabase API - Network only (never cache cloud operations)
+  // Strategy 4: Supabase API - Network only (never cache cloud operations)
   if (url.hostname.endsWith('.supabase.co')) {
     event.respondWith(fetch(request));
     return;

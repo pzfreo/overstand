@@ -99,9 +99,6 @@
     <!-- Supabase JS v2 (auth + database) — pinned for SRI -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.97.0/dist/umd/supabase.min.js" integrity="sha384-1+ItoWbWcmVSm+Y+dJaUt4SEWNA21/jxef+Z0TSHHVy/dEUxEUEnZ1bHn6GT5hj+" crossorigin="anonymous"></script>
 
-    <!-- Pyodide (v0.29.1 uses Python 3.13) -->
-    <script src="https://cdn.jsdelivr.net/pyodide/v0.29.1/full/pyodide.js" integrity="sha384-83RLbXeFEHU0aB9vk+YAxZ9IboI3AA4dkFyDN8OaRIUzQqaxqvvDAeAU9QYHzEPT" crossorigin="anonymous"></script>
-
     <!-- SVG.js for zoom/pan -->
     <script src="https://cdn.jsdelivr.net/npm/@svgdotjs/svg.js@3.2.4/dist/svg.min.js" integrity="sha384-E9th7bqNIiKK7X6i2f4uxD81Ian0ob12auwMGYCnA/JYhUn1qrYLDC/LVDpgNjIM" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@svgdotjs/svg.panzoom.js@2.1.2/dist/svg.panzoom.min.js" integrity="sha384-d+KQQrvnnLeTsS+Q5DfPR40pNMHx64sSJKeGt/usQMYpb1oEVbdQ3QtOJaRUlGDu" crossorigin="anonymous"></script>
@@ -171,7 +168,7 @@
     <!-- Status Bar (outside app-container) -->
     <div id="status" class="status-bar loading">
         <div class="spinner"></div>
-        <span id="status-text">Initializing Python environment...</span>
+        <span id="status-text">Initializing...</span>
         <span id="save-indicator" class="save-indicator"></span>
         <span id="version-info" class="version-info"></span>
         <a href="?reset" class="reset-link" title="Clear cache and reload">reset</a>
