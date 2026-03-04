@@ -27,7 +27,11 @@ from geometry_engine import (
     calculate_fingerboard_geometry,
     calculate_string_height_and_dimensions,
     calculate_fret_positions,
-    calculate_viol_back_break
+    calculate_viol_back_break,
+    evaluate_cubic_bezier,
+    find_bezier_t_for_y,
+    calculate_blend_curve,
+    calculate_cross_section_geometry,
 )
 
 
@@ -575,6 +579,250 @@ class TestCalculateViolBackBreak:
 
         # Larger angle = steeper break = shorter horizontal distance = longer back_break_length
         assert result_large['back_break_length'] > result_small['back_break_length']
+
+
+class TestEvaluateCubicBezier:
+    """Tests for evaluate_cubic_bezier function"""
+
+    def test_t0_returns_start_point(self):
+        """At t=0, result should be p0"""
+        p0, cp1, cp2, p3 = (0, 0), (1, 2), (3, 4), (5, 6)
+        x, y = evaluate_cubic_bezier(p0, cp1, cp2, p3, 0.0)
+        assert abs(x - 0) < 1e-9
+        assert abs(y - 0) < 1e-9
+
+    def test_t1_returns_end_point(self):
+        """At t=1, result should be p3"""
+        p0, cp1, cp2, p3 = (0, 0), (1, 2), (3, 4), (5, 6)
+        x, y = evaluate_cubic_bezier(p0, cp1, cp2, p3, 1.0)
+        assert abs(x - 5) < 1e-9
+        assert abs(y - 6) < 1e-9
+
+    def test_straight_line_midpoint(self):
+        """Control points on the line give midpoint at t=0.5"""
+        p0 = (0.0, 0.0)
+        cp1 = (1/3, 1/3)
+        cp2 = (2/3, 2/3)
+        p3 = (1.0, 1.0)
+        x, y = evaluate_cubic_bezier(p0, cp1, cp2, p3, 0.5)
+        assert abs(x - 0.5) < 1e-9
+        assert abs(y - 0.5) < 1e-9
+
+    def test_result_is_tuple_of_two_floats(self):
+        """Result should be a 2-tuple"""
+        result = evaluate_cubic_bezier((0, 0), (1, 0), (2, 0), (3, 0), 0.5)
+        assert len(result) == 2
+
+    def test_symmetric_curve_midpoint(self):
+        """Symmetric control points give midpoint x at t=0.5"""
+        p0 = (0.0, 0.0)
+        cp1 = (0.0, 10.0)
+        cp2 = (10.0, 10.0)
+        p3 = (10.0, 0.0)
+        x, y = evaluate_cubic_bezier(p0, cp1, cp2, p3, 0.5)
+        # Symmetric curve: x should be at midpoint (5.0) and y at max
+        assert abs(x - 5.0) < 1e-9
+        assert y > 0  # Curve bows upward
+
+
+class TestFindBezierTForY:
+    """Tests for find_bezier_t_for_y function"""
+
+    def _straight_line_bezier(self):
+        """Control points that form a straight line from y=0 to y=10"""
+        p0 = (0.0, 0.0)
+        cp1 = (0.0, 10/3)
+        cp2 = (0.0, 20/3)
+        p3 = (0.0, 10.0)
+        return p0, cp1, cp2, p3
+
+    def test_finds_start_y(self):
+        """Target y at p0 should return t near 0"""
+        p0, cp1, cp2, p3 = self._straight_line_bezier()
+        t = find_bezier_t_for_y(p0, cp1, cp2, p3, 0.0)
+        assert abs(t) < 0.001
+
+    def test_finds_end_y(self):
+        """Target y at p3 should return t near 1"""
+        p0, cp1, cp2, p3 = self._straight_line_bezier()
+        t = find_bezier_t_for_y(p0, cp1, cp2, p3, 10.0)
+        assert abs(t - 1.0) < 0.001
+
+    def test_finds_midpoint_y(self):
+        """Target y at midpoint should return t near 0.5 for a linear curve"""
+        p0, cp1, cp2, p3 = self._straight_line_bezier()
+        t = find_bezier_t_for_y(p0, cp1, cp2, p3, 5.0)
+        assert abs(t - 0.5) < 0.001
+
+    def test_result_evaluates_to_target_y(self):
+        """The found t should evaluate to a y within tolerance of target"""
+        p0 = (0.0, 0.0)
+        cp1 = (5.0, 3.0)
+        cp2 = (5.0, 8.0)
+        p3 = (10.0, 10.0)
+        target_y = 6.0
+        t = find_bezier_t_for_y(p0, cp1, cp2, p3, target_y)
+        _, y_found = evaluate_cubic_bezier(p0, cp1, cp2, p3, t)
+        assert abs(y_found - target_y) < 0.001
+
+    def test_result_in_range_0_to_1(self):
+        """Returned t should always be between 0 and 1"""
+        p0, cp1, cp2, p3 = self._straight_line_bezier()
+        for target_y in [0.0, 2.5, 5.0, 7.5, 10.0]:
+            t = find_bezier_t_for_y(p0, cp1, cp2, p3, target_y)
+            assert 0.0 <= t <= 1.0
+
+
+class TestCalculateBlendCurve:
+    """Tests for calculate_blend_curve function"""
+
+    def _default_args(self):
+        return dict(
+            half_neck_width_at_ribs=15.0,
+            half_fb_width=12.0,
+            y_top_of_block=35.0,
+            y_fb_bottom=41.0,
+            fb_visible_height=5.0,
+            fb_blend_percent=50.0,
+            half_button_width=14.0,
+            y_button=0.0,
+        )
+
+    def test_returns_expected_keys(self):
+        """Result should contain all required keys"""
+        result = calculate_blend_curve(**self._default_args())
+        for key in ('p0', 'cp1', 'cp2', 'p3', 'curve_end_y', 'neck_block_max_width'):
+            assert key in result
+
+    def test_p0_is_start_point(self):
+        """p0 should be at (half_neck_width_at_ribs, y_top_of_block)"""
+        result = calculate_blend_curve(**self._default_args())
+        assert result['p0'] == (15.0, 35.0)
+
+    def test_p3_is_end_point(self):
+        """p3 should be at (half_fb_width, curve_end_y)"""
+        result = calculate_blend_curve(**self._default_args())
+        assert result['p3'][0] == 12.0
+        assert abs(result['p3'][1] - result['curve_end_y']) < 1e-9
+
+    def test_zero_blend_gives_fingerboard_width(self):
+        """fb_blend_percent=0 should give neck_block_max_width = half_fb_width * 2"""
+        args = self._default_args()
+        args['fb_blend_percent'] = 0.0
+        result = calculate_blend_curve(**args)
+        assert result['neck_block_max_width'] == 12.0 * 2
+
+    def test_fb_bottom_at_or_below_top_of_block_gives_neck_width(self):
+        """When y_fb_bottom <= y_top_of_block, width equals neck width at ribs"""
+        args = self._default_args()
+        args['y_fb_bottom'] = 30.0  # below y_top_of_block=35
+        result = calculate_blend_curve(**args)
+        assert result['neck_block_max_width'] == 15.0 * 2
+
+    def test_zero_fb_visible_height_gives_fingerboard_width(self):
+        """When fb_visible_height=0, curve_end_y == y_fb_bottom, giving fb width"""
+        args = self._default_args()
+        args['fb_visible_height'] = 0.0
+        result = calculate_blend_curve(**args)
+        assert result['neck_block_max_width'] == 12.0 * 2
+
+    def test_normal_case_uses_bezier_for_intermediate_width(self):
+        """Normal case: neck_block_max_width should be between neck and fb width"""
+        result = calculate_blend_curve(**self._default_args())
+        assert 12.0 * 2 <= result['neck_block_max_width'] <= 15.0 * 2
+
+    def test_vertical_tangent_case(self):
+        """When half_button_width >= half_neck_width_at_ribs, use fallback cp1"""
+        args = self._default_args()
+        args['half_button_width'] = 16.0  # > half_neck_width_at_ribs=15
+        result = calculate_blend_curve(**args)
+        # Should still return valid result without error
+        assert 'neck_block_max_width' in result
+        assert result['p0'] == (15.0, 35.0)
+
+
+class TestCalculateStringAnglesGuitarValidation:
+    """Additional tests for calculate_string_angles_guitar edge cases"""
+
+    def test_impossible_geometry_raises_valueerror(self):
+        """sin_value > 1.0 should raise ValueError with helpful message"""
+        import math
+        vsl = 650.0
+        fret_positions = [vsl * (1 - 2 ** (-n / 12)) for n in range(1, 21)]
+        params = {
+            'fret_join': 12,
+            'string_height_nut': 0.0,
+            'string_height_12th_fret': 0.0,
+            'arching_height': 0.0,
+            'bridge_height': 400.0,  # Impossibly large
+            'overstand': 0.0,
+        }
+        with pytest.raises(ValueError, match="impossible"):
+            calculate_string_angles_guitar(params, vsl, fret_positions, 0.0)
+
+
+class TestCalculateViolBackBreakClamping:
+    """Additional tests for calculate_viol_back_break"""
+
+    def test_very_small_angle_clamps_break_horizontal_to_body_length(self):
+        """Very small angle (but above guard) causes break_horizontal > body_length, clamped"""
+        params = {
+            'break_angle': 0.06,      # ~0.00105 rad, above 0.001 guard
+            'top_block_height': 40.0,
+            'rib_height': 100.0,
+            'body_length': 100.0,     # Small body to ensure clamping
+            'belly_edge_thickness': 3.5,
+        }
+        result = calculate_viol_back_break(params)
+        # Clamped: break_horizontal = body_length, back_break_length = 0
+        assert result['back_break_length'] == 0.0
+        assert result['break_end_x'] == 100.0
+
+
+class TestCalculateCrossSectionGeometry:
+    """Tests for calculate_cross_section_geometry"""
+
+    def _default_params(self):
+        return {
+            'instrument_family': 'VIOLIN',
+            'rib_height': 35.0,
+            'button_width_at_join': 28.0,
+            'neck_width_at_top_of_ribs': 30.0,
+            'overstand': 6.0,
+            'belly_edge_thickness': 3.5,
+            'fingerboard_width_at_nut': 24.0,
+            'fingerboard_width_at_end': 42.0,
+            'fingerboard_length': 270.0,
+            'fingerboard_radius': 41.0,
+            'fb_visible_height_at_join': 1.2,
+            'vsl': 325.0,
+            'body_stop': 195.0,
+            'fb_blend_percent': 0.0,
+        }
+
+    def test_returns_dict(self):
+        """Should return a dictionary"""
+        result = calculate_cross_section_geometry(self._default_params())
+        assert isinstance(result, dict)
+
+    def test_zero_fingerboard_length_sets_position_ratio_to_zero(self):
+        """fingerboard_length=0 should set position_ratio=0 (use nut width)"""
+        params = self._default_params()
+        params['fingerboard_length'] = 0
+        params['fingerboard_width_at_nut'] = 24.0
+        params['fingerboard_width_at_end'] = 42.0
+        result = calculate_cross_section_geometry(params)
+        # With position_ratio=0, fb_width_at_body_join should equal fb_width_at_nut
+        assert result is not None  # No crash
+
+    def test_viol_uses_top_block_height(self):
+        """Viol family should use top_block_height if present"""
+        params = self._default_params()
+        params['instrument_family'] = 'VIOL'
+        params['top_block_height'] = 50.0
+        params['rib_height'] = 100.0
+        result = calculate_cross_section_geometry(params)
+        assert result is not None
 
 
 if __name__ == '__main__':

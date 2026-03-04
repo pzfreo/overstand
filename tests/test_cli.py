@@ -311,3 +311,56 @@ class TestPDFGeneration:
         )
         assert result.returncode == 0
         assert output_file.exists()
+
+
+class TestSanitizeFilename:
+    """Unit tests for sanitize_filename"""
+
+    def test_spaces_replaced_with_underscores(self):
+        assert cli.sanitize_filename("My Violin") == "My_Violin"
+
+    def test_multiple_spaces_become_single_underscore(self):
+        assert cli.sanitize_filename("a  b") == "a_b"
+
+    def test_special_chars_replaced(self):
+        result = cli.sanitize_filename('file<>:"/\\|?*name')
+        assert result == "file_name"
+
+    def test_leading_trailing_underscores_stripped(self):
+        assert cli.sanitize_filename(" leading") == "leading"
+        assert cli.sanitize_filename("trailing ") == "trailing"
+
+    def test_plain_name_unchanged(self):
+        assert cli.sanitize_filename("BasicViolin") == "BasicViolin"
+
+    def test_underscores_already_present_unchanged(self):
+        assert cli.sanitize_filename("My_Violin_2024") == "My_Violin_2024"
+
+
+class TestGetUniqueFilename:
+    """Unit tests for get_unique_filename"""
+
+    def test_returns_same_path_when_no_collision(self, tmp_path):
+        target = tmp_path / "output.svg"
+        result = cli.get_unique_filename(str(target))
+        assert str(result) == str(target)
+
+    def test_adds_counter_when_file_exists(self, tmp_path):
+        target = tmp_path / "output.svg"
+        target.touch()
+        result = cli.get_unique_filename(str(target))
+        assert result.name == "output_1.svg"
+
+    def test_increments_counter_for_multiple_conflicts(self, tmp_path):
+        target = tmp_path / "output.svg"
+        target.touch()
+        (tmp_path / "output_1.svg").touch()
+        (tmp_path / "output_2.svg").touch()
+        result = cli.get_unique_filename(str(target))
+        assert result.name == "output_3.svg"
+
+    def test_preserves_suffix(self, tmp_path):
+        target = tmp_path / "diagram.pdf"
+        target.touch()
+        result = cli.get_unique_filename(str(target))
+        assert result.suffix == ".pdf"
