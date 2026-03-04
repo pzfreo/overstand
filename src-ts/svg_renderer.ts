@@ -524,95 +524,65 @@ export function addFbThicknessDimensions(
 }
 
 // ============================================================================
-// addDimensions
+// SideViewDimensionOpts + addDimensions (split into sub-functions)
 // ============================================================================
 
 /**
- * Add dimension annotations.
+ * Options for side-view dimension annotations.
  */
-export function addDimensions(
-  exporter: ExportSVG,
-  show_measurements: boolean,
-  reference_line_end_x: number,
-  nut_top_x: number,
-  nut_top_y: number,
-  bridge_top_x: number,
-  bridge_top_y: number,
-  string_line: Edge,
-  string_length: number,
-  neck_end_x: number,
-  neck_end_y: number,
-  overstand: number,
-  body_stop: number,
-  arching_height: number,
-  bridge_height: number,
-  body_length: number,
-  rib_height: number,
-  belly_edge_thickness: number,
-  fb_surface_point_x: number,
-  fb_surface_point_y: number,
-  string_x_at_fb_end: number,
-  string_y_at_fb_end: number,
-  string_height_at_fb_end: number,
-  intersect_x: number,
-  intersect_y: number,
-  nut_to_perp_distance: number,
-  tailpiece_height: number = 0.0,
-  string_break_angle: number = 0.0,
-  downward_force_percent: number = 0.0,
-): void {
-  if (show_measurements) {
+export interface SideViewDimensionOpts {
+  show_measurements: boolean
+  reference_line_end_x: number
+  nut_top_x: number
+  nut_top_y: number
+  bridge_top_x: number
+  bridge_top_y: number
+  string_line: Edge
+  string_length: number
+  neck_end_x: number
+  neck_end_y: number
+  overstand: number
+  body_stop: number
+  arching_height: number
+  bridge_height: number
+  body_length: number
+  rib_height: number
+  belly_edge_thickness: number
+  fb_surface_point_x: number
+  fb_surface_point_y: number
+  string_x_at_fb_end: number
+  string_y_at_fb_end: number
+  string_height_at_fb_end: number
+  intersect_x: number
+  intersect_y: number
+  nut_to_perp_distance: number
+  tailpiece_height: number
+  string_break_angle: number
+  downward_force_percent: number
+}
+
+/**
+ * Nut-to-rib height, overstand, and nut x-distance dimensions.
+ */
+function addNutAndOverstandDimensions(exporter: ExportSVG, opts: SideViewDimensionOpts): void {
+  if (opts.show_measurements) {
     const rib_to_nut_feature_line = Edge.make_line(
-      [reference_line_end_x, 0],
-      [reference_line_end_x, nut_top_y],
+      [opts.reference_line_end_x, 0],
+      [opts.reference_line_end_x, opts.nut_top_y],
     )
     addDimensionShapes(exporter, createVerticalDimension(
       rib_to_nut_feature_line,
-      `${nut_top_y.toFixed(1)}`,
+      `${opts.nut_top_y.toFixed(1)}`,
       -8,
       3,
       DIMENSION_FONT_SIZE,
     ))
   }
 
-  addDimensionShapes(exporter, createDiagonalDimension(
-    string_line,
-    `${string_length.toFixed(1)}`,
-    10,
-    3,
-    DIMENSION_FONT_SIZE,
-  ))
-
-  if (nut_to_perp_distance > 0) {
-    const nut_to_perp_line = Edge.make_line(
-      [nut_top_x, nut_top_y],
-      [intersect_x, intersect_y],
-    )
-    addDimensionShapes(exporter, createDiagonalDimension(
-      nut_to_perp_line,
-      `${nut_to_perp_distance.toFixed(1)}`,
-      20,
-      3,
-      DIMENSION_FONT_SIZE,
-    ))
-  }
-
-  const string_height_feature_line = Edge.make_line(
-    [fb_surface_point_x, fb_surface_point_y],
-    [string_x_at_fb_end, string_y_at_fb_end],
-  )
-  addDimensionShapes(exporter, createVerticalDimension(
-    string_height_feature_line,
-    `${string_height_at_fb_end.toFixed(1)}`,
-    8,
-    3,
-    DIMENSION_FONT_SIZE,
-  ))
-
-  const nut_x_distance = Math.abs(neck_end_x)
+  const nut_x_distance = Math.abs(opts.neck_end_x)
   const nut_feature_line = Edge.make_line(
-    [neck_end_x, neck_end_y],
-    [0, neck_end_y],
+    [opts.neck_end_x, opts.neck_end_y],
+    [0, opts.neck_end_y],
   )
   addDimensionShapes(exporter, createHorizontalDimension(
     nut_feature_line,
@@ -622,49 +592,93 @@ export function addDimensions(
     DIMENSION_FONT_SIZE,
   ))
 
-  if (overstand > 0) {
-    const overstand_feature_line = Edge.make_line([0, 0], [0, overstand])
+  if (opts.overstand > 0) {
+    const overstand_feature_line = Edge.make_line([0, 0], [0, opts.overstand])
     addDimensionShapes(exporter, createVerticalDimension(
       overstand_feature_line,
-      `${overstand.toFixed(1)}`,
+      `${opts.overstand.toFixed(1)}`,
       8,
       3,
       DIMENSION_FONT_SIZE,
     ))
   }
+}
 
+/**
+ * String length diagonal, nut-to-perpendicular diagonal, and string height at fingerboard end.
+ */
+function addStringDimensions(exporter: ExportSVG, opts: SideViewDimensionOpts): void {
+  addDimensionShapes(exporter, createDiagonalDimension(
+    opts.string_line,
+    `${opts.string_length.toFixed(1)}`,
+    10,
+    3,
+    DIMENSION_FONT_SIZE,
+  ))
+
+  if (opts.nut_to_perp_distance > 0) {
+    const nut_to_perp_line = Edge.make_line(
+      [opts.nut_top_x, opts.nut_top_y],
+      [opts.intersect_x, opts.intersect_y],
+    )
+    addDimensionShapes(exporter, createDiagonalDimension(
+      nut_to_perp_line,
+      `${opts.nut_to_perp_distance.toFixed(1)}`,
+      20,
+      3,
+      DIMENSION_FONT_SIZE,
+    ))
+  }
+
+  const string_height_feature_line = Edge.make_line(
+    [opts.fb_surface_point_x, opts.fb_surface_point_y],
+    [opts.string_x_at_fb_end, opts.string_y_at_fb_end],
+  )
+  addDimensionShapes(exporter, createVerticalDimension(
+    string_height_feature_line,
+    `${opts.string_height_at_fb_end.toFixed(1)}`,
+    8,
+    3,
+    DIMENSION_FONT_SIZE,
+  ))
+}
+
+/**
+ * Arching height, bridge height, body stop, body length, and rib height dimensions.
+ */
+function addBodyDimensions(exporter: ExportSVG, opts: SideViewDimensionOpts): void {
   const arch_feature_line = Edge.make_line(
-    [body_stop, 0],
-    [body_stop, arching_height],
+    [opts.body_stop, 0],
+    [opts.body_stop, opts.arching_height],
   )
   addDimensionShapes(exporter, createVerticalDimension(
     arch_feature_line,
-    `${arching_height.toFixed(1)}`,
+    `${opts.arching_height.toFixed(1)}`,
     8,
     3,
     DIMENSION_FONT_SIZE,
   ))
 
   const bridge_feature_line = Edge.make_line(
-    [body_stop, arching_height],
-    [body_stop, arching_height + bridge_height],
+    [opts.body_stop, opts.arching_height],
+    [opts.body_stop, opts.arching_height + opts.bridge_height],
   )
   addDimensionShapes(exporter, createVerticalDimension(
     bridge_feature_line,
-    `${bridge_height.toFixed(1)}`,
+    `${opts.bridge_height.toFixed(1)}`,
     8,
     3,
     DIMENSION_FONT_SIZE,
   ))
 
-  const bottom_y = belly_edge_thickness - rib_height
+  const bottom_y = opts.belly_edge_thickness - opts.rib_height
   const body_stop_feature_line = Edge.make_line(
     [0, bottom_y],
-    [body_stop, bottom_y],
+    [opts.body_stop, bottom_y],
   )
   addDimensionShapes(exporter, createHorizontalDimension(
     body_stop_feature_line,
-    `${body_stop.toFixed(1)}`,
+    `${opts.body_stop.toFixed(1)}`,
     -15,
     3,
     DIMENSION_FONT_SIZE,
@@ -672,43 +686,48 @@ export function addDimensions(
 
   const body_length_feature_line = Edge.make_line(
     [0, bottom_y],
-    [body_length, bottom_y],
+    [opts.body_length, bottom_y],
   )
   addDimensionShapes(exporter, createHorizontalDimension(
     body_length_feature_line,
-    `${body_length.toFixed(1)}`,
+    `${opts.body_length.toFixed(1)}`,
     -30,
     3,
     DIMENSION_FONT_SIZE,
   ))
 
-  const rib_dim_x = body_length + 10
-  const dim_p1: [number, number] = [rib_dim_x, belly_edge_thickness]
-  const dim_p2: [number, number] = [rib_dim_x, belly_edge_thickness - rib_height]
+  const rib_dim_x = opts.body_length + 10
+  const dim_p1: [number, number] = [rib_dim_x, opts.belly_edge_thickness]
+  const dim_p2: [number, number] = [rib_dim_x, opts.belly_edge_thickness - opts.rib_height]
   const rib_dim_line = Edge.make_line(dim_p1, dim_p2)
   exporter.add_shape(rib_dim_line, 'dimensions')
   for (const arrow of createDimensionArrows(dim_p1, dim_p2, 3.0)) {
     exporter.add_shape(arrow, 'arrows')
   }
-  let rib_text = new Text(`${rib_height.toFixed(1)}`, DIMENSION_FONT_SIZE, FONT_NAME)
+  let rib_text = new Text(`${opts.rib_height.toFixed(1)}`, DIMENSION_FONT_SIZE, FONT_NAME)
   rib_text = rib_text.move(
-    new Location([rib_dim_x + DIMENSION_FONT_SIZE, belly_edge_thickness - rib_height / 2]),
+    new Location([rib_dim_x + DIMENSION_FONT_SIZE, opts.belly_edge_thickness - opts.rib_height / 2]),
   )
   exporter.add_shape(rib_text, 'text')
+}
 
+/**
+ * Tailpiece line, break angle, tailpiece height, and downforce arrow dimensions.
+ */
+function addTailpieceAndForceDimensions(exporter: ExportSVG, opts: SideViewDimensionOpts): void {
   // Tailpiece to bridge dotted line
-  const tailpiece_top_y = belly_edge_thickness + tailpiece_height
+  const tailpiece_top_y = opts.belly_edge_thickness + opts.tailpiece_height
   const tailpiece_to_bridge_line = Edge.make_line(
-    [body_length, tailpiece_top_y],
-    [bridge_top_x, bridge_top_y],
+    [opts.body_length, tailpiece_top_y],
+    [opts.bridge_top_x, opts.bridge_top_y],
   )
   exporter.add_shape(tailpiece_to_bridge_line, 'schematic_dotted')
 
-  if (string_break_angle > 0) {
+  if (opts.string_break_angle > 0) {
     addDimensionShapes(exporter, createAngleDimension(
-      string_line,
+      opts.string_line,
       tailpiece_to_bridge_line,
-      `${string_break_angle.toFixed(1)}°`,
+      `${opts.string_break_angle.toFixed(1)}°`,
       14,
       DIMENSION_FONT_SIZE,
       0,
@@ -716,15 +735,15 @@ export function addDimensions(
     ))
   }
 
-  if (tailpiece_height > 0) {
-    const tailpiece_base_y = belly_edge_thickness
+  if (opts.tailpiece_height > 0) {
+    const tailpiece_base_y = opts.belly_edge_thickness
     const tailpiece_ref_line = Edge.make_line(
-      [body_length, tailpiece_base_y],
-      [body_length, tailpiece_top_y],
+      [opts.body_length, tailpiece_base_y],
+      [opts.body_length, tailpiece_top_y],
     )
     exporter.add_shape(tailpiece_ref_line, 'schematic_dotted')
 
-    const tailpiece_dim_x = body_length + 20
+    const tailpiece_dim_x = opts.body_length + 20
     const tp_dim_p1: [number, number] = [tailpiece_dim_x, tailpiece_base_y]
     const tp_dim_p2: [number, number] = [tailpiece_dim_x, tailpiece_top_y]
     const tailpiece_dim_line = Edge.make_line(tp_dim_p1, tp_dim_p2)
@@ -733,23 +752,23 @@ export function addDimensions(
       exporter.add_shape(arrow, 'arrows')
     }
     let tailpiece_text = new Text(
-      `${tailpiece_height.toFixed(1)}`,
+      `${opts.tailpiece_height.toFixed(1)}`,
       DIMENSION_FONT_SIZE,
       FONT_NAME,
     )
     tailpiece_text = tailpiece_text.move(
       new Location([
         tailpiece_dim_x + DIMENSION_FONT_SIZE,
-        tailpiece_base_y + tailpiece_height / 2,
+        tailpiece_base_y + opts.tailpiece_height / 2,
       ]),
     )
     exporter.add_shape(tailpiece_text, 'text')
   }
 
-  if (downward_force_percent > 0) {
-    const arrow_x = body_stop - 15
-    const arrow_mid_y = arching_height + bridge_height / 2
-    const arrow_half_length = bridge_height / 4
+  if (opts.downward_force_percent > 0) {
+    const arrow_x = opts.body_stop - 15
+    const arrow_mid_y = opts.arching_height + opts.bridge_height / 2
+    const arrow_half_length = opts.bridge_height / 4
     const arrow_top_y = arrow_mid_y + arrow_half_length
     const arrow_bottom_y = arrow_mid_y - arrow_half_length
 
@@ -770,7 +789,7 @@ export function addDimensions(
     const line_height = DIMENSION_FONT_SIZE * 1.2
     const right_edge = arrow_x - 3
 
-    const percent_str = `${downward_force_percent.toFixed(0)}%`
+    const percent_str = `${opts.downward_force_percent.toFixed(0)}%`
     const percent_char_width = DIMENSION_FONT_SIZE * 0.6
     const percent_width = percent_str.length * percent_char_width
     let percent_text = new Text(percent_str, DIMENSION_FONT_SIZE, FONT_NAME)
@@ -787,6 +806,16 @@ export function addDimensions(
     )
     exporter.add_shape(downforce_text, 'dimensions')
   }
+}
+
+/**
+ * Add dimension annotations. Delegates to focused sub-functions.
+ */
+export function addDimensions(exporter: ExportSVG, opts: SideViewDimensionOpts): void {
+  addNutAndOverstandDimensions(exporter, opts)
+  addStringDimensions(exporter, opts)
+  addBodyDimensions(exporter, opts)
+  addTailpieceAndForceDimensions(exporter, opts)
 }
 
 // ============================================================================
@@ -1232,37 +1261,36 @@ export function renderSideView(
   )
 
   // Add dimensions
-  addDimensions(
-    exporter,
+  addDimensions(exporter, {
     show_measurements,
     reference_line_end_x,
-    derived['nut_top_x'] ?? 0,
-    derived['nut_top_y'] ?? 0,
-    derived['bridge_top_x'] ?? 0,
-    derived['bridge_top_y'] ?? 0,
+    nut_top_x: derived['nut_top_x'] ?? 0,
+    nut_top_y: derived['nut_top_y'] ?? 0,
+    bridge_top_x: derived['bridge_top_x'] ?? 0,
+    bridge_top_y: derived['bridge_top_y'] ?? 0,
     string_line,
-    derived['string_length'] ?? 0,
-    derived['neck_end_x'] ?? 0,
-    derived['neck_end_y'] ?? 0,
+    string_length: derived['string_length'] ?? 0,
+    neck_end_x: derived['neck_end_x'] ?? 0,
+    neck_end_y: derived['neck_end_y'] ?? 0,
     overstand,
-    derived['body_stop'] ?? 0,
+    body_stop: derived['body_stop'] ?? 0,
     arching_height,
     bridge_height,
     body_length,
     rib_height,
     belly_edge_thickness,
-    derived['fb_surface_point_x'] ?? 0,
-    derived['fb_surface_point_y'] ?? 0,
-    derived['string_x_at_fb_end'] ?? 0,
-    derived['string_y_at_fb_end'] ?? 0,
-    derived['string_height_at_fb_end'] ?? 0,
-    derived['nut_perpendicular_intersection_x'] ?? 0,
-    derived['nut_perpendicular_intersection_y'] ?? 0,
-    derived['nut_to_perpendicular_distance'] ?? 0,
-    getNumParam(params, 'tailpiece_height'),
-    derived['string_break_angle'] ?? 0,
-    derived['downward_force_percent'] ?? 0,
-  )
+    fb_surface_point_x: derived['fb_surface_point_x'] ?? 0,
+    fb_surface_point_y: derived['fb_surface_point_y'] ?? 0,
+    string_x_at_fb_end: derived['string_x_at_fb_end'] ?? 0,
+    string_y_at_fb_end: derived['string_y_at_fb_end'] ?? 0,
+    string_height_at_fb_end: derived['string_height_at_fb_end'] ?? 0,
+    intersect_x: derived['nut_perpendicular_intersection_x'] ?? 0,
+    intersect_y: derived['nut_perpendicular_intersection_y'] ?? 0,
+    nut_to_perp_distance: derived['nut_to_perpendicular_distance'] ?? 0,
+    tailpiece_height: getNumParam(params, 'tailpiece_height'),
+    string_break_angle: derived['string_break_angle'] ?? 0,
+    downward_force_percent: derived['downward_force_percent'] ?? 0,
+  })
 
   // Add FB thickness dimensions
   addFbThicknessDimensions(
