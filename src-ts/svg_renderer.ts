@@ -33,9 +33,22 @@ import {
   createAngleDimension,
 } from './dimension_helpers'
 
-import type { Params } from './geometry_engine'
+import type { Params, DerivedValues } from './types'
 
-export type DerivedValues = Record<string, number | null | undefined>
+import { getNumParam, getNumParamNullish, getStringParam, getBoolParam, toDegrees, magnitude } from './utils'
+
+// ============================================================================
+// Dimension helper
+// ============================================================================
+
+type ShapeLayerPair = [Edge | Arc | Text, string]
+
+/** Add an array of dimension shapes to the exporter (eliminates repeated for-of loops). */
+function addDimensionShapes(exporter: ExportSVG, shapes: ShapeLayerPair[]): void {
+  for (const [shape, layer] of shapes) {
+    exporter.add_shape(shape, layer)
+  }
+}
 
 // ============================================================================
 // setupExporter
@@ -188,29 +201,25 @@ export function addViolBackDimensions(
     [break_end_x, back_y],
     [body_length, back_y],
   )
-  for (const [shape, layer] of createHorizontalDimension(
+  addDimensionShapes(exporter, createHorizontalDimension(
     break_length_line,
     `${back_break_length.toFixed(1)}`,
     -45,
     3,
     DIMENSION_FONT_SIZE,
-  )) {
-    exporter.add_shape(shape, layer)
-  }
+  ))
 
   const top_block_line = Edge.make_line(
     [0, belly_edge_thickness],
     [0, break_start_y],
   )
-  for (const [shape, layer] of createVerticalDimension(
+  addDimensionShapes(exporter, createVerticalDimension(
     top_block_line,
     `${_top_block_height.toFixed(1)}`,
     -12,
     3,
     DIMENSION_FONT_SIZE,
-  )) {
-    exporter.add_shape(shape, layer)
-  }
+  ))
 
   const horizontal_ref = Edge.make_line(
     [break_end_x, break_end_y],
@@ -220,7 +229,7 @@ export function addViolBackDimensions(
     [break_end_x, break_end_y],
     [break_start_x, break_start_y],
   )
-  for (const [shape, layer] of createAngleDimension(
+  addDimensionShapes(exporter, createAngleDimension(
     horizontal_ref,
     break_line,
     `${break_angle_deg.toFixed(1)}°`,
@@ -229,9 +238,7 @@ export function addViolBackDimensions(
     0,
     false,
     true,
-  )) {
-    exporter.add_shape(shape, layer)
-  }
+  ))
 }
 
 // ============================================================================
@@ -293,7 +300,7 @@ export function drawNeck(
     'schematic_dotted',
   )
 
-  for (const [shape, layer] of createAngleDimension(
+  addDimensionShapes(exporter, createAngleDimension(
     neck_vertical_line,
     neck_angled_line,
     `${neck_angle_deg.toFixed(1)}°`,
@@ -301,9 +308,7 @@ export function drawNeck(
     DIMENSION_FONT_SIZE,
     5,
     true,
-  )) {
-    exporter.add_shape(shape, layer)
-  }
+  ))
 
   return [neck_vertical_line, neck_angled_line]
 }
@@ -519,229 +524,226 @@ export function addFbThicknessDimensions(
 }
 
 // ============================================================================
-// addDimensions
+// SideViewDimensionOpts + addDimensions (split into sub-functions)
 // ============================================================================
 
 /**
- * Add dimension annotations.
+ * Options for side-view dimension annotations.
  */
-export function addDimensions(
-  exporter: ExportSVG,
-  show_measurements: boolean,
-  reference_line_end_x: number,
-  nut_top_x: number,
-  nut_top_y: number,
-  bridge_top_x: number,
-  bridge_top_y: number,
-  string_line: Edge,
-  string_length: number,
-  neck_end_x: number,
-  neck_end_y: number,
-  overstand: number,
-  body_stop: number,
-  arching_height: number,
-  bridge_height: number,
-  body_length: number,
-  rib_height: number,
-  belly_edge_thickness: number,
-  fb_surface_point_x: number,
-  fb_surface_point_y: number,
-  string_x_at_fb_end: number,
-  string_y_at_fb_end: number,
-  string_height_at_fb_end: number,
-  intersect_x: number,
-  intersect_y: number,
-  nut_to_perp_distance: number,
-  tailpiece_height: number = 0.0,
-  string_break_angle: number = 0.0,
-  downward_force_percent: number = 0.0,
-): void {
-  if (show_measurements) {
+export interface SideViewDimensionOpts {
+  show_measurements: boolean
+  reference_line_end_x: number
+  nut_top_x: number
+  nut_top_y: number
+  bridge_top_x: number
+  bridge_top_y: number
+  string_line: Edge
+  string_length: number
+  neck_end_x: number
+  neck_end_y: number
+  overstand: number
+  body_stop: number
+  arching_height: number
+  bridge_height: number
+  body_length: number
+  rib_height: number
+  belly_edge_thickness: number
+  fb_surface_point_x: number
+  fb_surface_point_y: number
+  string_x_at_fb_end: number
+  string_y_at_fb_end: number
+  string_height_at_fb_end: number
+  intersect_x: number
+  intersect_y: number
+  nut_to_perp_distance: number
+  tailpiece_height: number
+  string_break_angle: number
+  downward_force_percent: number
+}
+
+/**
+ * Nut-to-rib height, overstand, and nut x-distance dimensions.
+ */
+function addNutAndOverstandDimensions(exporter: ExportSVG, opts: SideViewDimensionOpts): void {
+  if (opts.show_measurements) {
     const rib_to_nut_feature_line = Edge.make_line(
-      [reference_line_end_x, 0],
-      [reference_line_end_x, nut_top_y],
+      [opts.reference_line_end_x, 0],
+      [opts.reference_line_end_x, opts.nut_top_y],
     )
-    for (const [shape, layer] of createVerticalDimension(
+    addDimensionShapes(exporter, createVerticalDimension(
       rib_to_nut_feature_line,
-      `${nut_top_y.toFixed(1)}`,
+      `${opts.nut_top_y.toFixed(1)}`,
       -8,
       3,
       DIMENSION_FONT_SIZE,
-    )) {
-      exporter.add_shape(shape, layer)
-    }
+    ))
   }
 
-  for (const [shape, layer] of createDiagonalDimension(
-    string_line,
-    `${string_length.toFixed(1)}`,
-    10,
-    3,
-    DIMENSION_FONT_SIZE,
-  )) {
-    exporter.add_shape(shape, layer)
-  }
-
-  if (nut_to_perp_distance > 0) {
-    const nut_to_perp_line = Edge.make_line(
-      [nut_top_x, nut_top_y],
-      [intersect_x, intersect_y],
-    )
-    for (const [shape, layer] of createDiagonalDimension(
-      nut_to_perp_line,
-      `${nut_to_perp_distance.toFixed(1)}`,
-      20,
-      3,
-      DIMENSION_FONT_SIZE,
-    )) {
-      exporter.add_shape(shape, layer)
-    }
-  }
-
-  const string_height_feature_line = Edge.make_line(
-    [fb_surface_point_x, fb_surface_point_y],
-    [string_x_at_fb_end, string_y_at_fb_end],
-  )
-  for (const [shape, layer] of createVerticalDimension(
-    string_height_feature_line,
-    `${string_height_at_fb_end.toFixed(1)}`,
-    8,
-    3,
-    DIMENSION_FONT_SIZE,
-  )) {
-    exporter.add_shape(shape, layer)
-  }
-
-  const nut_x_distance = Math.abs(neck_end_x)
+  const nut_x_distance = Math.abs(opts.neck_end_x)
   const nut_feature_line = Edge.make_line(
-    [neck_end_x, neck_end_y],
-    [0, neck_end_y],
+    [opts.neck_end_x, opts.neck_end_y],
+    [0, opts.neck_end_y],
   )
-  for (const [shape, layer] of createHorizontalDimension(
+  addDimensionShapes(exporter, createHorizontalDimension(
     nut_feature_line,
     `${nut_x_distance.toFixed(1)}`,
     -10,
     3,
     DIMENSION_FONT_SIZE,
-  )) {
-    exporter.add_shape(shape, layer)
-  }
+  ))
 
-  if (overstand > 0) {
-    const overstand_feature_line = Edge.make_line([0, 0], [0, overstand])
-    for (const [shape, layer] of createVerticalDimension(
+  if (opts.overstand > 0) {
+    const overstand_feature_line = Edge.make_line([0, 0], [0, opts.overstand])
+    addDimensionShapes(exporter, createVerticalDimension(
       overstand_feature_line,
-      `${overstand.toFixed(1)}`,
+      `${opts.overstand.toFixed(1)}`,
       8,
       3,
       DIMENSION_FONT_SIZE,
-    )) {
-      exporter.add_shape(shape, layer)
-    }
+    ))
+  }
+}
+
+/**
+ * String length diagonal, nut-to-perpendicular diagonal, and string height at fingerboard end.
+ */
+function addStringDimensions(exporter: ExportSVG, opts: SideViewDimensionOpts): void {
+  addDimensionShapes(exporter, createDiagonalDimension(
+    opts.string_line,
+    `${opts.string_length.toFixed(1)}`,
+    10,
+    3,
+    DIMENSION_FONT_SIZE,
+  ))
+
+  if (opts.nut_to_perp_distance > 0) {
+    const nut_to_perp_line = Edge.make_line(
+      [opts.nut_top_x, opts.nut_top_y],
+      [opts.intersect_x, opts.intersect_y],
+    )
+    addDimensionShapes(exporter, createDiagonalDimension(
+      nut_to_perp_line,
+      `${opts.nut_to_perp_distance.toFixed(1)}`,
+      20,
+      3,
+      DIMENSION_FONT_SIZE,
+    ))
   }
 
-  const arch_feature_line = Edge.make_line(
-    [body_stop, 0],
-    [body_stop, arching_height],
+  const string_height_feature_line = Edge.make_line(
+    [opts.fb_surface_point_x, opts.fb_surface_point_y],
+    [opts.string_x_at_fb_end, opts.string_y_at_fb_end],
   )
-  for (const [shape, layer] of createVerticalDimension(
-    arch_feature_line,
-    `${arching_height.toFixed(1)}`,
+  addDimensionShapes(exporter, createVerticalDimension(
+    string_height_feature_line,
+    `${opts.string_height_at_fb_end.toFixed(1)}`,
     8,
     3,
     DIMENSION_FONT_SIZE,
-  )) {
-    exporter.add_shape(shape, layer)
-  }
+  ))
+}
+
+/**
+ * Arching height, bridge height, body stop, body length, and rib height dimensions.
+ */
+function addBodyDimensions(exporter: ExportSVG, opts: SideViewDimensionOpts): void {
+  const arch_feature_line = Edge.make_line(
+    [opts.body_stop, 0],
+    [opts.body_stop, opts.arching_height],
+  )
+  addDimensionShapes(exporter, createVerticalDimension(
+    arch_feature_line,
+    `${opts.arching_height.toFixed(1)}`,
+    8,
+    3,
+    DIMENSION_FONT_SIZE,
+  ))
 
   const bridge_feature_line = Edge.make_line(
-    [body_stop, arching_height],
-    [body_stop, arching_height + bridge_height],
+    [opts.body_stop, opts.arching_height],
+    [opts.body_stop, opts.arching_height + opts.bridge_height],
   )
-  for (const [shape, layer] of createVerticalDimension(
+  addDimensionShapes(exporter, createVerticalDimension(
     bridge_feature_line,
-    `${bridge_height.toFixed(1)}`,
+    `${opts.bridge_height.toFixed(1)}`,
     8,
     3,
     DIMENSION_FONT_SIZE,
-  )) {
-    exporter.add_shape(shape, layer)
-  }
+  ))
 
-  const bottom_y = belly_edge_thickness - rib_height
+  const bottom_y = opts.belly_edge_thickness - opts.rib_height
   const body_stop_feature_line = Edge.make_line(
     [0, bottom_y],
-    [body_stop, bottom_y],
+    [opts.body_stop, bottom_y],
   )
-  for (const [shape, layer] of createHorizontalDimension(
+  addDimensionShapes(exporter, createHorizontalDimension(
     body_stop_feature_line,
-    `${body_stop.toFixed(1)}`,
+    `${opts.body_stop.toFixed(1)}`,
     -15,
     3,
     DIMENSION_FONT_SIZE,
-  )) {
-    exporter.add_shape(shape, layer)
-  }
+  ))
 
   const body_length_feature_line = Edge.make_line(
     [0, bottom_y],
-    [body_length, bottom_y],
+    [opts.body_length, bottom_y],
   )
-  for (const [shape, layer] of createHorizontalDimension(
+  addDimensionShapes(exporter, createHorizontalDimension(
     body_length_feature_line,
-    `${body_length.toFixed(1)}`,
+    `${opts.body_length.toFixed(1)}`,
     -30,
     3,
     DIMENSION_FONT_SIZE,
-  )) {
-    exporter.add_shape(shape, layer)
-  }
+  ))
 
-  const rib_dim_x = body_length + 10
-  const dim_p1: [number, number] = [rib_dim_x, belly_edge_thickness]
-  const dim_p2: [number, number] = [rib_dim_x, belly_edge_thickness - rib_height]
+  const rib_dim_x = opts.body_length + 10
+  const dim_p1: [number, number] = [rib_dim_x, opts.belly_edge_thickness]
+  const dim_p2: [number, number] = [rib_dim_x, opts.belly_edge_thickness - opts.rib_height]
   const rib_dim_line = Edge.make_line(dim_p1, dim_p2)
   exporter.add_shape(rib_dim_line, 'dimensions')
   for (const arrow of createDimensionArrows(dim_p1, dim_p2, 3.0)) {
     exporter.add_shape(arrow, 'arrows')
   }
-  let rib_text = new Text(`${rib_height.toFixed(1)}`, DIMENSION_FONT_SIZE, FONT_NAME)
+  let rib_text = new Text(`${opts.rib_height.toFixed(1)}`, DIMENSION_FONT_SIZE, FONT_NAME)
   rib_text = rib_text.move(
-    new Location([rib_dim_x + DIMENSION_FONT_SIZE, belly_edge_thickness - rib_height / 2]),
+    new Location([rib_dim_x + DIMENSION_FONT_SIZE, opts.belly_edge_thickness - opts.rib_height / 2]),
   )
   exporter.add_shape(rib_text, 'text')
+}
 
+/**
+ * Tailpiece line, break angle, tailpiece height, and downforce arrow dimensions.
+ */
+function addTailpieceAndForceDimensions(exporter: ExportSVG, opts: SideViewDimensionOpts): void {
   // Tailpiece to bridge dotted line
-  const tailpiece_top_y = belly_edge_thickness + tailpiece_height
+  const tailpiece_top_y = opts.belly_edge_thickness + opts.tailpiece_height
   const tailpiece_to_bridge_line = Edge.make_line(
-    [body_length, tailpiece_top_y],
-    [bridge_top_x, bridge_top_y],
+    [opts.body_length, tailpiece_top_y],
+    [opts.bridge_top_x, opts.bridge_top_y],
   )
   exporter.add_shape(tailpiece_to_bridge_line, 'schematic_dotted')
 
-  if (string_break_angle > 0) {
-    for (const [shape, layer] of createAngleDimension(
-      string_line,
+  if (opts.string_break_angle > 0) {
+    addDimensionShapes(exporter, createAngleDimension(
+      opts.string_line,
       tailpiece_to_bridge_line,
-      `${string_break_angle.toFixed(1)}°`,
+      `${opts.string_break_angle.toFixed(1)}°`,
       14,
       DIMENSION_FONT_SIZE,
       0,
       true,
-    )) {
-      exporter.add_shape(shape, layer)
-    }
+    ))
   }
 
-  if (tailpiece_height > 0) {
-    const tailpiece_base_y = belly_edge_thickness
+  if (opts.tailpiece_height > 0) {
+    const tailpiece_base_y = opts.belly_edge_thickness
     const tailpiece_ref_line = Edge.make_line(
-      [body_length, tailpiece_base_y],
-      [body_length, tailpiece_top_y],
+      [opts.body_length, tailpiece_base_y],
+      [opts.body_length, tailpiece_top_y],
     )
     exporter.add_shape(tailpiece_ref_line, 'schematic_dotted')
 
-    const tailpiece_dim_x = body_length + 20
+    const tailpiece_dim_x = opts.body_length + 20
     const tp_dim_p1: [number, number] = [tailpiece_dim_x, tailpiece_base_y]
     const tp_dim_p2: [number, number] = [tailpiece_dim_x, tailpiece_top_y]
     const tailpiece_dim_line = Edge.make_line(tp_dim_p1, tp_dim_p2)
@@ -750,23 +752,23 @@ export function addDimensions(
       exporter.add_shape(arrow, 'arrows')
     }
     let tailpiece_text = new Text(
-      `${tailpiece_height.toFixed(1)}`,
+      `${opts.tailpiece_height.toFixed(1)}`,
       DIMENSION_FONT_SIZE,
       FONT_NAME,
     )
     tailpiece_text = tailpiece_text.move(
       new Location([
         tailpiece_dim_x + DIMENSION_FONT_SIZE,
-        tailpiece_base_y + tailpiece_height / 2,
+        tailpiece_base_y + opts.tailpiece_height / 2,
       ]),
     )
     exporter.add_shape(tailpiece_text, 'text')
   }
 
-  if (downward_force_percent > 0) {
-    const arrow_x = body_stop - 15
-    const arrow_mid_y = arching_height + bridge_height / 2
-    const arrow_half_length = bridge_height / 4
+  if (opts.downward_force_percent > 0) {
+    const arrow_x = opts.body_stop - 15
+    const arrow_mid_y = opts.arching_height + opts.bridge_height / 2
+    const arrow_half_length = opts.bridge_height / 4
     const arrow_top_y = arrow_mid_y + arrow_half_length
     const arrow_bottom_y = arrow_mid_y - arrow_half_length
 
@@ -787,7 +789,7 @@ export function addDimensions(
     const line_height = DIMENSION_FONT_SIZE * 1.2
     const right_edge = arrow_x - 3
 
-    const percent_str = `${downward_force_percent.toFixed(0)}%`
+    const percent_str = `${opts.downward_force_percent.toFixed(0)}%`
     const percent_char_width = DIMENSION_FONT_SIZE * 0.6
     const percent_width = percent_str.length * percent_char_width
     let percent_text = new Text(percent_str, DIMENSION_FONT_SIZE, FONT_NAME)
@@ -804,6 +806,16 @@ export function addDimensions(
     )
     exporter.add_shape(downforce_text, 'dimensions')
   }
+}
+
+/**
+ * Add dimension annotations. Delegates to focused sub-functions.
+ */
+export function addDimensions(exporter: ExportSVG, opts: SideViewDimensionOpts): void {
+  addNutAndOverstandDimensions(exporter, opts)
+  addStringDimensions(exporter, opts)
+  addBodyDimensions(exporter, opts)
+  addTailpieceAndForceDimensions(exporter, opts)
 }
 
 // ============================================================================
@@ -1048,15 +1060,13 @@ export function addCrossSectionDimensions(
     [half_button_width, y_button],
   )
   const button_width = half_button_width * 2
-  for (const [shape, layer] of createHorizontalDimension(
+  addDimensionShapes(exporter, createHorizontalDimension(
     button_line,
     `${button_width.toFixed(1)}`,
     dim_offset_y,
     0,
     DIMENSION_FONT_SIZE,
-  )) {
-    exporter.add_shape(shape, layer)
-  }
+  ))
 
   // 2. Neck width at top of ribs
   const neck_line = Edge.make_line(
@@ -1064,28 +1074,24 @@ export function addCrossSectionDimensions(
     [half_neck_width_at_ribs, y_top_of_block],
   )
   const neck_width = half_neck_width_at_ribs * 2
-  for (const [shape, layer] of createHorizontalDimension(
+  addDimensionShapes(exporter, createHorizontalDimension(
     neck_line,
     `${neck_width.toFixed(1)}`,
     dim_offset_y - 8,
     0,
     DIMENSION_FONT_SIZE,
-  )) {
-    exporter.add_shape(shape, layer)
-  }
+  ))
 
   // 3. Fingerboard width
   const fb_line = Edge.make_line([-half_fb_width, y_fb_top], [half_fb_width, y_fb_top])
   const fb_width = half_fb_width * 2
-  for (const [shape, layer] of createHorizontalDimension(
+  addDimensionShapes(exporter, createHorizontalDimension(
     fb_line,
     `${fb_width.toFixed(1)}`,
     8,
     0,
     DIMENSION_FONT_SIZE,
-  )) {
-    exporter.add_shape(shape, layer)
-  }
+  ))
 
   // 4. Neck block max width (when blend > 0 and different from fb_width)
   if (fb_blend_percent > 0.1 && neck_block_max_width != null) {
@@ -1095,15 +1101,13 @@ export function addCrossSectionDimensions(
         [-half_block_width, y_fb_bottom],
         [half_block_width, y_fb_bottom],
       )
-      for (const [shape, layer] of createHorizontalDimension(
+      addDimensionShapes(exporter, createHorizontalDimension(
         block_width_line,
         `${neck_block_max_width.toFixed(1)}`,
         dim_offset_y,
         0,
         DIMENSION_FONT_SIZE,
-      )) {
-        exporter.add_shape(shape, layer)
-      }
+      ))
     }
   }
 
@@ -1114,15 +1118,13 @@ export function addCrossSectionDimensions(
     [dim_offset_x, y_button],
     [dim_offset_x, y_top_of_block],
   )
-  for (const [shape, layer] of createVerticalDimension(
+  addDimensionShapes(exporter, createVerticalDimension(
     block_line,
     `${block_height.toFixed(1)}`,
     5,
     3,
     DIMENSION_FONT_SIZE,
-  )) {
-    exporter.add_shape(shape, layer)
-  }
+  ))
 
   // 6. Overstand
   const overstand = y_fb_bottom - y_top_of_block
@@ -1130,15 +1132,13 @@ export function addCrossSectionDimensions(
     [dim_offset_x + 15, y_top_of_block],
     [dim_offset_x + 15, y_fb_bottom],
   )
-  for (const [shape, layer] of createVerticalDimension(
+  addDimensionShapes(exporter, createVerticalDimension(
     overstand_line,
     `${overstand.toFixed(1)}`,
     5,
     3,
     DIMENSION_FONT_SIZE,
-  )) {
-    exporter.add_shape(shape, layer)
-  }
+  ))
 }
 
 // ============================================================================
@@ -1155,19 +1155,19 @@ export function renderSideView(
   params: Params,
   derived: DerivedValues,
 ): string {
-  const show_measurements = (params['show_measurements'] as boolean) ?? true
+  const show_measurements = getBoolParam(params, 'show_measurements', true)
 
   const exporter = setupExporter(show_measurements)
 
   const instrument_family =
-    (params['instrument_family'] as string) || 'VIOLIN'
+    getStringParam(params, 'instrument_family', 'VIOLIN')
 
-  const body_length = (params['body_length'] as number) || 0
-  const belly_edge_thickness = (params['belly_edge_thickness'] as number) || 0
-  const rib_height = (params['rib_height'] as number) || 0
-  const arching_height = (params['arching_height'] as number) || 0
-  const overstand = (params['overstand'] as number) || 0
-  const bridge_height = (params['bridge_height'] as number) || 0
+  const body_length = getNumParam(params, 'body_length')
+  const belly_edge_thickness = getNumParam(params, 'belly_edge_thickness')
+  const rib_height = getNumParam(params, 'rib_height')
+  const arching_height = getNumParam(params, 'arching_height')
+  const overstand = getNumParam(params, 'overstand')
+  const bridge_height = getNumParam(params, 'bridge_height')
 
   // Draw body
   if (instrument_family === 'VIOL') {
@@ -1186,7 +1186,7 @@ export function renderSideView(
       body_length,
       belly_edge_thickness,
       rib_height,
-      (params['top_block_height'] as number) || 40,
+      getNumParam(params, 'top_block_height', 40),
       derived['break_start_x'] ?? 0,
       derived['break_start_y'] ?? 0,
       derived['break_end_x'] ?? 0,
@@ -1219,9 +1219,9 @@ export function renderSideView(
 
   // Draw fingerboard
   const fb_visible_height_at_nut =
-    ((params['fb_visible_height_at_nut'] as number) || 0) || 4.5
+    getNumParam(params, 'fb_visible_height_at_nut', 4.5)
   const fb_visible_height_at_join =
-    ((params['fb_visible_height_at_join'] as number) || 0) || 4.5
+    getNumParam(params, 'fb_visible_height_at_join', 4.5)
 
   drawFingerboard(
     exporter,
@@ -1247,7 +1247,7 @@ export function renderSideView(
 
   // Add document text
   const instrument_name =
-    (params['instrument_name'] as string) || 'Instrument'
+    getStringParam(params, 'instrument_name', 'Instrument')
   addDocumentText(
     exporter,
     instrument_name,
@@ -1261,37 +1261,36 @@ export function renderSideView(
   )
 
   // Add dimensions
-  addDimensions(
-    exporter,
+  addDimensions(exporter, {
     show_measurements,
     reference_line_end_x,
-    derived['nut_top_x'] ?? 0,
-    derived['nut_top_y'] ?? 0,
-    derived['bridge_top_x'] ?? 0,
-    derived['bridge_top_y'] ?? 0,
+    nut_top_x: derived['nut_top_x'] ?? 0,
+    nut_top_y: derived['nut_top_y'] ?? 0,
+    bridge_top_x: derived['bridge_top_x'] ?? 0,
+    bridge_top_y: derived['bridge_top_y'] ?? 0,
     string_line,
-    derived['string_length'] ?? 0,
-    derived['neck_end_x'] ?? 0,
-    derived['neck_end_y'] ?? 0,
+    string_length: derived['string_length'] ?? 0,
+    neck_end_x: derived['neck_end_x'] ?? 0,
+    neck_end_y: derived['neck_end_y'] ?? 0,
     overstand,
-    derived['body_stop'] ?? 0,
+    body_stop: derived['body_stop'] ?? 0,
     arching_height,
     bridge_height,
     body_length,
     rib_height,
     belly_edge_thickness,
-    derived['fb_surface_point_x'] ?? 0,
-    derived['fb_surface_point_y'] ?? 0,
-    derived['string_x_at_fb_end'] ?? 0,
-    derived['string_y_at_fb_end'] ?? 0,
-    derived['string_height_at_fb_end'] ?? 0,
-    derived['nut_perpendicular_intersection_x'] ?? 0,
-    derived['nut_perpendicular_intersection_y'] ?? 0,
-    derived['nut_to_perpendicular_distance'] ?? 0,
-    (params['tailpiece_height'] as number) || 0,
-    derived['string_break_angle'] ?? 0,
-    derived['downward_force_percent'] ?? 0,
-  )
+    fb_surface_point_x: derived['fb_surface_point_x'] ?? 0,
+    fb_surface_point_y: derived['fb_surface_point_y'] ?? 0,
+    string_x_at_fb_end: derived['string_x_at_fb_end'] ?? 0,
+    string_y_at_fb_end: derived['string_y_at_fb_end'] ?? 0,
+    string_height_at_fb_end: derived['string_height_at_fb_end'] ?? 0,
+    intersect_x: derived['nut_perpendicular_intersection_x'] ?? 0,
+    intersect_y: derived['nut_perpendicular_intersection_y'] ?? 0,
+    nut_to_perp_distance: derived['nut_to_perpendicular_distance'] ?? 0,
+    tailpiece_height: getNumParam(params, 'tailpiece_height'),
+    string_break_angle: derived['string_break_angle'] ?? 0,
+    downward_force_percent: derived['downward_force_percent'] ?? 0,
+  })
 
   // Add FB thickness dimensions
   addFbThicknessDimensions(
@@ -1315,8 +1314,8 @@ export function renderSideView(
       body_length,
       belly_edge_thickness,
       rib_height,
-      (params['top_block_height'] as number) || 40,
-      (params['break_angle'] as number) || 15,
+      getNumParam(params, 'top_block_height', 40),
+      getNumParam(params, 'break_angle', 15),
       derived['back_break_length'] ?? 0,
       derived['break_start_x'] ?? 0,
       derived['break_start_y'] ?? 0,
@@ -1339,7 +1338,7 @@ export function renderCrossSectionView(
   params: Params,
   csGeom: Record<string, number | null | undefined | [number, number]>,
 ): string {
-  const show_measurements = (params['show_measurements'] as boolean) ?? true
+  const show_measurements = getBoolParam(params, 'show_measurements', true)
 
   const exporter = setupExporter(show_measurements)
 
@@ -1378,7 +1377,7 @@ export function renderCrossSectionView(
     (csGeom['neck_block_max_width'] as number | null) ?? null,
   )
 
-  const instrument_name = (params['instrument_name'] as string) || 'Instrument'
+  const instrument_name = getStringParam(params, 'instrument_name', 'Instrument')
   let title_text = new Text(
     `${instrument_name} - Neck Cross-Section`,
     TITLE_FONT_SIZE,

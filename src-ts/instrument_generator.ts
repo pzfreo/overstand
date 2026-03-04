@@ -34,7 +34,8 @@ import { calculateFretPositions } from './geometry_engine'
 
 export { loadStencilFont } from './radius_template'
 
-import type { Params } from './geometry_engine'
+import type { Params } from './types'
+import { getNumParam, getStringParam, getErrorMessage } from './utils'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -75,8 +76,8 @@ export interface DerivedValuesResult {
  * Mirrors view_generator.py generate_fret_positions_view().
  */
 function generateFretPositionsView(params: Params): FretPositionsResult {
-  const vsl = (params['vsl'] as number) || 0
-  const instrumentFamily = (params['instrument_family'] as string) || 'VIOLIN'
+  const vsl = getNumParam(params, 'vsl')
+  const instrumentFamily = getStringParam(params, 'instrument_family', 'VIOLIN')
   let noFrets: number
 
   if (params['no_frets'] != null) {
@@ -195,7 +196,7 @@ export function generateViolin(params: Params): GenerateViolinResult {
         errors: [],
       }
     } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e)
+      const msg = getErrorMessage(e)
       const isGeometryError =
         msg.includes('math domain error') ||
         msg.includes('Invalid geometric constraints')
@@ -214,7 +215,7 @@ export function generateViolin(params: Params): GenerateViolinResult {
       }
     }
   } catch (e) {
-    const msg = e instanceof Error ? e.message : String(e)
+    const msg = getErrorMessage(e)
     return {
       success: false,
       views: null,
@@ -258,7 +259,7 @@ export function generateViolinNeck(paramsJson: string): string {
         errors: [`Invalid parameter JSON: ${e.message}`],
       })
     }
-    const msg = e instanceof Error ? e.message : String(e)
+    const msg = getErrorMessage(e)
     return JSON.stringify({
       success: false,
       views: null,
@@ -287,7 +288,7 @@ export function getDerivedValues(paramsJson: string): string {
       formatted: formattedValues,
     })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : String(e)
+    const msg = getErrorMessage(e)
     return JSON.stringify({
       success: false,
       errors: [msg],
@@ -308,7 +309,7 @@ export function getDerivedValueMetadata(): string {
       metadata: getDerivedMetadataAsDict(),
     })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : String(e)
+    const msg = getErrorMessage(e)
     return JSON.stringify({
       success: false,
       errors: [msg],
@@ -326,7 +327,7 @@ export function getParameterDefinitions(): string {
   try {
     return getParametersAsJson()
   } catch (e) {
-    const msg = e instanceof Error ? e.message : String(e)
+    const msg = getErrorMessage(e)
     return JSON.stringify({
       success: false,
       errors: [`Failed to load parameters: ${msg}`],
@@ -347,7 +348,7 @@ export function getUiMetadata(): string {
       metadata: getUiMetadataBundle(),
     })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : String(e)
+    const msg = getErrorMessage(e)
     return JSON.stringify({
       success: false,
       errors: [msg],

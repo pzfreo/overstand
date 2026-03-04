@@ -52,6 +52,19 @@ export enum InstrumentType {
 }
 
 // ============================================================
+// SHARED TYPE ALIASES
+// ============================================================
+
+/** A 2-D point as [x, y]. */
+export type Point2D = [number, number]
+
+/** Loosely-typed parameter bag passed to all geometry functions. */
+export type Params = Record<string, number | boolean | string | null | undefined>
+
+/** Derived values produced by the geometry engine. */
+export type DerivedValues = Record<string, number | null | undefined>
+
+// ============================================================
 // INTERFACES (ported from Python dataclasses in parameter_registry.py)
 // ============================================================
 
@@ -65,7 +78,7 @@ export interface InputConfig {
   max_val: number
   default: number | boolean | string
   step: number  // default 0.1 in Python
-  visible_when: Record<string, unknown> | null  // Conditional visibility
+  visible_when: Record<string, string | string[]> | null  // Conditional visibility
   category: string  // default "Basic Dimensions"
 }
 

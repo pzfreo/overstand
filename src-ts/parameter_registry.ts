@@ -18,25 +18,8 @@ import {
   InstrumentType,
 } from './types'
 
-// ============================================================
-// INTERFACES
-// ============================================================
-
-export interface InputConfig {
-  min_val: number
-  max_val: number
-  default: number | boolean | string
-  step: number
-  visible_when: Record<string, string | string[]> | null
-  category: string
-}
-
-export interface OutputConfig {
-  decimals: number
-  visible: boolean
-  category: string
-  order: number
-}
+import type { InputConfig, OutputConfig } from './types'
+export type { InputConfig, OutputConfig } from './types'
 
 // ============================================================
 // UNIFIED PARAMETER CLASS
@@ -201,6 +184,34 @@ export class UnifiedParameter {
     }
     return formatted
   }
+}
+
+// ============================================================
+// INTERNAL PARAMETER HELPER
+// ============================================================
+
+/**
+ * Creates an internal OUTPUT_ONLY numeric parameter with visible: false
+ * and category: 'Internal'. Used for coordinate points, angles, and
+ * other intermediate geometry values not shown in the UI.
+ */
+function internalCoordParam(
+  key: string,
+  display_name: string,
+  unit: string,
+  description: string,
+  decimals: number,
+  order: number
+): UnifiedParameter {
+  return new UnifiedParameter({
+    key,
+    display_name,
+    param_type: ParameterType.NUMERIC,
+    unit,
+    description,
+    role: ParameterRole.OUTPUT_ONLY,
+    output_config: { decimals, visible: false, category: 'Internal', order },
+  })
 }
 
 // ============================================================
@@ -922,35 +933,9 @@ export const PARAMETER_REGISTRY: Record<string, UnifiedParameter> = {
     },
   }),
 
-  sagitta_at_nut: new UnifiedParameter({
-    key: 'sagitta_at_nut',
-    display_name: 'Sagitta at Nut',
-    param_type: ParameterType.NUMERIC,
-    unit: 'mm',
-    description: 'Height of fingerboard arc at nut due to radius',
-    role: ParameterRole.OUTPUT_ONLY,
-    output_config: {
-      decimals: 2,
-      visible: false,
-      category: 'Internal',
-      order: 20,
-    },
-  }),
+  sagitta_at_nut: internalCoordParam('sagitta_at_nut', 'Sagitta at Nut', 'mm', 'Height of fingerboard arc at nut due to radius', 2, 20),
 
-  sagitta_at_join: new UnifiedParameter({
-    key: 'sagitta_at_join',
-    display_name: 'Sagitta at Join',
-    param_type: ParameterType.NUMERIC,
-    unit: 'mm',
-    description: 'Height of fingerboard arc at body join due to radius',
-    role: ParameterRole.OUTPUT_ONLY,
-    output_config: {
-      decimals: 2,
-      visible: false,
-      category: 'Internal',
-      order: 21,
-    },
-  }),
+  sagitta_at_join: internalCoordParam('sagitta_at_join', 'Sagitta at Join', 'mm', 'Height of fingerboard arc at body join due to radius', 2, 21),
 
   neck_block_max_width: new UnifiedParameter({
     key: 'neck_block_max_width',
@@ -1048,350 +1033,51 @@ export const PARAMETER_REGISTRY: Record<string, UnifiedParameter> = {
   }),
 
   // Internal calculation values (visible=false)
-  neck_angle_rad: new UnifiedParameter({
-    key: 'neck_angle_rad',
-    display_name: 'Neck Angle (rad)',
-    param_type: ParameterType.NUMERIC,
-    unit: 'rad',
-    description: 'Neck angle in radians (for internal calculations)',
-    role: ParameterRole.OUTPUT_ONLY,
-    output_config: {
-      decimals: 4,
-      visible: false,
-      category: 'Internal',
-      order: 100,
-    },
-  }),
+  neck_angle_rad: internalCoordParam('neck_angle_rad', 'Neck Angle (rad)', 'rad', 'Neck angle in radians (for internal calculations)', 4, 100),
 
-  neck_end_x: new UnifiedParameter({
-    key: 'neck_end_x',
-    display_name: 'Neck End X',
-    param_type: ParameterType.NUMERIC,
-    unit: 'mm',
-    description: 'X coordinate of neck end point (for geometry)',
-    role: ParameterRole.OUTPUT_ONLY,
-    output_config: {
-      decimals: 2,
-      visible: false,
-      category: 'Internal',
-      order: 101,
-    },
-  }),
+  neck_end_x: internalCoordParam('neck_end_x', 'Neck End X', 'mm', 'X coordinate of neck end point (for geometry)', 2, 101),
 
-  neck_end_y: new UnifiedParameter({
-    key: 'neck_end_y',
-    display_name: 'Neck End Y',
-    param_type: ParameterType.NUMERIC,
-    unit: 'mm',
-    description: 'Y coordinate of neck end point (for geometry)',
-    role: ParameterRole.OUTPUT_ONLY,
-    output_config: {
-      decimals: 2,
-      visible: false,
-      category: 'Internal',
-      order: 102,
-    },
-  }),
+  neck_end_y: internalCoordParam('neck_end_y', 'Neck End Y', 'mm', 'Y coordinate of neck end point (for geometry)', 2, 102),
 
-  nut_draw_radius: new UnifiedParameter({
-    key: 'nut_draw_radius',
-    display_name: 'Nut Draw Radius',
-    param_type: ParameterType.NUMERIC,
-    unit: 'mm',
-    description: 'Radius of nut quarter-circle (for drawing)',
-    role: ParameterRole.OUTPUT_ONLY,
-    output_config: {
-      decimals: 2,
-      visible: false,
-      category: 'Internal',
-      order: 103,
-    },
-  }),
+  nut_draw_radius: internalCoordParam('nut_draw_radius', 'Nut Draw Radius', 'mm', 'Radius of nut quarter-circle (for drawing)', 2, 103),
 
-  neck_line_angle: new UnifiedParameter({
-    key: 'neck_line_angle',
-    display_name: 'Neck Line Angle',
-    param_type: ParameterType.NUMERIC,
-    unit: 'rad',
-    description: 'Angle of neck center line (for geometry)',
-    role: ParameterRole.OUTPUT_ONLY,
-    output_config: {
-      decimals: 4,
-      visible: false,
-      category: 'Internal',
-      order: 104,
-    },
-  }),
+  neck_line_angle: internalCoordParam('neck_line_angle', 'Neck Line Angle', 'rad', 'Angle of neck center line (for geometry)', 4, 104),
 
-  neck_line_angle_deg: new UnifiedParameter({
-    key: 'neck_line_angle_deg',
-    display_name: 'Neck Line Angle (deg)',
-    param_type: ParameterType.NUMERIC,
-    unit: '°',
-    description: 'Angle of neck center line',
-    role: ParameterRole.OUTPUT_ONLY,
-    output_config: {
-      decimals: 1,
-      visible: false,
-      category: 'Internal',
-      order: 10,
-    },
-  }),
+  neck_line_angle_deg: internalCoordParam('neck_line_angle_deg', 'Neck Line Angle (deg)', '°', 'Angle of neck center line', 1, 10),
 
-  nut_top_x: new UnifiedParameter({
-    key: 'nut_top_x',
-    display_name: 'Nut Top X',
-    param_type: ParameterType.NUMERIC,
-    unit: 'mm',
-    description: 'X coordinate of nut top where string contacts',
-    role: ParameterRole.OUTPUT_ONLY,
-    output_config: {
-      decimals: 2,
-      visible: false,
-      category: 'Internal',
-      order: 105,
-    },
-  }),
+  nut_top_x: internalCoordParam('nut_top_x', 'Nut Top X', 'mm', 'X coordinate of nut top where string contacts', 2, 105),
 
-  nut_top_y: new UnifiedParameter({
-    key: 'nut_top_y',
-    display_name: 'Nut Top Y',
-    param_type: ParameterType.NUMERIC,
-    unit: 'mm',
-    description: 'Y coordinate of nut top where string contacts',
-    role: ParameterRole.OUTPUT_ONLY,
-    output_config: {
-      decimals: 2,
-      visible: false,
-      category: 'Internal',
-      order: 106,
-    },
-  }),
+  nut_top_y: internalCoordParam('nut_top_y', 'Nut Top Y', 'mm', 'Y coordinate of nut top where string contacts', 2, 106),
 
-  bridge_top_x: new UnifiedParameter({
-    key: 'bridge_top_x',
-    display_name: 'Bridge Top X',
-    param_type: ParameterType.NUMERIC,
-    unit: 'mm',
-    description: 'X coordinate of bridge top where string contacts',
-    role: ParameterRole.OUTPUT_ONLY,
-    output_config: {
-      decimals: 2,
-      visible: false,
-      category: 'Internal',
-      order: 107,
-    },
-  }),
+  bridge_top_x: internalCoordParam('bridge_top_x', 'Bridge Top X', 'mm', 'X coordinate of bridge top where string contacts', 2, 107),
 
-  bridge_top_y: new UnifiedParameter({
-    key: 'bridge_top_y',
-    display_name: 'Bridge Top Y',
-    param_type: ParameterType.NUMERIC,
-    unit: 'mm',
-    description: 'Y coordinate of bridge top where string contacts',
-    role: ParameterRole.OUTPUT_ONLY,
-    output_config: {
-      decimals: 2,
-      visible: false,
-      category: 'Internal',
-      order: 108,
-    },
-  }),
+  bridge_top_y: internalCoordParam('bridge_top_y', 'Bridge Top Y', 'mm', 'Y coordinate of bridge top where string contacts', 2, 108),
 
-  fb_bottom_end_x: new UnifiedParameter({
-    key: 'fb_bottom_end_x',
-    display_name: 'Fingerboard Bottom End X',
-    param_type: ParameterType.NUMERIC,
-    unit: 'mm',
-    description: 'X coordinate of fingerboard bottom at end',
-    role: ParameterRole.OUTPUT_ONLY,
-    output_config: {
-      decimals: 2,
-      visible: false,
-      category: 'Internal',
-      order: 109,
-    },
-  }),
+  fb_bottom_end_x: internalCoordParam('fb_bottom_end_x', 'Fingerboard Bottom End X', 'mm', 'X coordinate of fingerboard bottom at end', 2, 109),
 
-  fb_bottom_end_y: new UnifiedParameter({
-    key: 'fb_bottom_end_y',
-    display_name: 'Fingerboard Bottom End Y',
-    param_type: ParameterType.NUMERIC,
-    unit: 'mm',
-    description: 'Y coordinate of fingerboard bottom at end',
-    role: ParameterRole.OUTPUT_ONLY,
-    output_config: {
-      decimals: 2,
-      visible: false,
-      category: 'Internal',
-      order: 110,
-    },
-  }),
+  fb_bottom_end_y: internalCoordParam('fb_bottom_end_y', 'Fingerboard Bottom End Y', 'mm', 'Y coordinate of fingerboard bottom at end', 2, 110),
 
-  fb_direction_angle: new UnifiedParameter({
-    key: 'fb_direction_angle',
-    display_name: 'Fingerboard Direction Angle',
-    param_type: ParameterType.NUMERIC,
-    unit: 'rad',
-    description: 'Angle of fingerboard direction',
-    role: ParameterRole.OUTPUT_ONLY,
-    output_config: {
-      decimals: 4,
-      visible: false,
-      category: 'Internal',
-      order: 111,
-    },
-  }),
+  fb_direction_angle: internalCoordParam('fb_direction_angle', 'Fingerboard Direction Angle', 'rad', 'Angle of fingerboard direction', 4, 111),
 
-  fb_direction_angle_deg: new UnifiedParameter({
-    key: 'fb_direction_angle_deg',
-    display_name: 'Fingerboard Direction Angle (deg)',
-    param_type: ParameterType.NUMERIC,
-    unit: '°',
-    description: 'Angle of fingerboard direction',
-    role: ParameterRole.OUTPUT_ONLY,
-    output_config: {
-      decimals: 1,
-      visible: false,
-      category: 'Internal',
-      order: 11,
-    },
-  }),
+  fb_direction_angle_deg: internalCoordParam('fb_direction_angle_deg', 'Fingerboard Direction Angle (deg)', '°', 'Angle of fingerboard direction', 1, 11),
 
-  fb_thickness_at_end: new UnifiedParameter({
-    key: 'fb_thickness_at_end',
-    display_name: 'Fingerboard Thickness at End',
-    param_type: ParameterType.NUMERIC,
-    unit: 'mm',
-    description: 'Fingerboard thickness at end',
-    role: ParameterRole.OUTPUT_ONLY,
-    output_config: {
-      decimals: 2,
-      visible: false,
-      category: 'Internal',
-      order: 112,
-    },
-  }),
+  fb_thickness_at_end: internalCoordParam('fb_thickness_at_end', 'Fingerboard Thickness at End', 'mm', 'Fingerboard thickness at end', 2, 112),
 
-  fb_surface_point_x: new UnifiedParameter({
-    key: 'fb_surface_point_x',
-    display_name: 'Fingerboard Surface Point X',
-    param_type: ParameterType.NUMERIC,
-    unit: 'mm',
-    description: 'X coordinate of fingerboard surface reference point',
-    role: ParameterRole.OUTPUT_ONLY,
-    output_config: {
-      decimals: 2,
-      visible: false,
-      category: 'Internal',
-      order: 113,
-    },
-  }),
+  fb_surface_point_x: internalCoordParam('fb_surface_point_x', 'Fingerboard Surface Point X', 'mm', 'X coordinate of fingerboard surface reference point', 2, 113),
 
-  fb_surface_point_y: new UnifiedParameter({
-    key: 'fb_surface_point_y',
-    display_name: 'Fingerboard Surface Point Y',
-    param_type: ParameterType.NUMERIC,
-    unit: 'mm',
-    description: 'Y coordinate of fingerboard surface reference point',
-    role: ParameterRole.OUTPUT_ONLY,
-    output_config: {
-      decimals: 2,
-      visible: false,
-      category: 'Internal',
-      order: 114,
-    },
-  }),
+  fb_surface_point_y: internalCoordParam('fb_surface_point_y', 'Fingerboard Surface Point Y', 'mm', 'Y coordinate of fingerboard surface reference point', 2, 114),
 
-  string_x_at_fb_end: new UnifiedParameter({
-    key: 'string_x_at_fb_end',
-    display_name: 'String X at Fingerboard End',
-    param_type: ParameterType.NUMERIC,
-    unit: 'mm',
-    description: 'X coordinate of string at fingerboard end',
-    role: ParameterRole.OUTPUT_ONLY,
-    output_config: {
-      decimals: 2,
-      visible: false,
-      category: 'Internal',
-      order: 115,
-    },
-  }),
+  string_x_at_fb_end: internalCoordParam('string_x_at_fb_end', 'String X at Fingerboard End', 'mm', 'X coordinate of string at fingerboard end', 2, 115),
 
-  string_y_at_fb_end: new UnifiedParameter({
-    key: 'string_y_at_fb_end',
-    display_name: 'String Y at Fingerboard End',
-    param_type: ParameterType.NUMERIC,
-    unit: 'mm',
-    description: 'Y coordinate of string at fingerboard end',
-    role: ParameterRole.OUTPUT_ONLY,
-    output_config: {
-      decimals: 2,
-      visible: false,
-      category: 'Internal',
-      order: 116,
-    },
-  }),
+  string_y_at_fb_end: internalCoordParam('string_y_at_fb_end', 'String Y at Fingerboard End', 'mm', 'Y coordinate of string at fingerboard end', 2, 116),
 
-  string_height_at_fb_end: new UnifiedParameter({
-    key: 'string_height_at_fb_end',
-    display_name: 'String Height at Fingerboard End',
-    param_type: ParameterType.NUMERIC,
-    unit: 'mm',
-    description: 'String height at end of fingerboard',
-    role: ParameterRole.OUTPUT_ONLY,
-    output_config: {
-      decimals: 2,
-      visible: false,
-      category: 'Internal',
-      order: 117,
-    },
-  }),
+  string_height_at_fb_end: internalCoordParam('string_height_at_fb_end', 'String Height at Fingerboard End', 'mm', 'String height at end of fingerboard', 2, 117),
 
-  nut_perpendicular_intersection_x: new UnifiedParameter({
-    key: 'nut_perpendicular_intersection_x',
-    display_name: 'Nut Perpendicular Intersection X',
-    param_type: ParameterType.NUMERIC,
-    unit: 'mm',
-    description: 'X coordinate where nut perpendicular intersects rib plane',
-    role: ParameterRole.OUTPUT_ONLY,
-    output_config: {
-      decimals: 2,
-      visible: false,
-      category: 'Internal',
-      order: 118,
-    },
-  }),
+  nut_perpendicular_intersection_x: internalCoordParam('nut_perpendicular_intersection_x', 'Nut Perpendicular Intersection X', 'mm', 'X coordinate where nut perpendicular intersects rib plane', 2, 118),
 
-  nut_perpendicular_intersection_y: new UnifiedParameter({
-    key: 'nut_perpendicular_intersection_y',
-    display_name: 'Nut Perpendicular Intersection Y',
-    param_type: ParameterType.NUMERIC,
-    unit: 'mm',
-    description: 'Y coordinate where nut perpendicular intersects rib plane',
-    role: ParameterRole.OUTPUT_ONLY,
-    output_config: {
-      decimals: 2,
-      visible: false,
-      category: 'Internal',
-      order: 119,
-    },
-  }),
+  nut_perpendicular_intersection_y: internalCoordParam('nut_perpendicular_intersection_y', 'Nut Perpendicular Intersection Y', 'mm', 'Y coordinate where nut perpendicular intersects rib plane', 2, 119),
 
-  nut_to_perpendicular_distance: new UnifiedParameter({
-    key: 'nut_to_perpendicular_distance',
-    display_name: 'Nut to Perpendicular Distance',
-    param_type: ParameterType.NUMERIC,
-    unit: 'mm',
-    description: 'Distance from nut to perpendicular intersection',
-    role: ParameterRole.OUTPUT_ONLY,
-    output_config: {
-      decimals: 2,
-      visible: false,
-      category: 'Internal',
-      order: 120,
-    },
-  }),
+  nut_to_perpendicular_distance: internalCoordParam('nut_to_perpendicular_distance', 'Nut to Perpendicular Distance', 'mm', 'Distance from nut to perpendicular intersection', 2, 120),
 }
 
 // ============================================================
