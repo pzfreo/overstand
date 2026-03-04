@@ -6,12 +6,12 @@
 
 import {
   calculateSagitta,
-  calculateFingerboadThickness,
-  calculateFingerboadThicknessAtFret,
+  calculateFingerboardThickness,
+  calculateFingerboardThicknessAtFret,
   calculateStringAnglesViolin,
   calculateStringAnglesGuitar,
   calculateNeckGeometry,
-  calculateFingerboadGeometry,
+  calculateFingerboardGeometry,
   calculateStringHeightAndDimensions,
   calculateFretPositions,
   calculateViolBackBreak,
@@ -61,10 +61,10 @@ describe('calculateSagitta', () => {
 })
 
 // ---------------------------------------------------------------------------
-// TestCalculateFingerboadThickness
+// TestCalculateFingerboardThickness
 // ---------------------------------------------------------------------------
 
-describe('calculateFingerboadThickness', () => {
+describe('calculateFingerboardThickness', () => {
   it('returns expected keys', () => {
     const params = {
       fingerboard_radius: 41,
@@ -73,7 +73,7 @@ describe('calculateFingerboadThickness', () => {
       fingerboard_width_at_nut: 24,
       fingerboard_width_at_end: 30,
     }
-    const result = calculateFingerboadThickness(params)
+    const result = calculateFingerboardThickness(params)
     expect('sagitta_at_nut' in result).toBe(true)
     expect('sagitta_at_join' in result).toBe(true)
     expect('fb_thickness_at_nut' in result).toBe(true)
@@ -88,7 +88,7 @@ describe('calculateFingerboadThickness', () => {
       fingerboard_width_at_nut: 24,
       fingerboard_width_at_end: 30,
     }
-    const result = calculateFingerboadThickness(params)
+    const result = calculateFingerboardThickness(params)
 
     const expectedNut = 4.0 + result.sagitta_at_nut
     const expectedJoin = 6.0 + result.sagitta_at_join
@@ -98,7 +98,7 @@ describe('calculateFingerboadThickness', () => {
   })
 
   it('uses defaults for missing params', () => {
-    const result = calculateFingerboadThickness({})
+    const result = calculateFingerboardThickness({})
     expect(result.sagitta_at_nut).toBeGreaterThanOrEqual(0)
     expect(result.fb_thickness_at_nut).toBeGreaterThan(0)
   })
@@ -205,13 +205,13 @@ describe('calculateNeckGeometry', () => {
 })
 
 // ---------------------------------------------------------------------------
-// TestCalculateFingerboadGeometry
+// TestCalculateFingerboardGeometry
 // ---------------------------------------------------------------------------
 
-describe('calculateFingerboadGeometry', () => {
+describe('calculateFingerboardGeometry', () => {
   it('returns expected keys', () => {
     const params = { fingerboard_length: 270 }
-    const result = calculateFingerboadGeometry(
+    const result = calculateFingerboardGeometry(
       params, 130, -125, 10, -0.1, 5.5, 7.5
     )
     expect('fb_direction_angle' in result).toBe(true)
@@ -223,7 +223,7 @@ describe('calculateFingerboadGeometry', () => {
   it('direction angle is opposite neck', () => {
     const params = { fingerboard_length: 270 }
     const neckLineAngle = -0.1
-    const result = calculateFingerboadGeometry(
+    const result = calculateFingerboardGeometry(
       params, 130, -125, 10, neckLineAngle, 5.5, 7.5
     )
     const expected = neckLineAngle + Math.PI
@@ -268,10 +268,10 @@ describe('calculateFretPositions', () => {
 })
 
 // ---------------------------------------------------------------------------
-// TestCalculateFingerboadThicknessAtFret
+// TestCalculateFingerboardThicknessAtFret
 // ---------------------------------------------------------------------------
 
-describe('calculateFingerboadThicknessAtFret', () => {
+describe('calculateFingerboardThicknessAtFret', () => {
   function violinParams() {
     return {
       vsl: 330,
@@ -285,7 +285,7 @@ describe('calculateFingerboadThicknessAtFret', () => {
   }
 
   it('returns expected keys', () => {
-    const result = calculateFingerboadThicknessAtFret(violinParams(), 1)
+    const result = calculateFingerboardThicknessAtFret(violinParams(), 1)
     expect('fret_distance_from_nut' in result).toBe(true)
     expect('position_ratio' in result).toBe(true)
     expect('fb_thickness_at_fret' in result).toBe(true)
@@ -293,8 +293,8 @@ describe('calculateFingerboadThicknessAtFret', () => {
 
   it('fret 1 close to nut', () => {
     const params = violinParams()
-    const result = calculateFingerboadThicknessAtFret(params, 1)
-    const fb = calculateFingerboadThickness(params)
+    const result = calculateFingerboardThicknessAtFret(params, 1)
+    const fb = calculateFingerboardThickness(params)
     expect(result.fb_thickness_at_fret).toBeGreaterThan(fb.fb_thickness_at_nut)
     expect(result.fb_thickness_at_fret).toBeLessThan(fb.fb_thickness_at_join)
     expect(result.position_ratio).toBeLessThan(0.1)
@@ -302,38 +302,38 @@ describe('calculateFingerboadThicknessAtFret', () => {
 
   it('position ratio increases with fret', () => {
     const params = violinParams()
-    const r1 = calculateFingerboadThicknessAtFret(params, 1)
-    const r7 = calculateFingerboadThicknessAtFret(params, 7)
-    const r12 = calculateFingerboadThicknessAtFret(params, 12)
+    const r1 = calculateFingerboardThicknessAtFret(params, 1)
+    const r7 = calculateFingerboardThicknessAtFret(params, 7)
+    const r12 = calculateFingerboardThicknessAtFret(params, 12)
     expect(r1.position_ratio).toBeLessThan(r7.position_ratio)
     expect(r7.position_ratio).toBeLessThan(r12.position_ratio)
   })
 
   it('thickness increases with fret', () => {
     const params = violinParams()
-    const t1 = calculateFingerboadThicknessAtFret(params, 1).fb_thickness_at_fret
-    const t12 = calculateFingerboadThicknessAtFret(params, 12).fb_thickness_at_fret
+    const t1 = calculateFingerboardThicknessAtFret(params, 1).fb_thickness_at_fret
+    const t12 = calculateFingerboardThicknessAtFret(params, 12).fb_thickness_at_fret
     expect(t12).toBeGreaterThan(t1)
   })
 
   it('fret distance uses equal temperament', () => {
     const params = violinParams()
     const vsl = params.vsl
-    const result = calculateFingerboadThicknessAtFret(params, 12)
+    const result = calculateFingerboardThicknessAtFret(params, 12)
     const expected = calculateFretPositions(vsl, 12)[11]!
     expect(Math.abs(result.fret_distance_from_nut - expected)).toBeLessThan(0.001)
   })
 
   it('position ratio clamped beyond fingerboard', () => {
     const params = { ...violinParams(), fingerboard_length: 100 }
-    const result = calculateFingerboadThicknessAtFret(params, 12)
+    const result = calculateFingerboardThicknessAtFret(params, 12)
     expect(result.position_ratio).toBe(1.0)
   })
 
   it('zero fingerboard length returns nut thickness', () => {
     const params = { ...violinParams(), fingerboard_length: 0 }
-    const result = calculateFingerboadThicknessAtFret(params, 7)
-    const fb = calculateFingerboadThickness(params)
+    const result = calculateFingerboardThicknessAtFret(params, 7)
+    const fb = calculateFingerboardThickness(params)
     expect(result.fb_thickness_at_fret).toBe(fb.fb_thickness_at_nut)
   })
 })
@@ -361,7 +361,7 @@ describe('Integration: full violin calculation pipeline', () => {
     }
 
     // Step 1: Calculate fingerboard thickness
-    const fbResult = calculateFingerboadThickness(params)
+    const fbResult = calculateFingerboardThickness(params)
     expect(fbResult.fb_thickness_at_nut).toBeGreaterThan(params.fb_visible_height_at_nut)
 
     // Step 2: Calculate string angles
@@ -383,7 +383,7 @@ describe('Integration: full violin calculation pipeline', () => {
     expect('neck_angle' in neckResult).toBe(true)
 
     // Step 4: Calculate fingerboard geometry
-    const fbGeomResult = calculateFingerboadGeometry(
+    const fbGeomResult = calculateFingerboardGeometry(
       params,
       stringResult.neck_stop,
       neckResult.neck_end_x,

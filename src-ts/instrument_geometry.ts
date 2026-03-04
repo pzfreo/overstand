@@ -17,12 +17,12 @@ import {
 
 import {
   calculateFretPositions,
-  calculateFingerboadThickness,
-  calculateFingerboadThicknessAtFret,
+  calculateFingerboardThickness,
+  calculateFingerboardThicknessAtFret,
   calculateStringAnglesViolin,
   calculateStringAnglesGuitar,
   calculateNeckGeometry,
-  calculateFingerboadGeometry,
+  calculateFingerboardGeometry,
   calculateStringHeightAndDimensions,
   calculateViolBackBreak,
   calculateCrossSectionGeometry,
@@ -75,7 +75,7 @@ export function calculateDerivedValues(params: Params): DerivedValues {
 
   const fretPositions = calculateFretPositions(vsl, noFrets)
 
-  const fbResult = calculateFingerboadThickness(params)
+  const fbResult = calculateFingerboardThickness(params)
   Object.assign(derived, fbResult)
   const fbThicknessAtNut = fbResult.fb_thickness_at_nut
   const fbThicknessAtJoin = fbResult.fb_thickness_at_join
@@ -87,10 +87,10 @@ export function calculateDerivedValues(params: Params): DerivedValues {
   } else {
     fbRefFret = 7
   }
-  const fret1Result = calculateFingerboadThicknessAtFret(params, 1)
+  const fret1Result = calculateFingerboardThicknessAtFret(params, 1)
   derived['fb_thickness_at_fret_1'] = fret1Result.fb_thickness_at_fret
   derived['fb_fret_1_distance'] = fret1Result.fret_distance_from_nut
-  const refResult = calculateFingerboadThicknessAtFret(params, fbRefFret)
+  const refResult = calculateFingerboardThicknessAtFret(params, fbRefFret)
   derived['fb_thickness_at_ref_fret'] = refResult.fb_thickness_at_fret
   derived['fb_ref_fret_distance'] = refResult.fret_distance_from_nut
   derived['fb_ref_fret_number'] = fbRefFret
@@ -131,7 +131,7 @@ export function calculateDerivedValues(params: Params): DerivedValues {
   derived['body_stop'] = angleResult.body_stop
   Object.assign(derived, neckResult)
 
-  const fbGeomResult = calculateFingerboadGeometry(
+  const fbGeomResult = calculateFingerboardGeometry(
     params,
     neckStop,
     derived['neck_end_x']!,

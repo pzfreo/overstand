@@ -221,10 +221,10 @@ export function calculateBlendCurve(args: BlendCurveArgs): BlendCurveResult {
 }
 
 // ---------------------------------------------------------------------------
-// calculateFingerboadThickness
+// calculateFingerboardThickness
 // ---------------------------------------------------------------------------
 
-export interface FingerboadThicknessResult {
+export interface FingerboardThicknessResult {
   sagitta_at_nut: number
   sagitta_at_join: number
   fb_thickness_at_nut: number
@@ -234,15 +234,15 @@ export interface FingerboadThicknessResult {
 /**
  * Calculate fingerboard thickness including sagitta for radiused fingerboard.
  */
-export function calculateFingerboadThickness(params: Params): FingerboadThicknessResult {
-  const fingerboadRadius = getNumParamNullish(params, 'fingerboard_radius', DEFAULT_FINGERBOARD_RADIUS)
+export function calculateFingerboardThickness(params: Params): FingerboardThicknessResult {
+  const fingerboardRadius = getNumParamNullish(params, 'fingerboard_radius', DEFAULT_FINGERBOARD_RADIUS)
   const fbVisibleHeightAtNut = getNumParamNullish(params, 'fb_visible_height_at_nut', DEFAULT_FB_VISIBLE_HEIGHT_AT_NUT)
   const fbVisibleHeightAtJoin = getNumParamNullish(params, 'fb_visible_height_at_join', DEFAULT_FB_VISIBLE_HEIGHT_AT_JOIN)
   const fbWidthAtNut = getNumParamNullish(params, 'fingerboard_width_at_nut', DEFAULT_FB_WIDTH_AT_NUT)
   const fbWidthAtJoin = getNumParamNullish(params, 'fingerboard_width_at_end', DEFAULT_FB_WIDTH_AT_END)
 
-  const sagittaAtNut = calculateSagitta(fingerboadRadius || DEFAULT_FINGERBOARD_RADIUS, fbWidthAtNut || DEFAULT_FB_WIDTH_AT_NUT)
-  const sagittaAtJoin = calculateSagitta(fingerboadRadius || DEFAULT_FINGERBOARD_RADIUS, fbWidthAtJoin || DEFAULT_FB_WIDTH_AT_END)
+  const sagittaAtNut = calculateSagitta(fingerboardRadius || DEFAULT_FINGERBOARD_RADIUS, fbWidthAtNut || DEFAULT_FB_WIDTH_AT_NUT)
+  const sagittaAtJoin = calculateSagitta(fingerboardRadius || DEFAULT_FINGERBOARD_RADIUS, fbWidthAtJoin || DEFAULT_FB_WIDTH_AT_END)
 
   const fbThicknessAtNut = (fbVisibleHeightAtNut || DEFAULT_FB_VISIBLE_HEIGHT_AT_NUT) + sagittaAtNut
   const fbThicknessAtJoin = (fbVisibleHeightAtJoin || DEFAULT_FB_VISIBLE_HEIGHT_AT_JOIN) + sagittaAtJoin
@@ -283,10 +283,10 @@ export function calculateStringAnglesViolin(
   const overstand = getNumParam(params, 'overstand')
   const stringHeightNut = getNumParam(params, 'string_height_nut')
   const stringHeightEof = getNumParam(params, 'string_height_eof')
-  const fingerboadLength = getNumParam(params, 'fingerboard_length')
+  const fingerboardLength = getNumParam(params, 'fingerboard_length')
 
   const stringHeightAtJoin =
-    ((stringHeightEof - stringHeightNut) * ((vsl - bodyStop) / fingerboadLength)) +
+    ((stringHeightEof - stringHeightNut) * ((vsl - bodyStop) / fingerboardLength)) +
     stringHeightNut
   const opposite = archingHeight + bridgeHeight - overstand - fbThicknessAtJoin - stringHeightAtJoin
   const stringAngleToRibsRad = Math.atan(opposite / bodyStop)
@@ -295,7 +295,7 @@ export function calculateStringAnglesViolin(
   const stringNutToJoin = vsl - stringToJoin
   const neckStop = Math.cos(stringAngleToRibsRad) * stringNutToJoin
   const oppositeStringToFb = stringHeightEof - stringHeightNut
-  const stringAngleToFb = toDegrees(Math.atan(oppositeStringToFb / fingerboadLength))
+  const stringAngleToFb = toDegrees(Math.atan(oppositeStringToFb / fingerboardLength))
   const fretJoinPosition =
     stringToJoin > 0 && vsl > 0 ? 12 * Math.log2(vsl / stringToJoin) : null
 
@@ -427,9 +427,9 @@ export function calculateNeckGeometry(
   const nutTopY = bridgeTopY - Math.sin(stringAngleToRibsRad) * vsl
 
   const oppositeFb = fbThicknessAtJoin - fbThicknessAtNut
-  const fingerboadAngle = toDegrees(Math.atan(oppositeFb / neckStop))
+  const fingerboardAngle = toDegrees(Math.atan(oppositeFb / neckStop))
   const neckAngle =
-    90 - (toDegrees(stringAngleToRibsRad) - stringAngleToFb - fingerboadAngle)
+    90 - (toDegrees(stringAngleToRibsRad) - stringAngleToFb - fingerboardAngle)
   const neckAngleRad = toRadians(neckAngle)
 
   const neckEndX = 0 - neckStop + Math.cos(neckAngleRad) * fbThicknessAtNut
@@ -457,10 +457,10 @@ export function calculateNeckGeometry(
 }
 
 // ---------------------------------------------------------------------------
-// calculateFingerboadGeometry
+// calculateFingerboardGeometry
 // ---------------------------------------------------------------------------
 
-export interface FingerboadGeometryResult {
+export interface FingerboardGeometryResult {
   fb_direction_angle: number
   fb_bottom_end_x: number
   fb_bottom_end_y: number
@@ -470,7 +470,7 @@ export interface FingerboadGeometryResult {
 /**
  * Calculate fingerboard geometry including direction angle and end position.
  */
-export function calculateFingerboadGeometry(
+export function calculateFingerboardGeometry(
   params: Params,
   neckStop: number,
   neckEndX: number,
@@ -478,13 +478,13 @@ export function calculateFingerboadGeometry(
   neckLineAngle: number,
   fbThicknessAtNut: number,
   fbThicknessAtJoin: number
-): FingerboadGeometryResult {
-  const fingerboadLength = getNumParam(params, 'fingerboard_length')
+): FingerboardGeometryResult {
+  const fingerboardLength = getNumParam(params, 'fingerboard_length')
 
   const fbDirectionAngle = neckLineAngle + Math.PI
-  const fbBottomEndX = neckEndX + fingerboadLength * Math.cos(fbDirectionAngle)
-  const fbBottomEndY = neckEndY + fingerboadLength * Math.sin(fbDirectionAngle)
-  const fbThicknessAtEnd = lerp(fbThicknessAtNut, fbThicknessAtJoin, fingerboadLength / neckStop)
+  const fbBottomEndX = neckEndX + fingerboardLength * Math.cos(fbDirectionAngle)
+  const fbBottomEndY = neckEndY + fingerboardLength * Math.sin(fbDirectionAngle)
+  const fbThicknessAtEnd = lerp(fbThicknessAtNut, fbThicknessAtJoin, fingerboardLength / neckStop)
 
   return {
     fb_direction_angle: fbDirectionAngle,
@@ -609,10 +609,10 @@ export function calculateFretPositions(vsl: number, noFrets: number): number[] {
 }
 
 // ---------------------------------------------------------------------------
-// calculateFingerboadThicknessAtFret
+// calculateFingerboardThicknessAtFret
 // ---------------------------------------------------------------------------
 
-export interface FingerboadThicknessAtFretResult {
+export interface FingerboardThicknessAtFretResult {
   fret_distance_from_nut: number
   position_ratio: number
   fb_thickness_at_fret: number
@@ -624,23 +624,23 @@ export interface FingerboadThicknessAtFretResult {
  * Interpolates between the already-defined nut and join thicknesses using
  * the fret's position along the fingerboard.
  */
-export function calculateFingerboadThicknessAtFret(
+export function calculateFingerboardThicknessAtFret(
   params: Params,
   fretNumber: number
-): FingerboadThicknessAtFretResult {
+): FingerboardThicknessAtFretResult {
   const vsl = getNumParam(params, 'vsl')
-  const fingerboadLength = getNumParam(params, 'fingerboard_length')
+  const fingerboardLength = getNumParam(params, 'fingerboard_length')
 
   const fretPositions = calculateFretPositions(vsl, fretNumber)
   const fretDistance = fretPositions[fretNumber - 1]!
 
-  const fb = calculateFingerboadThickness(params)
+  const fb = calculateFingerboardThickness(params)
   const fbThicknessAtNut = fb.fb_thickness_at_nut
   const fbThicknessAtJoin = fb.fb_thickness_at_join
 
   let t: number
-  if (fingerboadLength > 0) {
-    t = Math.min(fretDistance / fingerboadLength, 1.0)
+  if (fingerboardLength > 0) {
+    t = Math.min(fretDistance / fingerboardLength, 1.0)
   } else {
     t = 0.0
   }
@@ -785,8 +785,8 @@ export function calculateCrossSectionGeometry(params: Params): CrossSectionGeome
   // Fingerboard parameters
   const fbWidthAtNut = getNumParamNullish(params, 'fingerboard_width_at_nut', DEFAULT_FB_WIDTH_AT_NUT)
   const fbWidthAtEnd = getNumParamNullish(params, 'fingerboard_width_at_end', DEFAULT_FB_WIDTH_AT_END)
-  const fingerboadLength = getNumParamNullish(params, 'fingerboard_length', 270.0)
-  const fingerboadRadius = getNumParamNullish(params, 'fingerboard_radius', DEFAULT_FINGERBOARD_RADIUS)
+  const fingerboardLength = getNumParamNullish(params, 'fingerboard_length', 270.0)
+  const fingerboardRadius = getNumParamNullish(params, 'fingerboard_radius', DEFAULT_FINGERBOARD_RADIUS)
   const fbVisibleHeightAtJoin = getNumParamNullish(params, 'fb_visible_height_at_join', DEFAULT_FB_VISIBLE_HEIGHT_AT_JOIN)
 
   // Calculate neck_stop to determine position along fingerboard
@@ -796,8 +796,8 @@ export function calculateCrossSectionGeometry(params: Params): CrossSectionGeome
 
   // Interpolate fingerboard width at body join
   let positionRatio: number
-  if (fingerboadLength > 0) {
-    positionRatio = Math.min(neckStop / fingerboadLength, 1.0)
+  if (fingerboardLength > 0) {
+    positionRatio = Math.min(neckStop / fingerboardLength, 1.0)
   } else {
     positionRatio = 0.0
   }
@@ -805,7 +805,7 @@ export function calculateCrossSectionGeometry(params: Params): CrossSectionGeome
   const fbWidthAtBodyJoin = lerp(fbWidthAtNut, fbWidthAtEnd, positionRatio)
 
   // Calculate fingerboard thickness at body join (including sagitta for curve)
-  const sagittaAtJoin = calculateSagitta(fingerboadRadius, fbWidthAtBodyJoin)
+  const sagittaAtJoin = calculateSagitta(fingerboardRadius, fbWidthAtBodyJoin)
   const fbThicknessAtJoin = fbVisibleHeightAtJoin + sagittaAtJoin
 
   // Y coordinates (from bottom to top)
@@ -863,7 +863,7 @@ export function calculateCrossSectionGeometry(params: Params): CrossSectionGeome
     fb_width_at_body_join: fbWidthAtBodyJoin,
     fb_thickness_at_join: fbThicknessAtJoin,
     sagitta_at_join: sagittaAtJoin,
-    fingerboard_radius: fingerboadRadius,
+    fingerboard_radius: fingerboardRadius,
 
     y_button: yButton,
     y_top_of_block: yTopOfBlock,
