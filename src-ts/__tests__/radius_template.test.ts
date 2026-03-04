@@ -8,9 +8,10 @@
  * via the second argument to generateRadiusTemplateSvg.
  */
 
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest'
 import {
   generateRadiusTemplateSvg,
+  loadStencilFont,
   textToSvgPath,
   FONT_URL,
 } from '../radius_template'
@@ -145,6 +146,39 @@ describe('generateRadiusTemplateSvg compound-path branch', () => {
     const result = generateRadiusTemplateSvg(defaultParams(), null)
     expect(result).not.toContain('evenodd')
     expect(result).toContain('stroke')
+  })
+})
+
+// ============================================================================
+// loadStencilFont integration test (uses real font file)
+// ============================================================================
+
+describe('loadStencilFont', () => {
+  beforeAll(async () => {
+    // Load the real font so _font module cache is populated
+    await loadStencilFont('./web/fonts/AllertaStencil-Regular.ttf')
+  })
+
+  afterAll(async () => {
+    // Reset font cache so other tests are unaffected
+    await loadStencilFont('/nonexistent-font-to-reset-cache.ttf')
+  })
+
+  it('generates compound path with evenodd fill-rule when font is loaded', () => {
+    // After loadStencilFont, generateRadiusTemplateSvg uses cached font by default
+    const result = generateRadiusTemplateSvg(defaultParams())
+    expect(result).toContain('evenodd')
+  })
+
+  it('includes rotate transform when font is loaded', () => {
+    const result = generateRadiusTemplateSvg(defaultParams())
+    expect(result).toContain('rotate(')
+  })
+
+  it('text path contains bezier curve commands', () => {
+    const result = generateRadiusTemplateSvg(defaultParams())
+    // opentype.js generates cubic bezier (C) and line (L) commands for text
+    expect(result).toMatch(/[CLQ] /)
   })
 })
 

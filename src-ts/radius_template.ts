@@ -10,6 +10,7 @@
  * Ported from src/radius_template.py
  */
 
+import opentype from 'opentype.js'
 import {
   TEMPLATE_WIDTH_MARGIN,
   MIN_FLAT_AREA_HEIGHT,
@@ -22,9 +23,24 @@ import {
 
 type Params = Record<string, number | boolean | string | null | undefined>
 
-// Font URL - served from GitHub Pages
-export const FONT_URL =
-  'https://paulhermany.github.io/diagram-creator/fonts/AllertaStencil-Regular.ttf'
+// Font URL - served alongside the web app
+export const FONT_URL = '/fonts/AllertaStencil-Regular.ttf'
+
+// Module-level font cache (populated by loadStencilFont)
+let _font: unknown = null
+
+/**
+ * Load the AllertaStencil font and cache it for use in generateRadiusTemplateSvg.
+ * Call this once during app initialization before generating radius templates.
+ */
+export async function loadStencilFont(url = FONT_URL): Promise<void> {
+  try {
+    _font = await opentype.load(url)
+  } catch (e) {
+    console.warn('Could not load stencil font:', e)
+    _font = null
+  }
+}
 
 // ============================================================================
 // textToSvgPath
@@ -94,7 +110,7 @@ export function textToSvgPath(
  */
 export function generateRadiusTemplateSvg(
   params: Params,
-  font: unknown = null,
+  font: unknown = _font,
 ): string {
   const fingerboard_radius = (params['fingerboard_radius'] as number) ?? 41.0
   const fb_width_at_end = (params['fingerboard_width_at_end'] as number) ?? 42.0

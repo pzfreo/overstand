@@ -32,6 +32,8 @@ import { getUiMetadataBundle } from './ui_metadata'
 
 import { calculateFretPositions } from './geometry_engine'
 
+export { loadStencilFont } from './radius_template'
+
 import type { Params } from './geometry_engine'
 
 // ---------------------------------------------------------------------------

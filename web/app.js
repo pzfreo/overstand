@@ -16,7 +16,7 @@ import { updateAuthUI, showLoginModal, refreshCloudPresets } from './auth-ui.js'
 import { showLoadProfileModal, closeLoadProfileModal, switchProfileTab, setLoadPresetCallback } from './profile-modal.js';
 import { handleCloudSave, handleShare, handleMenuPublish, handleShareURL, handleShareSave, closeShareModal, handleShareCopy, shareViaEmail, shareViaWhatsApp, shareViaFacebook } from './share.js';
 import { initKeyboardShortcuts, setKeyboardActions } from './keyboard.js';
-import { getParameterDefinitions, getDerivedValueMetadata, getUiMetadata } from '/dist/instrument_generator.js';
+import { getParameterDefinitions, getDerivedValueMetadata, getUiMetadata, loadStencilFont } from '/dist/instrument_generator.js';
 
 // Wire up circular dependency callbacks
 setGenerationCallbacks({ updateDerivedValues, debouncedGenerate });
@@ -188,6 +188,9 @@ async function initializeEngine() {
         } else {
             console.error('Failed to load UI metadata:', uiMetaResult.error);
         }
+
+        ui.setStatus('loading', 'Loading fonts...');
+        await loadStencilFont();
 
         ui.setStatus('loading', 'Building interface...');
         state.presets = await loadPresetsFromDirectory();
