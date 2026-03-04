@@ -441,6 +441,11 @@ export function populatePresets() {
             option.title = preset.description;
             select.appendChild(option);
         }
+
+        // Default to violin preset if available, otherwise first option
+        if (select.querySelector('option[value="violin"]')) {
+            select.value = 'violin';
+        }
     } else {
         // Fallback to legacy file-based presets
         select.innerHTML = '<option value="">-- Custom --</option>';
