@@ -49,7 +49,7 @@ const CDN_URLS = [
 ];
 
 /**
- * Install event - cache app shell and Python modules immediately
+ * Install event - cache app shell immediately
  */
 self.addEventListener('install', (event) => {
   console.log(`[ServiceWorker] Installing... (${ENVIRONMENT}, ${CACHE_NAME})`);
