@@ -1178,8 +1178,8 @@ PARAMETER_REGISTRY: Dict[str, UnifiedParameter] = {
         role=ParameterRole.OUTPUT_ONLY,
         output_config=OutputConfig(
             decimals=1,
-            visible=True,
-            category='Geometry',
+            visible=False,
+            category='Internal',
             order=10
         )
     ),
@@ -1298,8 +1298,8 @@ PARAMETER_REGISTRY: Dict[str, UnifiedParameter] = {
         role=ParameterRole.OUTPUT_ONLY,
         output_config=OutputConfig(
             decimals=1,
-            visible=True,
-            category='Geometry',
+            visible=False,
+            category='Internal',
             order=11
         )
     ),

@@ -1132,8 +1132,8 @@ export const PARAMETER_REGISTRY: Record<string, UnifiedParameter> = {
     role: ParameterRole.OUTPUT_ONLY,
     output_config: {
       decimals: 1,
-      visible: true,
-      category: 'Geometry',
+      visible: false,
+      category: 'Internal',
       order: 10,
     },
   }),
@@ -1252,8 +1252,8 @@ export const PARAMETER_REGISTRY: Record<string, UnifiedParameter> = {
     role: ParameterRole.OUTPUT_ONLY,
     output_config: {
       decimals: 1,
-      visible: true,
-      category: 'Geometry',
+      visible: false,
+      category: 'Internal',
       order: 11,
     },
   }),
