@@ -673,7 +673,7 @@ export class ExportSVG {
     if (filename) {
       // In browser context, cannot write to files directly.
       // In Node/test context this could be added, but mirrors Python behavior.
-      // eslint-disable-next-line no-console
+       
       console.warn('ExportSVG.write: filename parameter is ignored in TypeScript port')
     }
 

@@ -302,7 +302,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const isDark = html.getAttribute('data-theme') === 'dark';
         const newTheme = isDark ? 'light' : 'dark';
         html.setAttribute('data-theme', newTheme);
-        try { localStorage.setItem('overstand-theme', newTheme); } catch(e) {}
+        try { localStorage.setItem('overstand-theme', newTheme); } catch { /* localStorage unavailable */ }
 
         const icon = isDark ? '🌙' : '☀️';
         const toolbarThemeIcon = document.querySelector('#toolbar-theme .icon');

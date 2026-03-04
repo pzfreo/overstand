@@ -97,7 +97,7 @@ function extractTextContents(svg: string): string[] {
   let m: RegExpExecArray | null
   while ((m = textRe.exec(svg)) !== null) {
     // Strip any inner tags (like <tspan>)
-    let content = m[1]!.replace(/<[^>]*>/g, '').trim()
+    const content = m[1]!.replace(/<[^>]*>/g, '').trim()
     if (content) {
       results.push(content)
     }

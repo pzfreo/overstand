@@ -10,15 +10,24 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "test:e2e": "npx playwright test"
+    "test:e2e": "npx playwright test",
+    "lint": "eslint src-ts/ web/",
+    "lint:fix": "eslint src-ts/ web/ --fix",
+    "format": "prettier --write 'src-ts/**/*.ts' 'web/**/*.js'",
+    "format:check": "prettier --check 'src-ts/**/*.ts' 'web/**/*.js'"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.50.0",
     "@types/node": "^25.3.3",
     "@vitest/coverage-v8": "^4.0.18",
+    "eslint": "^10.0.2",
+    "eslint-config-prettier": "^10.1.8",
     "jsdom": "^26.1.0",
+    "prettier": "^3.8.1",
     "serve": "^14.2.0",
     "typescript": "^5.9.3",
+    "typescript-eslint": "^8.56.1",
     "vite": "^7.3.1",
     "vitest": "^4.0.18"
   },
