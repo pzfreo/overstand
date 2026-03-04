@@ -18,25 +18,8 @@ import {
   InstrumentType,
 } from './types'
 
-// ============================================================
-// INTERFACES
-// ============================================================
-
-export interface InputConfig {
-  min_val: number
-  max_val: number
-  default: number | boolean | string
-  step: number
-  visible_when: Record<string, string | string[]> | null
-  category: string
-}
-
-export interface OutputConfig {
-  decimals: number
-  visible: boolean
-  category: string
-  order: number
-}
+import type { InputConfig, OutputConfig } from './types'
+export type { InputConfig, OutputConfig } from './types'
 
 // ============================================================
 // UNIFIED PARAMETER CLASS

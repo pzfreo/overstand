@@ -28,16 +28,11 @@ import {
   calculateCrossSectionGeometry,
 } from './geometry_engine'
 
-import type { Params } from './geometry_engine'
+import type { Params, DerivedValues } from './types'
+export type { DerivedValues } from './types'
 
 import { renderSideView, renderCrossSectionView } from './svg_renderer'
 import { generateRadiusTemplateSvg } from './radius_template'
-
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
-export type DerivedValues = Record<string, number | null>
 
 // ---------------------------------------------------------------------------
 // calculateDerivedValues

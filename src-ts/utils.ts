@@ -5,7 +5,7 @@
  * error handling, and small math helpers.
  */
 
-import type { Params } from './geometry_engine'
+import type { Params } from './types'
 
 // ---------------------------------------------------------------------------
 // Angle conversion

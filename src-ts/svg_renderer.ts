@@ -33,9 +33,7 @@ import {
   createAngleDimension,
 } from './dimension_helpers'
 
-import type { Params } from './geometry_engine'
-
-export type DerivedValues = Record<string, number | null | undefined>
+import type { Params, DerivedValues } from './types'
 
 // ============================================================================
 // setupExporter

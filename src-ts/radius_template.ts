@@ -21,7 +21,7 @@ import {
   SVG_MARGIN,
 } from './constants'
 
-type Params = Record<string, number | boolean | string | null | undefined>
+import type { Params } from './types'
 
 // Font URL - served alongside the web app
 export const FONT_URL = '/fonts/AllertaStencil-Regular.ttf'

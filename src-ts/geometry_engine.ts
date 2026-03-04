@@ -17,11 +17,12 @@ import {
 } from './constants'
 
 // ---------------------------------------------------------------------------
-// Type aliases
+// Type aliases (canonical definitions in types.ts, re-exported for
+// backwards compatibility with existing importers)
 // ---------------------------------------------------------------------------
 
-export type Point2D = [number, number]
-export type Params = Record<string, number | boolean | string | null | undefined>
+export type { Point2D, Params } from './types'
+import type { Point2D, Params } from './types'
 
 // ---------------------------------------------------------------------------
 // calculateSagitta
