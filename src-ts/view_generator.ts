@@ -7,7 +7,8 @@
  */
 
 import { calculateFretPositions } from './geometry_engine'
-import type { Params } from './geometry_engine'
+import type { Params } from './types'
+import { getNumParam, getStringParam } from './utils'
 
 // ============================================================================
 // generateFretPositionsView
@@ -27,9 +28,8 @@ export function generateFretPositionsView(params: Params): {
   vsl?: number
   no_frets?: number
 } {
-  const vsl = (params['vsl'] as number) || 0
-  const instrument_family =
-    (params['instrument_family'] as string) || 'VIOLIN'
+  const vsl = getNumParam(params, 'vsl')
+  const instrument_family = getStringParam(params, 'instrument_family', 'VIOLIN')
 
   let no_frets: number
   if (params['no_frets'] != null) {

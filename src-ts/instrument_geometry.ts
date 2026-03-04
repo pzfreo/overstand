@@ -31,6 +31,8 @@ import {
 import type { Params, DerivedValues } from './types'
 export type { DerivedValues } from './types'
 
+import { toDegrees, toRadians, getNumParam, getStringParam } from './utils'
+
 import { renderSideView, renderCrossSectionView } from './svg_renderer'
 import { generateRadiusTemplateSvg } from './radius_template'
 
@@ -49,8 +51,8 @@ import { generateRadiusTemplateSvg } from './radius_template'
 export function calculateDerivedValues(params: Params): DerivedValues {
   const derived: DerivedValues = {}
 
-  const vsl = (params['vsl'] as number) || 0
-  const instrumentFamily = (params['instrument_family'] as string) || 'VIOLIN'
+  const vsl = getNumParam(params, 'vsl')
+  const instrumentFamily = getStringParam(params, 'instrument_family', 'VIOLIN')
 
   // Determine number of frets
   let noFrets: number
@@ -66,7 +68,7 @@ export function calculateDerivedValues(params: Params): DerivedValues {
 
   // For guitar family, ensure we calculate enough frets for fret_join and
   // the 12th fret reference used in string height interpolation
-  const fretJoin = (params['fret_join'] as number) || 12
+  const fretJoin = getNumParam(params, 'fret_join', 12)
   if (instrumentFamily === 'GUITAR_MANDOLIN') {
     noFrets = Math.max(noFrets, fretJoin, 12)
   }
@@ -156,26 +158,26 @@ export function calculateDerivedValues(params: Params): DerivedValues {
   Object.assign(derived, stringHeightResult)
 
   // Add degree versions of internal angles for display
-  derived['neck_line_angle_deg'] = derived['neck_line_angle']! * 180 / Math.PI
-  derived['fb_direction_angle_deg'] = derived['fb_direction_angle']! * 180 / Math.PI
+  derived['neck_line_angle_deg'] = toDegrees(derived['neck_line_angle']!)
+  derived['fb_direction_angle_deg'] = toDegrees(derived['fb_direction_angle']!)
 
   // Calculate afterlength angle (angle of string from bridge to tailpiece relative to ribs)
   // Positive angle indicates downward slope from bridge to tailpiece
-  const bodyLength = (params['body_length'] as number) || 0
-  const bellyEdgeThickness = (params['belly_edge_thickness'] as number) || 0
-  const tailpieceHeight = (params['tailpiece_height'] as number) || 0
+  const bodyLength = getNumParam(params, 'body_length')
+  const bellyEdgeThickness = getNumParam(params, 'belly_edge_thickness')
+  const tailpieceHeight = getNumParam(params, 'tailpiece_height')
 
   const dx = bodyLength - derived['bridge_top_x']!
   const dy = derived['bridge_top_y']! - (bellyEdgeThickness + tailpieceHeight)
-  derived['afterlength_angle'] = Math.atan2(dy, dx) * 180 / Math.PI
+  derived['afterlength_angle'] = toDegrees(Math.atan2(dy, dx))
 
   // Calculate string break angle at the bridge
   derived['string_break_angle'] = 180 - derived['string_angle_to_ribs']! - derived['afterlength_angle']!
 
   // Calculate percentage of string tension pushing downward on the belly
   // Convert angles from degrees to radians for sin calculation
-  const stringAngleRad = derived['string_angle_to_ribs']! * Math.PI / 180
-  const afterlengthAngleRad = derived['afterlength_angle']! * Math.PI / 180
+  const stringAngleRad = toRadians(derived['string_angle_to_ribs']!)
+  const afterlengthAngleRad = toRadians(derived['afterlength_angle']!)
   derived['downward_force_percent'] = (Math.sin(stringAngleRad) + Math.sin(afterlengthAngleRad)) * 100
 
   // Calculate viol-specific back break geometry

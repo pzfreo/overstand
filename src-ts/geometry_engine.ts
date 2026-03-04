@@ -16,6 +16,16 @@ import {
   EPSILON,
 } from './constants'
 
+import {
+  toRadians,
+  toDegrees,
+  getNumParam,
+  getNumParamNullish,
+  getStringParam,
+  lerp,
+  magnitude,
+} from './utils'
+
 // ---------------------------------------------------------------------------
 // Type aliases (canonical definitions in types.ts, re-exported for
 // backwards compatibility with existing importers)
@@ -160,7 +170,7 @@ export function calculateBlendCurve(args: BlendCurveArgs): BlendCurveResult {
   // Calculate curve length (approximate straight-line distance)
   const dx = p3[0] - p0[0]
   const dy = p3[1] - p0[1]
-  const curveLength = Math.sqrt(dx * dx + dy * dy)
+  const curveLength = magnitude(dx, dy)
 
   // Control point distances (1/3 of curve length is standard heuristic)
   const t1 = curveLength / 3.0
@@ -170,7 +180,7 @@ export function calculateBlendCurve(args: BlendCurveArgs): BlendCurveResult {
   let cp1: Point2D
   if (dxStraight > EPSILON) {
     // Normalize the incoming tangent
-    const tangentLength = Math.sqrt(dxStraight * dxStraight + dyStraight * dyStraight)
+    const tangentLength = magnitude(dxStraight, dyStraight)
     const tangentDx = dxStraight / tangentLength
     const tangentDy = dyStraight / tangentLength
     cp1 = [p0[0] + t1 * tangentDx, p0[1] + t1 * tangentDy]
@@ -225,11 +235,11 @@ export interface FingerboadThicknessResult {
  * Calculate fingerboard thickness including sagitta for radiused fingerboard.
  */
 export function calculateFingerboadThickness(params: Params): FingerboadThicknessResult {
-  const fingerboadRadius = (params['fingerboard_radius'] as number | null | undefined) ?? DEFAULT_FINGERBOARD_RADIUS
-  const fbVisibleHeightAtNut = (params['fb_visible_height_at_nut'] as number | null | undefined) ?? DEFAULT_FB_VISIBLE_HEIGHT_AT_NUT
-  const fbVisibleHeightAtJoin = (params['fb_visible_height_at_join'] as number | null | undefined) ?? DEFAULT_FB_VISIBLE_HEIGHT_AT_JOIN
-  const fbWidthAtNut = (params['fingerboard_width_at_nut'] as number | null | undefined) ?? DEFAULT_FB_WIDTH_AT_NUT
-  const fbWidthAtJoin = (params['fingerboard_width_at_end'] as number | null | undefined) ?? DEFAULT_FB_WIDTH_AT_END
+  const fingerboadRadius = getNumParamNullish(params, 'fingerboard_radius', DEFAULT_FINGERBOARD_RADIUS)
+  const fbVisibleHeightAtNut = getNumParamNullish(params, 'fb_visible_height_at_nut', DEFAULT_FB_VISIBLE_HEIGHT_AT_NUT)
+  const fbVisibleHeightAtJoin = getNumParamNullish(params, 'fb_visible_height_at_join', DEFAULT_FB_VISIBLE_HEIGHT_AT_JOIN)
+  const fbWidthAtNut = getNumParamNullish(params, 'fingerboard_width_at_nut', DEFAULT_FB_WIDTH_AT_NUT)
+  const fbWidthAtJoin = getNumParamNullish(params, 'fingerboard_width_at_end', DEFAULT_FB_WIDTH_AT_END)
 
   const sagittaAtNut = calculateSagitta(fingerboadRadius || DEFAULT_FINGERBOARD_RADIUS, fbWidthAtNut || DEFAULT_FB_WIDTH_AT_NUT)
   const sagittaAtJoin = calculateSagitta(fingerboadRadius || DEFAULT_FINGERBOARD_RADIUS, fbWidthAtJoin || DEFAULT_FB_WIDTH_AT_END)
@@ -267,26 +277,25 @@ export function calculateStringAnglesViolin(
   vsl: number,
   fbThicknessAtJoin: number
 ): StringAnglesViolinResult {
-  const bodyStop = (params['body_stop'] as number) || 0
-  const archingHeight = (params['arching_height'] as number) || 0
-  const bridgeHeight = (params['bridge_height'] as number) || 0
-  const overstand = (params['overstand'] as number) || 0
-  const stringHeightNut = (params['string_height_nut'] as number) || 0
-  const stringHeightEof = (params['string_height_eof'] as number) || 0
-  const fingerboadLength = (params['fingerboard_length'] as number) || 0
+  const bodyStop = getNumParam(params, 'body_stop')
+  const archingHeight = getNumParam(params, 'arching_height')
+  const bridgeHeight = getNumParam(params, 'bridge_height')
+  const overstand = getNumParam(params, 'overstand')
+  const stringHeightNut = getNumParam(params, 'string_height_nut')
+  const stringHeightEof = getNumParam(params, 'string_height_eof')
+  const fingerboadLength = getNumParam(params, 'fingerboard_length')
 
   const stringHeightAtJoin =
     ((stringHeightEof - stringHeightNut) * ((vsl - bodyStop) / fingerboadLength)) +
     stringHeightNut
   const opposite = archingHeight + bridgeHeight - overstand - fbThicknessAtJoin - stringHeightAtJoin
   const stringAngleToRibsRad = Math.atan(opposite / bodyStop)
-  const stringAngleToRibs = (stringAngleToRibsRad * 180) / Math.PI
-  const stringToJoin = Math.sqrt(opposite ** 2 + bodyStop ** 2)
+  const stringAngleToRibs = toDegrees(stringAngleToRibsRad)
+  const stringToJoin = magnitude(opposite, bodyStop)
   const stringNutToJoin = vsl - stringToJoin
   const neckStop = Math.cos(stringAngleToRibsRad) * stringNutToJoin
   const oppositeStringToFb = stringHeightEof - stringHeightNut
-  const stringAngleToFb =
-    Math.atan(oppositeStringToFb / fingerboadLength) * (180 / Math.PI)
+  const stringAngleToFb = toDegrees(Math.atan(oppositeStringToFb / fingerboadLength))
   const fretJoinPosition =
     stringToJoin > 0 && vsl > 0 ? 12 * Math.log2(vsl / stringToJoin) : null
 
@@ -323,12 +332,12 @@ export function calculateStringAnglesGuitar(
   fretPositions: number[],
   fbThicknessAtJoin: number
 ): StringAnglesGuitarResult {
-  const fretJoin = (params['fret_join'] as number) || 12
-  const stringHeightNut = (params['string_height_nut'] as number) || 0
-  const stringHeight12thFret = (params['string_height_12th_fret'] as number) || 0
-  const archingHeight = (params['arching_height'] as number) || 0
-  const bridgeHeight = (params['bridge_height'] as number) || 0
-  const overstand = (params['overstand'] as number) || 0
+  const fretJoin = getNumParam(params, 'fret_join', 12)
+  const stringHeightNut = getNumParam(params, 'string_height_nut')
+  const stringHeight12thFret = getNumParam(params, 'string_height_12th_fret')
+  const archingHeight = getNumParam(params, 'arching_height')
+  const bridgeHeight = getNumParam(params, 'bridge_height')
+  const overstand = getNumParam(params, 'overstand')
 
   // fretPositions is 0-indexed: index 0 = fret 1, index N-1 = fret N
   const fretJoinIdx = fretJoin - 1
@@ -353,13 +362,12 @@ export function calculateStringAnglesGuitar(
   }
 
   const stringAngleToRibsRad = Math.asin(sinValue)
-  const stringAngleToRibs = (stringAngleToRibsRad * 180) / Math.PI
+  const stringAngleToRibs = toDegrees(stringAngleToRibsRad)
   const stringNutToJoin = fretPosAtJoin
   const neckStop = Math.cos(stringAngleToRibsRad) * stringNutToJoin
   const bodyStop = Math.cos(stringAngleToRibsRad) * hypotenuse
   const oppositeStringToJoin = stringHeightAtJoin - stringHeightNut
-  const stringAngleToFb =
-    Math.atan(oppositeStringToJoin / fretPosAtJoin) * (180 / Math.PI)
+  const stringAngleToFb = toDegrees(Math.atan(oppositeStringToJoin / fretPosAtJoin))
 
   return {
     body_stop: bodyStop,
@@ -407,31 +415,29 @@ export function calculateNeckGeometry(
   fbThicknessAtJoin: number,
   bodyStop: number | null = null
 ): NeckGeometryResult {
-  const archingHeight = (params['arching_height'] as number) || 0
-  const bridgeHeight = (params['bridge_height'] as number) || 0
-  const overstand = (params['overstand'] as number) || 0
-  const stringHeightNut = (params['string_height_nut'] as number) || 0
+  const archingHeight = getNumParam(params, 'arching_height')
+  const bridgeHeight = getNumParam(params, 'bridge_height')
+  const overstand = getNumParam(params, 'overstand')
+  const stringHeightNut = getNumParam(params, 'string_height_nut')
 
   // Use passed bodyStop (for GUITAR_MANDOLIN) or fall back to params (for VIOLIN/VIOL)
-  const bridgeTopX = bodyStop !== null ? bodyStop : ((params['body_stop'] as number) ?? 0)
+  const bridgeTopX = bodyStop !== null ? bodyStop : getNumParamNullish(params, 'body_stop', 0)
   const bridgeTopY = archingHeight + bridgeHeight
   const nutTopX = -neckStop
   const nutTopY = bridgeTopY - Math.sin(stringAngleToRibsRad) * vsl
 
   const oppositeFb = fbThicknessAtJoin - fbThicknessAtNut
-  const fingerboadAngle = Math.atan(oppositeFb / neckStop) * (180 / Math.PI)
+  const fingerboadAngle = toDegrees(Math.atan(oppositeFb / neckStop))
   const neckAngle =
-    90 - ((stringAngleToRibsRad * 180) / Math.PI - stringAngleToFb - fingerboadAngle)
-  const neckAngleRad = (neckAngle * Math.PI) / 180
+    90 - (toDegrees(stringAngleToRibsRad) - stringAngleToFb - fingerboadAngle)
+  const neckAngleRad = toRadians(neckAngle)
 
   const neckEndX = 0 - neckStop + Math.cos(neckAngleRad) * fbThicknessAtNut
   const neckEndY = overstand - neckStop * Math.cos(neckAngleRad)
   const nutDrawRadius = fbThicknessAtNut + stringHeightNut
   const neckLineAngle = Math.atan2(neckEndY - overstand, neckEndX - 0)
 
-  const stringLength = Math.sqrt(
-    (bridgeTopX - nutTopX) ** 2 + (bridgeTopY - nutTopY) ** 2
-  )
+  const stringLength = magnitude(bridgeTopX - nutTopX, bridgeTopY - nutTopY)
 
   return {
     neck_angle: neckAngle,
@@ -473,13 +479,12 @@ export function calculateFingerboadGeometry(
   fbThicknessAtNut: number,
   fbThicknessAtJoin: number
 ): FingerboadGeometryResult {
-  const fingerboadLength = (params['fingerboard_length'] as number) || 0
+  const fingerboadLength = getNumParam(params, 'fingerboard_length')
 
   const fbDirectionAngle = neckLineAngle + Math.PI
   const fbBottomEndX = neckEndX + fingerboadLength * Math.cos(fbDirectionAngle)
   const fbBottomEndY = neckEndY + fingerboadLength * Math.sin(fbDirectionAngle)
-  const fbThicknessAtEnd =
-    fbThicknessAtNut + (fbThicknessAtJoin - fbThicknessAtNut) * (fingerboadLength / neckStop)
+  const fbThicknessAtEnd = lerp(fbThicknessAtNut, fbThicknessAtJoin, fingerboadLength / neckStop)
 
   return {
     fb_direction_angle: fbDirectionAngle,
@@ -520,7 +525,7 @@ export function calculateStringHeightAndDimensions(
   fbDirectionAngle: number,
   fbThicknessAtEnd: number
 ): StringHeightAndDimensionsResult {
-  const overstand = (params['overstand'] as number) || 0
+  const overstand = getNumParam(params, 'overstand')
 
   const perpAngle = fbDirectionAngle + Math.PI / 2
   const fbTopRightX = fbBottomEndX + fbThicknessAtEnd * Math.cos(perpAngle)
@@ -545,9 +550,7 @@ export function calculateStringHeightAndDimensions(
       ((0 - nutTopX) * perpNeckDy - (overstand - nutTopY) * perpNeckDx) / det
     intersectX = nutTopX + t * stringDx
     intersectY = nutTopY + t * stringDy
-    nutToPerp = Math.sqrt(
-      (intersectX - nutTopX) ** 2 + (intersectY - nutTopY) ** 2
-    )
+    nutToPerp = magnitude(intersectX - nutTopX, intersectY - nutTopY)
   } else {
     intersectX = 0.0
     intersectY = 0.0
@@ -625,8 +628,8 @@ export function calculateFingerboadThicknessAtFret(
   params: Params,
   fretNumber: number
 ): FingerboadThicknessAtFretResult {
-  const vsl = (params['vsl'] as number) || 0
-  const fingerboadLength = (params['fingerboard_length'] as number) || 0
+  const vsl = getNumParam(params, 'vsl')
+  const fingerboadLength = getNumParam(params, 'fingerboard_length')
 
   const fretPositions = calculateFretPositions(vsl, fretNumber)
   const fretDistance = fretPositions[fretNumber - 1]!
@@ -642,7 +645,7 @@ export function calculateFingerboadThicknessAtFret(
     t = 0.0
   }
 
-  const fbThicknessAtFret = fbThicknessAtNut + (fbThicknessAtJoin - fbThicknessAtNut) * t
+  const fbThicknessAtFret = lerp(fbThicknessAtNut, fbThicknessAtJoin, t)
 
   return {
     fret_distance_from_nut: fretDistance,
@@ -668,14 +671,14 @@ export interface ViolBackBreakResult {
  * Calculate viol back break geometry.
  */
 export function calculateViolBackBreak(params: Params): ViolBackBreakResult {
-  const breakAngleDeg = (params['break_angle'] as number) ?? 15.0
-  const topBlockHeight = (params['top_block_height'] as number) ?? 40.0
-  const ribHeight = (params['rib_height'] as number) ?? 100.0
-  const bodyLength = (params['body_length'] as number) ?? 355.0
-  const bellyEdgeThickness = (params['belly_edge_thickness'] as number) ?? 3.5
+  const breakAngleDeg = getNumParamNullish(params, 'break_angle', 15.0)
+  const topBlockHeight = getNumParamNullish(params, 'top_block_height', 40.0)
+  const ribHeight = getNumParamNullish(params, 'rib_height', 100.0)
+  const bodyLength = getNumParamNullish(params, 'body_length', 355.0)
+  const bellyEdgeThickness = getNumParamNullish(params, 'belly_edge_thickness', 3.5)
 
   // Convert angle to radians
-  const breakAngleRad = (breakAngleDeg * Math.PI) / 180
+  const breakAngleRad = toRadians(breakAngleDeg)
 
   // Y coordinates (belly is at bellyEdgeThickness, back is at bellyEdgeThickness - ribHeight)
   const bellyY = bellyEdgeThickness
@@ -760,35 +763,35 @@ export interface CrossSectionGeometryResult {
  */
 export function calculateCrossSectionGeometry(params: Params): CrossSectionGeometryResult {
   // Get instrument family to determine block height
-  const instrumentFamily = (params['instrument_family'] as string) ?? 'VIOLIN'
+  const instrumentFamily = getStringParam(params, 'instrument_family', 'VIOLIN')
 
   // Block height varies by instrument family
   let blockHeight: number
   if (instrumentFamily === 'VIOL') {
-    blockHeight =
-      ((params['top_block_height'] as number) ?? null) ??
-      ((params['rib_height'] as number) ?? 35.0)
+    const topBlock = params['top_block_height']
+    blockHeight = typeof topBlock === 'number'
+      ? topBlock
+      : getNumParamNullish(params, 'rib_height', 35.0)
   } else {
-    blockHeight = (params['rib_height'] as number) ?? 35.0
+    blockHeight = getNumParamNullish(params, 'rib_height', 35.0)
   }
 
   // Get width parameters
-  const buttonWidth = (params['button_width_at_join'] as number) ?? 28.0
-  const neckWidthAtRibs = (params['neck_width_at_top_of_ribs'] as number) ?? 30.0
-  const overstand = (params['overstand'] as number) ?? 6.0
-  const bellyEdgeThickness = (params['belly_edge_thickness'] as number) ?? 3.5
+  const buttonWidth = getNumParamNullish(params, 'button_width_at_join', 28.0)
+  const neckWidthAtRibs = getNumParamNullish(params, 'neck_width_at_top_of_ribs', 30.0)
+  const overstand = getNumParamNullish(params, 'overstand', 6.0)
+  const bellyEdgeThickness = getNumParamNullish(params, 'belly_edge_thickness', 3.5)
 
   // Fingerboard parameters
-  const fbWidthAtNut = (params['fingerboard_width_at_nut'] as number) ?? DEFAULT_FB_WIDTH_AT_NUT
-  const fbWidthAtEnd = (params['fingerboard_width_at_end'] as number) ?? DEFAULT_FB_WIDTH_AT_END
-  const fingerboadLength = (params['fingerboard_length'] as number) ?? 270.0
-  const fingerboadRadius = (params['fingerboard_radius'] as number) ?? DEFAULT_FINGERBOARD_RADIUS
-  const fbVisibleHeightAtJoin =
-    (params['fb_visible_height_at_join'] as number) ?? DEFAULT_FB_VISIBLE_HEIGHT_AT_JOIN
+  const fbWidthAtNut = getNumParamNullish(params, 'fingerboard_width_at_nut', DEFAULT_FB_WIDTH_AT_NUT)
+  const fbWidthAtEnd = getNumParamNullish(params, 'fingerboard_width_at_end', DEFAULT_FB_WIDTH_AT_END)
+  const fingerboadLength = getNumParamNullish(params, 'fingerboard_length', 270.0)
+  const fingerboadRadius = getNumParamNullish(params, 'fingerboard_radius', DEFAULT_FINGERBOARD_RADIUS)
+  const fbVisibleHeightAtJoin = getNumParamNullish(params, 'fb_visible_height_at_join', DEFAULT_FB_VISIBLE_HEIGHT_AT_JOIN)
 
   // Calculate neck_stop to determine position along fingerboard
-  const vsl = (params['vsl'] as number) ?? 330.0
-  const bodyStop = (params['body_stop'] as number) ?? 195.0
+  const vsl = getNumParamNullish(params, 'vsl', 330.0)
+  const bodyStop = getNumParamNullish(params, 'body_stop', 195.0)
   const neckStop = vsl - bodyStop
 
   // Interpolate fingerboard width at body join
@@ -799,8 +802,7 @@ export function calculateCrossSectionGeometry(params: Params): CrossSectionGeome
     positionRatio = 0.0
   }
 
-  const fbWidthAtBodyJoin =
-    fbWidthAtNut + (fbWidthAtEnd - fbWidthAtNut) * positionRatio
+  const fbWidthAtBodyJoin = lerp(fbWidthAtNut, fbWidthAtEnd, positionRatio)
 
   // Calculate fingerboard thickness at body join (including sagitta for curve)
   const sagittaAtJoin = calculateSagitta(fingerboadRadius, fbWidthAtBodyJoin)
@@ -818,7 +820,7 @@ export function calculateCrossSectionGeometry(params: Params): CrossSectionGeome
   const halfFbWidth = fbWidthAtBodyJoin / 2.0
 
   // Blend parameters
-  const fbBlendPercent = (params['fb_blend_percent'] as number) ?? 0.0
+  const fbBlendPercent = getNumParamNullish(params, 'fb_blend_percent', 0.0)
   const fbVisibleHeight = fbThicknessAtJoin - sagittaAtJoin // Edge height of FB
 
   // Calculate blend curve if fingerboard is wider than neck

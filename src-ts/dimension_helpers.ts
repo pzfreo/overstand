@@ -8,6 +8,8 @@
  * Ported from src/dimension_helpers.py
  */
 
+import { toDegrees, magnitude } from './utils'
+
 import {
   Edge,
   Arc,
@@ -141,7 +143,7 @@ export function createDiagonalDimension(
 
   const dx = x2 - x1
   const dy = y2 - y1
-  const length = Math.sqrt(dx * dx + dy * dy)
+  const length = magnitude(dx, dy)
 
   const perp_x = -dy / length
   const perp_y = dx / length
@@ -175,7 +177,7 @@ export function createDiagonalDimension(
   const text_y = center_y + perp_y * text_offset
 
   let angle_rad = Math.atan2(-dy, dx)
-  let angle_deg = (angle_rad * 180) / Math.PI
+  let angle_deg = toDegrees(angle_rad)
   if (angle_deg > 90) angle_deg -= 180
   else if (angle_deg < -90) angle_deg += 180
 
@@ -264,7 +266,7 @@ export function createAngleDimension(
   const line2_p2: [number, number] = [line2.position_at(1).X, line2.position_at(1).Y]
 
   const dist = (a: [number, number], b: [number, number]): number =>
-    Math.sqrt((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2)
+    magnitude(a[0] - b[0], a[1] - b[1])
 
   const tolerance = 0.01
 
@@ -290,7 +292,7 @@ export function createAngleDimension(
   const angle2 = Math.atan2(dir2_point[1] - jy, dir2_point[0] - jx)
 
   const angle_diff = angle2 - angle1
-  let angle_deg = ((angle_diff * 180) / Math.PI) % 360
+  let angle_deg = toDegrees(angle_diff) % 360
   if (angle_deg > 180) angle_deg = 360 - angle_deg
 
   const effective_label = label !== null ? label : `${angle_deg.toFixed(1)}°`
@@ -298,7 +300,7 @@ export function createAngleDimension(
   if (line_extension > 0) {
     const dx1 = dir1_point[0] - jx
     const dy1 = dir1_point[1] - jy
-    const len1 = Math.sqrt(dx1 * dx1 + dy1 * dy1)
+    const len1 = magnitude(dx1, dy1)
     if (len1 > 0) {
       const ext1_point: [number, number] = [
         dir1_point[0] + (dx1 / len1) * line_extension,
@@ -309,7 +311,7 @@ export function createAngleDimension(
 
     const dx2 = dir2_point[0] - jx
     const dy2 = dir2_point[1] - jy
-    const len2 = Math.sqrt(dx2 * dx2 + dy2 * dy2)
+    const len2 = magnitude(dx2, dy2)
     if (len2 > 0) {
       const ext2_point: [number, number] = [
         dir2_point[0] + (dx2 / len2) * line_extension,

@@ -35,6 +35,8 @@ import {
 
 import type { Params, DerivedValues } from './types'
 
+import { getNumParam, getNumParamNullish, getStringParam, getBoolParam, toDegrees, magnitude } from './utils'
+
 // ============================================================================
 // setupExporter
 // ============================================================================
@@ -1153,19 +1155,19 @@ export function renderSideView(
   params: Params,
   derived: DerivedValues,
 ): string {
-  const show_measurements = (params['show_measurements'] as boolean) ?? true
+  const show_measurements = getBoolParam(params, 'show_measurements', true)
 
   const exporter = setupExporter(show_measurements)
 
   const instrument_family =
-    (params['instrument_family'] as string) || 'VIOLIN'
+    getStringParam(params, 'instrument_family', 'VIOLIN')
 
-  const body_length = (params['body_length'] as number) || 0
-  const belly_edge_thickness = (params['belly_edge_thickness'] as number) || 0
-  const rib_height = (params['rib_height'] as number) || 0
-  const arching_height = (params['arching_height'] as number) || 0
-  const overstand = (params['overstand'] as number) || 0
-  const bridge_height = (params['bridge_height'] as number) || 0
+  const body_length = getNumParam(params, 'body_length')
+  const belly_edge_thickness = getNumParam(params, 'belly_edge_thickness')
+  const rib_height = getNumParam(params, 'rib_height')
+  const arching_height = getNumParam(params, 'arching_height')
+  const overstand = getNumParam(params, 'overstand')
+  const bridge_height = getNumParam(params, 'bridge_height')
 
   // Draw body
   if (instrument_family === 'VIOL') {
@@ -1184,7 +1186,7 @@ export function renderSideView(
       body_length,
       belly_edge_thickness,
       rib_height,
-      (params['top_block_height'] as number) || 40,
+      getNumParam(params, 'top_block_height', 40),
       derived['break_start_x'] ?? 0,
       derived['break_start_y'] ?? 0,
       derived['break_end_x'] ?? 0,
@@ -1217,9 +1219,9 @@ export function renderSideView(
 
   // Draw fingerboard
   const fb_visible_height_at_nut =
-    ((params['fb_visible_height_at_nut'] as number) || 0) || 4.5
+    getNumParam(params, 'fb_visible_height_at_nut', 4.5)
   const fb_visible_height_at_join =
-    ((params['fb_visible_height_at_join'] as number) || 0) || 4.5
+    getNumParam(params, 'fb_visible_height_at_join', 4.5)
 
   drawFingerboard(
     exporter,
@@ -1245,7 +1247,7 @@ export function renderSideView(
 
   // Add document text
   const instrument_name =
-    (params['instrument_name'] as string) || 'Instrument'
+    getStringParam(params, 'instrument_name', 'Instrument')
   addDocumentText(
     exporter,
     instrument_name,
@@ -1286,7 +1288,7 @@ export function renderSideView(
     derived['nut_perpendicular_intersection_x'] ?? 0,
     derived['nut_perpendicular_intersection_y'] ?? 0,
     derived['nut_to_perpendicular_distance'] ?? 0,
-    (params['tailpiece_height'] as number) || 0,
+    getNumParam(params, 'tailpiece_height'),
     derived['string_break_angle'] ?? 0,
     derived['downward_force_percent'] ?? 0,
   )
@@ -1313,8 +1315,8 @@ export function renderSideView(
       body_length,
       belly_edge_thickness,
       rib_height,
-      (params['top_block_height'] as number) || 40,
-      (params['break_angle'] as number) || 15,
+      getNumParam(params, 'top_block_height', 40),
+      getNumParam(params, 'break_angle', 15),
       derived['back_break_length'] ?? 0,
       derived['break_start_x'] ?? 0,
       derived['break_start_y'] ?? 0,
@@ -1337,7 +1339,7 @@ export function renderCrossSectionView(
   params: Params,
   csGeom: Record<string, number | null | undefined | [number, number]>,
 ): string {
-  const show_measurements = (params['show_measurements'] as boolean) ?? true
+  const show_measurements = getBoolParam(params, 'show_measurements', true)
 
   const exporter = setupExporter(show_measurements)
 
@@ -1376,7 +1378,7 @@ export function renderCrossSectionView(
     (csGeom['neck_block_max_width'] as number | null) ?? null,
   )
 
-  const instrument_name = (params['instrument_name'] as string) || 'Instrument'
+  const instrument_name = getStringParam(params, 'instrument_name', 'Instrument')
   let title_text = new Text(
     `${instrument_name} - Neck Cross-Section`,
     TITLE_FONT_SIZE,

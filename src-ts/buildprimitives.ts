@@ -7,6 +7,8 @@
  * Ported from src/buildprimitives.py
  */
 
+import { toRgbString } from './utils'
+
 // ============================================================================
 // Font Configuration
 // ============================================================================
@@ -370,7 +372,7 @@ export class Text {
     y_flipped: boolean = false,
   ): string {
     const color = fill_color
-      ? `rgb(${fill_color[0]},${fill_color[1]},${fill_color[2]})`
+      ? toRgbString(fill_color)
       : 'black'
 
     if (y_flipped) {
@@ -459,7 +461,7 @@ export class ExportSVG {
       return 'stroke="none" fill="none"'
     }
 
-    const color = `rgb(${line_color[0]},${line_color[1]},${line_color[2]})`
+    const color = toRgbString(line_color)
 
     let stroke_dasharray = ''
     if (layer.line_type === LineType.DASHED) {
@@ -643,7 +645,7 @@ export class ExportSVG {
             const layerCfg = this.layers.get(layer_name)
             if (layerCfg?.fill_color) {
               const fc = layerCfg.fill_color
-              fill = `rgb(${fc[0]},${fc[1]},${fc[2]})`
+              fill = toRgbString(fc)
             } else {
               fill = 'black'
             }
