@@ -43,14 +43,21 @@ export async function loadStencilFont(url = FONT_URL): Promise<void> {
 }
 
 // ============================================================================
-// mirrorPathDataX
+// SVG path coordinate transformation
 // ============================================================================
 
 /**
- * Negate all X coordinates in an SVG absolute path data string.
+ * Transform coordinates in an SVG absolute path data string.
  * Only handles absolute commands (M, L, C, Q, Z) as output by opentype.js.
+ *
+ * @param xTransform - applied to every X coordinate (even indices: 0, 2, 4, ...)
+ * @param yTransform - applied to every Y coordinate (odd indices: 1, 3, 5, ...)
  */
-export function mirrorPathDataX(d: string): string {
+function transformPathCoords(
+  d: string,
+  xTransform: (val: number) => number,
+  yTransform: (val: number) => number,
+): string {
   const tokens = d.match(/[MLCQZmlcqz]|[-+]?[0-9]*\.?[0-9]+/g) ?? []
   const out: string[] = []
   const coordCounts: Record<string, number> = { M: 2, L: 2, C: 6, Q: 4, m: 2, l: 2, c: 6, q: 4 }
@@ -62,53 +69,30 @@ export function mirrorPathDataX(d: string): string {
     const n = coordCounts[t] ?? 0
     for (let j = 0; j < n; j++) {
       const val = parseFloat(tokens[i++])
-      out.push(j % 2 === 0 ? `${-val}` : `${val}`)
+      out.push(`${j % 2 === 0 ? xTransform(val) : yTransform(val)}`)
     }
   }
   return out.join(' ')
 }
 
-// ============================================================================
-// preTransformTextForRotation
-// ============================================================================
+/**
+ * Negate all X coordinates in an SVG absolute path data string.
+ */
+export function mirrorPathDataX(d: string): string {
+  return transformPathCoords(d, x => -x, y => y)
+}
 
 /**
  * Pre-transform opentype.js text path data so that a subsequent rotate(180)
  * produces readable, correctly-oriented text cutouts.
  *
- * The problem: opentype.js uses Y-down SVG coordinates, but matplotlib's
- * TextPath (used by the Python version) uses Y-up math coordinates. After
- * rotate(180), the Y-flip converts Y-up→Y-down (Python: correct), but for
- * Y-down opentype paths the same Y-flip makes glyphs appear upside-down.
- *
- * The fix applies (x, y) → (−x, 2·baseline_y − y):
+ * Applies (x, y) → (−x, 2·baseline_y − y):
  *   • Negate X: so rotate(180)'s X-flip restores left-to-right reading order
  *   • Reflect Y around baseline_y: converts opentype Y-down to Y-up convention
  *     so rotate(180)'s Y-flip produces correctly-oriented glyphs
- *
- * This is equivalent to Python's `-(vertices[0] + x)` X-negation combined with
- * the implicit Y-up convention of matplotlib TextPath.
  */
 export function preTransformTextForRotation(d: string, baseline_y: number): string {
-  const tokens = d.match(/[MLCQZmlcqz]|[-+]?[0-9]*\.?[0-9]+/g) ?? []
-  const out: string[] = []
-  const coordCounts: Record<string, number> = { M: 2, L: 2, C: 6, Q: 4, m: 2, l: 2, c: 6, q: 4 }
-  let i = 0
-  while (i < tokens.length) {
-    const t = tokens[i++]
-    out.push(t)
-    if (t === 'Z' || t === 'z') continue
-    const n = coordCounts[t] ?? 0
-    for (let j = 0; j < n; j++) {
-      const val = parseFloat(tokens[i++])
-      if (j % 2 === 0) {
-        out.push(`${-val}`)                    // X: negate
-      } else {
-        out.push(`${2 * baseline_y - val}`)    // Y: reflect around baseline
-      }
-    }
-  }
-  return out.join(' ')
+  return transformPathCoords(d, x => -x, y => 2 * baseline_y - y)
 }
 
 // ============================================================================
