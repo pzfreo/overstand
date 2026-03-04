@@ -14,6 +14,7 @@ import {
   loadStencilFont,
   textToSvgPath,
   mirrorPathDataX,
+  preTransformTextForRotation,
   FONT_URL,
 } from '../radius_template'
 import {
@@ -246,5 +247,41 @@ describe('mirrorPathDataX', () => {
     expect(mirrored).toBe('M -5 10 L 3 4 Z')
     const restored = mirrorPathDataX(mirrored)
     expect(restored).toBe('M 5 10 L -3 4 Z')
+  })
+})
+
+// ============================================================================
+// preTransformTextForRotation
+// ============================================================================
+
+describe('preTransformTextForRotation', () => {
+  it('negates X and reflects Y around baseline for M command', () => {
+    // baseline_y=20: y → 2*20 - y = 40 - y
+    expect(preTransformTextForRotation('M 5 15', 20)).toBe('M -5 25')
+  })
+
+  it('baseline vertex stays at baseline_y', () => {
+    // y=20 at baseline_y=20: 2*20-20=20 (stays)
+    expect(preTransformTextForRotation('M 3 20', 20)).toBe('M -3 20')
+  })
+
+  it('ascender above baseline reflects below after transform', () => {
+    // y=15 (above baseline 20 in Y-down) → 2*20-15=25 (below baseline)
+    // After rotate(180) this will come back above the new baseline position
+    expect(preTransformTextForRotation('M 0 15', 20)).toBe('M 0 25')
+  })
+
+  it('handles C command (3 pairs)', () => {
+    // baseline_y=10: y → 20-y
+    expect(preTransformTextForRotation('C 1 8 3 10 5 9', 10)).toBe('C -1 12 -3 10 -5 11')
+  })
+
+  it('passes Z unchanged', () => {
+    expect(preTransformTextForRotation('Z', 10)).toBe('Z')
+  })
+
+  it('compound path: M L Z', () => {
+    // baseline_y=20
+    expect(preTransformTextForRotation('M 5 18 L 10 20 Z', 20)).toBe('M -5 22 L -10 20 Z')
   })
 })
