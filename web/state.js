@@ -1,6 +1,5 @@
 // Global state management
 export const state = {
-    pyodide: null,
     isGenerating: false,
     views: null,              // Stores all 3 SVG views + dimensions table
     currentView: 'side',      // Currently displayed view (default to side)

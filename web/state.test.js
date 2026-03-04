@@ -11,10 +11,6 @@ describe('state', () => {
       expect(typeof state).toBe('object');
     });
 
-    test('pyodide is initially null', () => {
-      expect(state.pyodide).toBeNull();
-    });
-
     test('isGenerating is initially false', () => {
       expect(state.isGenerating).toBe(false);
     });
@@ -51,7 +47,6 @@ describe('state', () => {
   describe('state properties', () => {
     test('state has all expected properties', () => {
       const expectedProps = [
-        'pyodide',
         'isGenerating',
         'views',
         'currentView',
