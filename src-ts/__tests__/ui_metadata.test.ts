@@ -184,7 +184,7 @@ describe('getUiMetadataBundle', () => {
 
   it('bundle has 11 presets', () => {
     const bundle = getUiMetadataBundle()
-    expect(bundle.presets.length).toBe(11)
+    expect(Object.keys(bundle.presets).length).toBe(11)
   })
 
   it('bundle has 4 key measurements', () => {

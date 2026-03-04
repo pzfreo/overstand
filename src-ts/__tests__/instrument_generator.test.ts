@@ -349,21 +349,23 @@ describe('getUiMetadata - has key_measurements', () => {
 // exposed through getUiMetadata() as PresetMetadata[] (name, id, filepath).
 // ---------------------------------------------------------------------------
 
-describe('getUiMetadata presets - returns valid presets list', () => {
-  it('presets is an array with at least one entry', () => {
+describe('getUiMetadata presets - returns valid presets dict', () => {
+  it('presets is a dict with at least one entry', () => {
     const result = JSON.parse(getUiMetadata())
     const presets = result.metadata.presets
-    expect(Array.isArray(presets)).toBe(true)
-    expect(presets.length).toBeGreaterThan(0)
+    expect(typeof presets).toBe('object')
+    expect(Array.isArray(presets)).toBe(false)
+    expect(Object.keys(presets).length).toBeGreaterThan(0)
   })
 })
 
 describe('getUiMetadata presets - each preset has an id', () => {
-  it('every preset has a non-empty id', () => {
+  it('every preset has a non-empty id matching its key', () => {
     const result = JSON.parse(getUiMetadata())
-    for (const preset of result.metadata.presets) {
+    for (const [key, preset] of Object.entries<{ id: string }>(result.metadata.presets)) {
       expect(typeof preset.id).toBe('string')
       expect(preset.id.length).toBeGreaterThan(0)
+      expect(preset.id).toBe(key)
     }
   })
 })
@@ -371,7 +373,7 @@ describe('getUiMetadata presets - each preset has an id', () => {
 describe('getUiMetadata presets - each preset has a display_name', () => {
   it('every preset has a non-empty display_name', () => {
     const result = JSON.parse(getUiMetadata())
-    for (const preset of result.metadata.presets) {
+    for (const preset of Object.values<{ display_name: string }>(result.metadata.presets)) {
       expect(typeof preset.display_name).toBe('string')
       expect(preset.display_name.length).toBeGreaterThan(0)
     }
@@ -381,7 +383,7 @@ describe('getUiMetadata presets - each preset has a display_name', () => {
 describe('getUiMetadata presets - each preset has a filepath', () => {
   it('every preset has a filepath', () => {
     const result = JSON.parse(getUiMetadata())
-    for (const preset of result.metadata.presets) {
+    for (const preset of Object.values<{ filepath: string }>(result.metadata.presets)) {
       expect(typeof preset.filepath).toBe('string')
       expect(preset.filepath.length).toBeGreaterThan(0)
     }
@@ -389,11 +391,10 @@ describe('getUiMetadata presets - each preset has a filepath', () => {
 })
 
 describe('getUiMetadata presets - violin preset exists', () => {
-  it('at least one preset id contains violin', () => {
+  it('violin preset is accessible by ID', () => {
     const result = JSON.parse(getUiMetadata())
-    const presets: Array<{ id: string }> = result.metadata.presets
-    const violinPresets = presets.filter(p => p.id.toLowerCase().includes('violin'))
-    expect(violinPresets.length).toBeGreaterThan(0)
+    const presets: Record<string, { id: string }> = result.metadata.presets
+    expect('violin' in presets).toBe(true)
   })
 })
 

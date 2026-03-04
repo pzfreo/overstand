@@ -60,7 +60,7 @@ export interface UiMetadataBundle {
   sections: Record<string, SectionDefinition>
   parameters: Record<string, unknown>
   derived_values: Record<string, unknown>
-  presets: PresetMetadata[]
+  presets: Record<string, PresetMetadata>
   key_measurements: KeyMeasurement[]
 }
 
@@ -422,11 +422,16 @@ export function getUiMetadataBundle(): UiMetadataBundle {
     derivedValues[key] = param.toOutputMetadata()
   }
 
+  const presets: Record<string, PresetMetadata> = {}
+  for (const p of PRESET_METADATA) {
+    presets[p.id] = p
+  }
+
   return {
     sections: SECTIONS,
     parameters,
     derived_values: derivedValues,
-    presets: PRESET_METADATA,
+    presets,
     key_measurements: KEY_MEASUREMENTS,
   }
 }
