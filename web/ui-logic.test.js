@@ -6,7 +6,7 @@
  * docs/UI_DESIGN_DECISIONS.md.
  */
 
-import { jest } from '@jest/globals';
+import { vi } from 'vitest';
 import { state, elements, initElements } from './state.js';
 import {
     checkParameterVisibility,
@@ -125,11 +125,11 @@ describe('isParameterOutput', () => {
 
 describe('Error handling', () => {
     beforeEach(() => {
-        jest.useFakeTimers();
+        vi.useFakeTimers();
     });
 
     afterEach(() => {
-        jest.useRealTimers();
+        vi.useRealTimers();
     });
 
     test('showErrors adds "show" class to error panel', () => {
@@ -151,16 +151,16 @@ describe('Error handling', () => {
         showErrors(['test'], 'transient');
         expect(elements.errorPanel.classList.contains('show')).toBe(true);
 
-        jest.advanceTimersByTime(3999);
+        vi.advanceTimersByTime(3999);
         expect(elements.errorPanel.classList.contains('show')).toBe(true);
 
-        jest.advanceTimersByTime(1);
+        vi.advanceTimersByTime(1);
         expect(elements.errorPanel.classList.contains('show')).toBe(false);
     });
 
     test('persistent errors do not auto-dismiss', () => {
         showErrors(['test'], 'persistent');
-        jest.advanceTimersByTime(10000);
+        vi.advanceTimersByTime(10000);
         expect(elements.errorPanel.classList.contains('show')).toBe(true);
     });
 

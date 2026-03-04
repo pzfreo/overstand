@@ -12,7 +12,23 @@ export default defineConfig({
     sourcemap: true,
   },
   test: {
-    include: ['src-ts/**/*.test.ts'],
-    globals: true,
+    projects: [
+      {
+        test: {
+          name: 'ts',
+          include: ['src-ts/**/*.test.ts'],
+          globals: true,
+        },
+      },
+      {
+        test: {
+          name: 'web',
+          include: ['web/**/*.test.js'],
+          globals: true,
+          environment: 'jsdom',
+          setupFiles: ['web/test-setup.js'],
+        },
+      },
+    ],
   },
 })

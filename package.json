@@ -7,20 +7,16 @@
   "scripts": {
     "build:ts": "vite build",
     "dev": "vite",
-    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
-    "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
-    "test:coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
-    "test:e2e": "npx playwright test",
-    "test:ts": "vitest run",
-    "test:ts:watch": "vitest",
-    "test:all": "npm run test && npm run test:ts"
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "npx playwright test"
   },
   "devDependencies": {
     "@playwright/test": "^1.50.0",
     "@types/node": "^25.3.3",
     "@vitest/coverage-v8": "^4.0.18",
-    "jest": "^29.7.0",
-    "jest-environment-jsdom": "^29.7.0",
+    "jsdom": "^26.1.0",
     "serve": "^14.2.0",
     "typescript": "^5.9.3",
     "vite": "^7.3.1",
