@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "esModuleInterop": true,
+    "declaration": true,
+    "outDir": "dist",
+    "rootDir": "src-ts",
+    "sourceMap": true
+  },
+  "include": ["src-ts/**/*.ts"],
+  "exclude": ["src-ts/**/*.test.ts"]
+}
