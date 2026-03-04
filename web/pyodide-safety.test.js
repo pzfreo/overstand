@@ -1,12 +1,12 @@
 /**
- * Tests to prevent Pyodide code injection vulnerabilities.
+ * Tests to verify the TypeScript engine cutover is complete and no unsafe
+ * Pyodide patterns remain in the web app source.
  *
- * The app passes user-controlled JSON to Python via Pyodide's runPythonAsync.
- * Interpolating strings directly into Python code (e.g. via template literals)
- * is unsafe -- crafted input could escape the string and execute arbitrary Python.
- *
- * The safe approach is pyodide.globals.set() to pass data as a variable,
- * then reference that variable in the Python code.
+ * After the cutover from Pyodide to the TypeScript geometry engine:
+ * - No runPythonAsync calls should exist
+ * - No loadPyodide calls should exist
+ * - No string interpolation into eval-like calls
+ * - The TS engine import should be present in generation.js
  */
 
 import { readFileSync } from 'fs';
@@ -17,68 +17,55 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const appSource = readFileSync(resolve(__dirname, 'app.js'), 'utf-8');
 const generationSource = readFileSync(resolve(__dirname, 'generation.js'), 'utf-8');
 
-describe('Pyodide injection safety', () => {
+describe('TypeScript engine cutover safety', () => {
 
-  test('no string interpolation inside runPythonAsync calls', () => {
-    // Match template literal interpolation (${...}) inside runPythonAsync blocks.
-    // This pattern catches both direct variable interpolation and .replace() escaping.
-    // Check all files that call runPythonAsync
+  test('no runPythonAsync calls exist in app.js or generation.js', () => {
     const combinedSource = appSource + '\n' + generationSource;
-    const lines = combinedSource.split('\n');
-    const violations = [];
-
-    let insideRunPython = false;
-    let blockStart = 0;
-
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-
-      if (line.includes('runPythonAsync(`') || line.includes('runPythonAsync(`')) {
-        insideRunPython = true;
-        blockStart = i + 1;
-      }
-
-      if (insideRunPython && line.includes('${')) {
-        violations.push(`Line ${i + 1}: ${line.trim()}`);
-      }
-
-      // End of template literal inside runPythonAsync
-      if (insideRunPython && line.includes('`)')) {
-        insideRunPython = false;
-      }
-    }
-
-    expect(violations).toEqual([]);
+    expect(combinedSource).not.toContain('runPythonAsync');
   });
 
-  test('user data is passed via globals.set() before runPythonAsync', () => {
-    // Verify the safe pattern: globals.set() followed by runPythonAsync
-    // referencing the global variable (not string interpolation)
-    // This pattern is now in generation.js after refactoring
+  test('no loadPyodide calls exist in app.js or generation.js', () => {
     const combinedSource = appSource + '\n' + generationSource;
-    const generateNeckMatch = combinedSource.includes('globals.set("_params_json", paramsJson)');
-    expect(generateNeckMatch).toBe(true);
+    expect(combinedSource).not.toContain('loadPyodide');
   });
 
-  test('no .replace() used to escape strings for Python execution', () => {
+  test('no pyodide.globals.set calls exist in app.js or generation.js', () => {
+    const combinedSource = appSource + '\n' + generationSource;
+    expect(combinedSource).not.toContain('globals.set');
+  });
+
+  test('generation.js imports from the TypeScript engine bundle', () => {
+    expect(generationSource).toContain("from '/dist/instrument_generator.js'");
+  });
+
+  test('generation.js uses generateViolinNeck from TS engine', () => {
+    expect(generationSource).toContain('generateViolinNeck(paramsJson)');
+  });
+
+  test('generation.js uses getDerivedValues from TS engine', () => {
+    expect(generationSource).toContain('getDerivedValues(paramsJson)');
+  });
+
+  test('app.js imports metadata functions from the TypeScript engine bundle', () => {
+    expect(appSource).toContain("from '/dist/instrument_generator.js'");
+  });
+
+  test('app.js uses getParameterDefinitions from TS engine', () => {
+    expect(appSource).toContain('getParameterDefinitions()');
+  });
+
+  test('app.js uses getDerivedValueMetadata from TS engine', () => {
+    expect(appSource).toContain('getDerivedValueMetadata()');
+  });
+
+  test('app.js uses getUiMetadata from TS engine', () => {
+    expect(appSource).toContain('getUiMetadata()');
+  });
+
+  test('no .replace() used to escape strings for code execution', () => {
     // The old vulnerable pattern was: paramsJson.replace(/'/g, "\\'")
-    // This should never appear near runPythonAsync calls
     const combinedSource = appSource + '\n' + generationSource;
-    const dangerousPattern = /paramsJson\.replace\(.*runPythonAsync|runPythonAsync[^)]*paramsJson\.replace/s;
+    const dangerousPattern = /paramsJson\.replace\(/;
     expect(dangerousPattern.test(combinedSource)).toBe(false);
-  });
-
-  test('runPythonAsync calls with static strings are safe', () => {
-    // Static strings (no interpolation) are safe -- just verify they exist
-    // These are the init-time calls that don't take user input
-    const staticCalls = [
-      'instrument_generator.get_parameter_definitions()',
-      'instrument_generator.get_derived_value_metadata()',
-      'instrument_generator.get_ui_metadata()'
-    ];
-
-    staticCalls.forEach(call => {
-      expect(appSource).toContain(call);
-    });
   });
 });
