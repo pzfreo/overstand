@@ -38,10 +38,17 @@ interface SvgViewFixture {
   path_data: string[]
 }
 
+interface FretPositionsFixture {
+  available: boolean
+  html: string
+  no_frets: number
+}
+
 interface SvgFixtureEntry {
   preset: string
   params: Record<string, unknown>
   views: Record<string, SvgViewFixture>
+  fret_positions: FretPositionsFixture
 }
 
 // ---------------------------------------------------------------------------
@@ -297,5 +304,45 @@ for (const fixture of fixtures) {
         })
       })
     }
+
+    // ----- Fret positions table -----
+    describe('fret_positions table', () => {
+      const pyFret = fixture.fret_positions
+
+      test('availability matches', () => {
+        const tsFret = tsResult.fret_positions
+        expect(tsFret?.available ?? false).toBe(pyFret.available)
+      })
+
+      if (pyFret.available) {
+        test('no_frets matches', () => {
+          expect(tsResult.fret_positions?.no_frets).toBe(pyFret.no_frets)
+        })
+
+        test('HTML structure matches (headers and row count)', () => {
+          const tsHtml = tsResult.fret_positions?.html ?? ''
+          // Same table structure
+          expect(tsHtml).toContain('class="fret-table-container"')
+          expect(tsHtml).toContain('class="fret-table"')
+          expect(tsHtml).toContain('<th>Fret</th>')
+          expect(tsHtml).toContain('<th>Distance from Nut (mm)</th>')
+          expect(tsHtml).toContain('<th>Distance from Previous Fret (mm)</th>')
+          // Same row count: count <tr> in tbody (exclude header row)
+          const pyRows = (pyFret.html.match(/<tr><td>/g) || []).length
+          const tsRows = (tsHtml.match(/<tr><td>/g) || []).length
+          expect(tsRows).toBe(pyRows)
+        })
+
+        test('HTML fret values match Python to 1 decimal place', () => {
+          // Extract all numbers from each HTML table and compare in order
+          const pyNums = (pyFret.html.match(/-?\d+\.?\d*/g) || []).map(Number)
+          const tsNums = ((tsResult.fret_positions?.html ?? '').match(/-?\d+\.?\d*/g) || []).map(Number)
+          expect(tsNums.length).toBe(pyNums.length)
+          for (let i = 0; i < pyNums.length; i++) {
+            expect(tsNums[i]).toBeCloseTo(pyNums[i]!, 1)
+          }
+        })
+      }
+    })
   })
 }

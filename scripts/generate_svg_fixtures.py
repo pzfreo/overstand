@@ -137,10 +137,19 @@ def generate_svg_fixture(preset_name: str, params: dict) -> dict:
                 'path_data': [],
             }
 
+    # Capture fret_positions HTML table (guitar/viol families only)
+    fret_data = result.get('fret_positions', {})
+    fret_fixture = {
+        'available': fret_data.get('available', False),
+        'html': fret_data.get('html', '') if fret_data.get('available') else '',
+        'no_frets': fret_data.get('no_frets', 0),
+    }
+
     return {
         'preset': preset_name,
         'params': params,
         'views': views,
+        'fret_positions': fret_fixture,
     }
 
 
@@ -161,7 +170,9 @@ def main():
             continue
         try:
             fixture = generate_svg_fixture(preset_path.stem, params)
-            print(f'  OK  {preset_path.name}')
+            fp = fixture['fret_positions']
+            fp_summary = f'{fp["no_frets"]} frets' if fp['available'] else 'N/A'
+            print(f'  OK  {preset_path.name}  fret_positions: {fp_summary}')
             for vname in ('side', 'cross_section', 'radius_template'):
                 info = fixture['views'][vname]
                 print(f'       {vname}: {info["path_count"]} paths, '
