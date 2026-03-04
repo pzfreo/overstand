@@ -31,6 +31,7 @@ import {
 import type { Params } from './geometry_engine'
 
 import { renderSideView, renderCrossSectionView } from './svg_renderer'
+import { generateRadiusTemplateSvg } from './radius_template'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -235,6 +236,6 @@ export function generateMultiViewSvg(
     side: sideView,
     top: 'Top View Placeholder',
     cross_section: crossSectionView,
-    radius_template: '<svg></svg>',
+    radius_template: generateRadiusTemplateSvg(params),
   }
 }

@@ -123,9 +123,15 @@ function extractPathNumbers(d: string): number[] {
   return nums
 }
 
-/** Extract path commands (letters) from a path d-attribute string. */
+/** Extract path commands (letters) from a path d-attribute string.
+ *  Only includes valid SVG path command letters — not 'e'/'E' which
+ *  appear as part of scientific notation (e.g. 1.23e-15). */
 function extractPathCommands(d: string): string {
-  return d.replace(/[^A-Za-z]/g, '')
+  // Valid SVG path commands: M m Z z L l H h V v C c S s Q q T t A a
+  // Remove numbers (including scientific notation like 1.23e-15) and punctuation first
+  const noNums = d.replace(/-?\d+\.?\d*(?:[eE][+-]?\d+)?/g, ' ')
+  // Now extract only the command letters (not e/E which were part of numbers)
+  return noNums.replace(/[^MmZzLlHhVvCcSsQqTtAa]/g, '')
 }
 
 /**
@@ -164,12 +170,14 @@ describe('SVG parity fixtures', () => {
     expect(fixtures.length).toBeGreaterThan(0)
   })
 
-  test('each fixture has side and cross_section views', () => {
+  test('each fixture has side, cross_section and radius_template views', () => {
     for (const f of fixtures) {
       expect(f.views['side']).toBeTruthy()
       expect(f.views['cross_section']).toBeTruthy()
+      expect(f.views['radius_template']).toBeTruthy()
       expect(f.views['side']!.path_count).toBeGreaterThan(0)
       expect(f.views['cross_section']!.path_count).toBeGreaterThan(0)
+      expect(f.views['radius_template']!.path_count).toBeGreaterThan(0)
     }
   })
 })
@@ -178,7 +186,7 @@ describe('SVG parity fixtures', () => {
 // Per-preset, per-view tests
 // ---------------------------------------------------------------------------
 
-const VIEW_NAMES = ['side', 'cross_section'] as const
+const VIEW_NAMES = ['side', 'cross_section', 'radius_template'] as const
 
 for (const fixture of fixtures) {
   describe(`SVG parity — ${fixture.preset}`, () => {

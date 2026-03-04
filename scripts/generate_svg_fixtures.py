@@ -122,7 +122,7 @@ def generate_svg_fixture(preset_name: str, params: dict) -> dict:
         raise RuntimeError(f"Generation failed for {preset_name}: {result['errors']}")
 
     views = {}
-    for view_name in ('side', 'cross_section'):
+    for view_name in ('side', 'cross_section', 'radius_template'):
         svg_string = result['views'].get(view_name, '')
         if svg_string and svg_string.startswith('<svg'):
             views[view_name] = parse_svg_properties(svg_string)
@@ -161,15 +161,12 @@ def main():
             continue
         try:
             fixture = generate_svg_fixture(preset_path.stem, params)
-            side_info = fixture['views']['side']
-            cs_info = fixture['views']['cross_section']
             print(f'  OK  {preset_path.name}')
-            print(f'       side: {side_info["path_count"]} paths, '
-                  f'{side_info["text_count"]} texts, '
-                  f'{side_info["group_count"]} groups')
-            print(f'       cross_section: {cs_info["path_count"]} paths, '
-                  f'{cs_info["text_count"]} texts, '
-                  f'{cs_info["group_count"]} groups')
+            for vname in ('side', 'cross_section', 'radius_template'):
+                info = fixture['views'][vname]
+                print(f'       {vname}: {info["path_count"]} paths, '
+                      f'{info["text_count"]} texts, '
+                      f'{info["group_count"]} groups')
             fixtures.append(fixture)
         except Exception as e:
             errors.append((preset_path.name, str(e)))
