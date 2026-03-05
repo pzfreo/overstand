@@ -2,6 +2,7 @@ import { state } from './state.js';
 import { showInfoModal, showErrorModal } from './modal.js';
 import { trackPDFExported, trackError } from './analytics.js';
 import { VIEW_FILENAME_PARTS } from './constants.js';
+import { ISO_SIZES, PDF_MARGIN_MM, BRAND_COLOR_RGB } from './pdf_constants.js';
 
 export async function downloadPDF(collectParameters, sanitizeFilename) {
     if (!state || !state.views || !state.views[state.currentView]) {
@@ -35,7 +36,7 @@ export async function downloadPDF(collectParameters, sanitizeFilename) {
                 html: '.dimensions-table',
                 startY: 25,
                 theme: 'grid',
-                headStyles: { fillColor: [79, 70, 229] },
+                headStyles: { fillColor: BRAND_COLOR_RGB },
                 styles: { fontSize: 9 }
             });
             doc.save(`${filename}_dimensions.pdf`);
@@ -60,7 +61,7 @@ export async function downloadPDF(collectParameters, sanitizeFilename) {
                 html: '.fret-table',
                 startY: 37,
                 theme: 'grid',
-                headStyles: { fillColor: [79, 70, 229] },
+                headStyles: { fillColor: BRAND_COLOR_RGB },
                 styles: { fontSize: 9 }
             });
             doc.save(`${filename}_fret-positions.pdf`);
@@ -82,22 +83,14 @@ export async function downloadPDF(collectParameters, sanitizeFilename) {
             svgHeight = parseFloat(svgElement.getAttribute('height')) || 297;
         }
 
-        const isoSizes = [
-            { name: 'a4', width: 210, height: 297 },
-            { name: 'a3', width: 297, height: 420 },
-            { name: 'a2', width: 420, height: 594 },
-            { name: 'a1', width: 594, height: 841 },
-            { name: 'a0', width: 841, height: 1189 }
-        ];
-
-        const margin = 20;
+        const margin = PDF_MARGIN_MM;
         const requiredWidth = svgWidth + (margin * 2);
         const requiredHeight = svgHeight + (margin * 2);
 
         let selectedFormat = null;
         let selectedOrientation = 'portrait';
 
-        for (const size of isoSizes) {
+        for (const size of ISO_SIZES) {
             if (size.width >= requiredWidth && size.height >= requiredHeight) {
                 selectedFormat = size; selectedOrientation = 'portrait'; break;
             }
@@ -107,7 +100,7 @@ export async function downloadPDF(collectParameters, sanitizeFilename) {
         }
 
         if (!selectedFormat) {
-            selectedFormat = isoSizes[4]; selectedOrientation = 'landscape';
+            selectedFormat = ISO_SIZES[ISO_SIZES.length - 1]; selectedOrientation = 'landscape';
         }
 
         const doc = new jsPDF({
@@ -132,7 +125,7 @@ export async function downloadPDF(collectParameters, sanitizeFilename) {
             document.body.removeChild(svgElement);
         }
 
-        doc.save(`${filename}_${VIEW_FILENAME_PARTS[currentView]}_${selectedFormat.name}.pdf`);
+        doc.save(`${filename}_${VIEW_FILENAME_PARTS[currentView]}_${selectedFormat.name.toLowerCase()}.pdf`);
         trackPDFExported(params.instrument_family || 'unknown');
 
     } catch (error) {

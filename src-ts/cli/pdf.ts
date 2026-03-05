@@ -16,6 +16,10 @@ import { ParameterType } from '../types'
 import type { Params } from '../types'
 import type { FretPositionsResult } from '../instrument_generator'
 
+// Shared constants (single source of truth for web + CLI)
+// @ts-expect-error — plain JS module, no type declarations
+import { ISO_SIZES, PDF_MARGIN_MM, BRAND_COLOR_HEX, BRAND_COLOR_RGB } from '../../web/pdf_constants.js'
+
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -23,20 +27,7 @@ import type { FretPositionsResult } from '../instrument_generator'
 /** Points per millimeter (1 inch = 72 points, 1 inch = 25.4 mm). */
 const PT_PER_MM = 72 / 25.4
 
-/** ISO paper sizes in mm. */
-const ISO_SIZES = [
-  { name: 'A4', width: 210, height: 297 },
-  { name: 'A3', width: 297, height: 420 },
-  { name: 'A2', width: 420, height: 594 },
-  { name: 'A1', width: 594, height: 841 },
-  { name: 'A0', width: 841, height: 1189 },
-]
-
-const MARGIN_MM = 20
-
-/** Overstand brand color. */
-const BRAND_COLOR = '#4F46E5'
-const BRAND_RGB: [number, number, number] = [79, 70, 229]
+const BRAND_COLOR: string = BRAND_COLOR_HEX
 
 // ---------------------------------------------------------------------------
 // SVG dimension parsing
@@ -88,8 +79,8 @@ export interface PaperSize {
  * Matches the web app logic in web/pdf_export.js.
  */
 export function selectPaperSize(widthMm: number, heightMm: number): PaperSize {
-  const requiredW = widthMm + MARGIN_MM * 2
-  const requiredH = heightMm + MARGIN_MM * 2
+  const requiredW = widthMm + PDF_MARGIN_MM * 2
+  const requiredH = heightMm + PDF_MARGIN_MM * 2
 
   for (const size of ISO_SIZES) {
     if (size.width >= requiredW && size.height >= requiredH) {
