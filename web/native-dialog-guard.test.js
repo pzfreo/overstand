@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * Guard test to prevent reintroduction of native browser dialogs.
  *

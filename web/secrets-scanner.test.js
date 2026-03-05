@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * Scans source files for potential hardcoded secrets.
  *

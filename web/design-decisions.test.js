@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * Static analysis tests for UI design decisions.
  *

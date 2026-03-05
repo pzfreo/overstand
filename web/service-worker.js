@@ -35,16 +35,15 @@ const APP_SHELL = [
   `${BASE_PATH}manifest.json`,
   `${BASE_PATH}privacy.html`,
   `${BASE_PATH}terms.html`,
-  `${BASE_PATH}dist/instrument_generator.js`
+  `${BASE_PATH}dist/instrument_generator.js`,
+  `${BASE_PATH}dist/pdf_generator.js`,
+  `${BASE_PATH}dist/index.js`
 ];
 
 // CDN libraries
 const CDN_URLS = [
   'https://cdn.jsdelivr.net/npm/@svgdotjs/svg.js@3.2/dist/svg.min.js',
   'https://cdn.jsdelivr.net/npm/@svgdotjs/svg.panzoom.js@2.1/dist/svg.panzoom.min.js',
-  'https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js',
-  'https://cdn.jsdelivr.net/npm/svg2pdf.js@2.7.0/dist/svg2pdf.umd.min.js',
-  'https://cdn.jsdelivr.net/npm/jspdf-autotable@5.0.7/dist/jspdf.plugin.autotable.min.js',
   'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js'
 ];
 
