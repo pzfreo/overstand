@@ -14,7 +14,8 @@
     "lint": "eslint src-ts/ web/",
     "lint:fix": "eslint src-ts/ web/ --fix",
     "format": "prettier --write 'src-ts/**/*.ts' 'web/**/*.js'",
-    "format:check": "prettier --check 'src-ts/**/*.ts' 'web/**/*.js'"
+    "format:check": "prettier --check 'src-ts/**/*.ts' 'web/**/*.js'",
+    "cli": "tsx src-ts/cli/cli.ts"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -26,6 +27,7 @@
     "jsdom": "^26.1.0",
     "prettier": "^3.8.1",
     "serve": "^14.2.0",
+    "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.56.1",
     "vite": "^7.3.1",
