@@ -22,6 +22,11 @@ import {
   generateStandaloneDimensionsHTML,
   generateStandaloneFretPositionsHTML,
 } from './dimensions'
+import {
+  svgToPdfBuffer,
+  dimensionsTableToPdfBuffer,
+  fretPositionsToPdfBuffer,
+} from './pdf'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -41,7 +46,7 @@ Arguments:
 Options:
   --view <name>           View to generate: ${VALID_VIEWS.join(', ')}
   --all                   Generate all views (requires --output-dir)
-  --pdf                   Output as PDF (not yet supported)
+  --pdf                   Output as PDF instead of SVG/HTML
   -o, --output <file>     Output file (default: stdout)
   --output-dir <dir>      Output directory for --all mode
   -h, --help              Show this help message
@@ -86,14 +91,21 @@ export function loadParameters(jsonFile: string): Params {
 // ---------------------------------------------------------------------------
 
 interface ViewContent {
-  content: string
+  content: string | Buffer
   ext: string
+}
+
+import type { GenerateViolinResult } from '../instrument_generator'
+
+interface GeneratedOutput {
+  views: Record<string, ViewContent>
+  result: GenerateViolinResult
 }
 
 async function generateAllViews(
   params: Params,
   viewsRequested: string[],
-): Promise<Record<string, ViewContent>> {
+): Promise<GeneratedOutput> {
   // Load font if radius_template is requested
   if (viewsRequested.includes('radius_template')) {
     const fontPath = path.resolve(__dirname, '../../web/fonts/AllertaStencil-Regular.ttf')
@@ -145,7 +157,7 @@ async function generateAllViews(
     }
   }
 
-  return views
+  return { views, result }
 }
 
 // ---------------------------------------------------------------------------
@@ -185,12 +197,6 @@ export async function main(): Promise<void> {
     process.exit(1)
   }
 
-  if (opts.pdf) {
-    console.error('PDF generation is not yet supported in the Node.js CLI.')
-    console.error('Use the web app\'s PDF export for now.')
-    process.exit(1)
-  }
-
   if (opts.all && opts.view) {
     console.error('Error: Cannot use both --all and --view')
     process.exit(1)
@@ -223,7 +229,37 @@ export async function main(): Promise<void> {
 
   // Determine which views to generate
   const viewsRequested = opts.all ? [...VALID_VIEWS] : [opts.view!]
-  const views = await generateAllViews(mergedParams, viewsRequested)
+  const { views, result } = await generateAllViews(mergedParams, viewsRequested)
+
+  // Convert to PDF if requested
+  if (opts.pdf) {
+    for (const [viewKey, view] of Object.entries(views)) {
+      if (view.ext === 'svg') {
+        views[viewKey] = {
+          content: await svgToPdfBuffer(view.content as string),
+          ext: 'pdf',
+        }
+      } else if (viewKey === 'dimensions') {
+        views[viewKey] = {
+          content: await dimensionsTableToPdfBuffer(
+            mergedParams,
+            result.derived_values ?? {},
+            result.derived_formatted ?? {},
+            result.derived_metadata ?? {},
+          ),
+          ext: 'pdf',
+        }
+      } else if (viewKey === 'fret_positions' && result.fret_positions) {
+        views[viewKey] = {
+          content: await fretPositionsToPdfBuffer(
+            (mergedParams['instrument_name'] as string) || 'Instrument',
+            result.fret_positions,
+          ),
+          ext: 'pdf',
+        }
+      }
+    }
+  }
 
   if (opts.all) {
     // Generate all views to output directory

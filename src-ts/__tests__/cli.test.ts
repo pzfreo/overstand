@@ -438,11 +438,43 @@ describe('CLI integration', () => {
     expect(result.stderr.toLowerCase()).toContain('invalid view')
   })
 
-  test('--pdf prints not-yet-supported message', () => {
+  test('--pdf generates PDF for side view', () => {
     const presetFile = path.join(PRESETS_DIR, 'violin.json')
-    const result = runCli([presetFile, '--view', 'side', '--pdf'])
-    expect(result.status).not.toBe(0)
-    expect(result.stderr.toLowerCase()).toContain('not yet supported')
+    const outputFile = path.join(tmpDir, 'output.pdf')
+    const result = runCli([presetFile, '--view', 'side', '--pdf', '-o', outputFile])
+    expect(result.status).toBe(0)
+    expect(existsSync(outputFile)).toBe(true)
+    const content = readFileSync(outputFile)
+    expect(content.slice(0, 5).toString()).toBe('%PDF-')
+  })
+
+  test('--pdf generates PDF for dimensions', () => {
+    const presetFile = path.join(PRESETS_DIR, 'violin.json')
+    const outputFile = path.join(tmpDir, 'dims.pdf')
+    const result = runCli([presetFile, '--view', 'dimensions', '--pdf', '-o', outputFile])
+    expect(result.status).toBe(0)
+    expect(existsSync(outputFile)).toBe(true)
+    const content = readFileSync(outputFile)
+    expect(content.slice(0, 5).toString()).toBe('%PDF-')
+  })
+
+  test('--pdf generates PDF for fret_positions', () => {
+    const presetFile = path.join(PRESETS_DIR, 'bass_viol.json')
+    const outputFile = path.join(tmpDir, 'frets.pdf')
+    const result = runCli([presetFile, '--view', 'fret_positions', '--pdf', '-o', outputFile])
+    expect(result.status).toBe(0)
+    expect(existsSync(outputFile)).toBe(true)
+    const content = readFileSync(outputFile)
+    expect(content.slice(0, 5).toString()).toBe('%PDF-')
+  })
+
+  test('--all --pdf creates PDF files', () => {
+    const presetFile = path.join(PRESETS_DIR, 'violin.json')
+    const outputDir = path.join(tmpDir, 'pdf-output')
+    const result = runCli([presetFile, '--all', '--pdf', '--output-dir', outputDir])
+    expect(result.status).toBe(0)
+    expect(existsSync(path.join(outputDir, 'Default_Violin_side-view.pdf'))).toBe(true)
+    expect(existsSync(path.join(outputDir, 'Default_Violin_dimensions.pdf'))).toBe(true)
   })
 
   test('--help shows usage', () => {
