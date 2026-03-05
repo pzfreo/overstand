@@ -42,6 +42,11 @@ async function loadPresetsFromDirectory() {
             const presetFiles = manifest.presets || [];
 
             for (const filename of presetFiles) {
+                // Validate filename to prevent path traversal
+                if (!/^[a-zA-Z0-9_-]+\.json$/.test(filename)) {
+                    console.warn(`Skipping invalid preset filename: ${filename}`);
+                    continue;
+                }
                 try {
                     const response = await fetch(`${basePath}${filename}`);
                     if (response.ok) {
@@ -93,6 +98,13 @@ async function loadPreset() {
     let parameters = null;
 
     const presetPaths = ['./presets/', '../presets/'];
+
+    // Validate preset ID to prevent path traversal
+    if (!/^[a-zA-Z0-9_-]+$/.test(presetId)) {
+        console.error(`Invalid preset ID: ${presetId}`);
+        return;
+    }
+
     const filename = `${presetId}.json`;
 
     for (const basePath of presetPaths) {

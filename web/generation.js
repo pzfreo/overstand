@@ -4,6 +4,7 @@ import * as analytics from './analytics.js';
 import { DEBOUNCE_GENERATE } from './constants.js';
 import { debounce, collectParameters } from './params.js';
 import { generateViolinNeck, getDerivedValues } from '/dist/instrument_generator.js';
+import { escapeHtml } from './modal.js';
 
 export function classifyErrors(errors) {
     if (!errors || errors.length === 0) return 'transient';
@@ -118,7 +119,7 @@ export function updateDerivedValues() {
                     div.className = 'metric-card';
                     let formattedValue = (value == null || isNaN(value)) ? '—' : (result.formatted && result.formatted[label]) || (meta ? `${value.toFixed(meta.decimals)} ${meta.unit}`.trim() : value);
 
-                    div.innerHTML = `<span class="metric-label" title="${meta ? meta.description : ''}">${meta ? meta.display_name : label}</span><span class="metric-value">${formattedValue}</span>`;
+                    div.innerHTML = `<span class="metric-label" title="${escapeHtml(meta ? meta.description : '')}">${escapeHtml(meta ? meta.display_name : label)}</span><span class="metric-value">${escapeHtml(String(formattedValue))}</span>`;
                     container.appendChild(div);
                 }
             }

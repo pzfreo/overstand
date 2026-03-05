@@ -104,9 +104,12 @@ describe('Design decisions: UI logic invariants', () => {
 
 describe('Design decisions: OAuth implicit flow', () => {
     test('oauth-callback.html parses access_token from URL hash', () => {
-        expect(oauthCallbackSource).toMatch(/access_token/);
+        // The handler may be inline or in an external script referenced by the HTML
+        const oauthHandlerSource = readFile('oauth-callback-handler.js');
+        expect(oauthCallbackSource).toMatch(/oauth-callback-handler\.js/);
+        expect(oauthHandlerSource).toMatch(/access_token/);
         // Should parse from hash fragment, not query params
-        expect(oauthCallbackSource).toMatch(/hash/i);
+        expect(oauthHandlerSource).toMatch(/hash/i);
     });
 });
 
@@ -177,6 +180,9 @@ describe('Design decisions: dark theme', () => {
 
     test('theme is read from localStorage before first paint', () => {
         // The theme init script must appear in <head> before stylesheets load
-        expect(indexSource).toMatch(/overstand-theme/);
+        // It may be inline or in an external file referenced by index.html
+        const themeInitSource = readFile('theme-init.js');
+        expect(indexSource).toMatch(/theme-init\.js/);
+        expect(themeInitSource).toMatch(/overstand-theme/);
     });
 });

@@ -83,7 +83,7 @@ def main():
 
     timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H-%M-%S")
     dest = BACKUP_DIR / timestamp
-    dest.mkdir(parents=True, exist_ok=True)
+    dest.mkdir(parents=True, exist_ok=True, mode=0o700)
 
     manifest = {"timestamp": timestamp, "tables": {}}
     errors = []
@@ -93,6 +93,7 @@ def main():
             rows = fetch_table(base_url, key, table)
             outfile = dest / f"{table}.json"
             outfile.write_text(json.dumps(rows, indent=2, default=str))
+            outfile.chmod(0o600)
             manifest["tables"][table] = {"rows": len(rows)}
             print(f"  {table}: {len(rows)} rows")
         except HTTPError as e:
@@ -107,7 +108,9 @@ def main():
     if errors:
         manifest["errors"] = errors
 
-    (dest / "manifest.json").write_text(json.dumps(manifest, indent=2))
+    manifest_file = dest / "manifest.json"
+    manifest_file.write_text(json.dumps(manifest, indent=2))
+    manifest_file.chmod(0o600)
 
     if errors:
         print(f"\nBackup completed with errors → {dest}")

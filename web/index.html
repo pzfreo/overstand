@@ -9,72 +9,10 @@
 
     <!-- Emergency cache reset - runs before anything else loads -->
     <!-- Usage: Add ?reset to URL to clear all caches and reload -->
-    <script>
-    (function() {
-        if (window.location.search.includes('reset')) {
-            // Show a message while clearing
-            document.write('<div style="font-family:system-ui;padding:40px;text-align:center;">' +
-                '<h2>Clearing cache...</h2><p>Please wait...</p></div>');
-
-            // Clear everything aggressively
-            var clearAll = [];
-
-            // 1. Clear all service worker caches
-            if ('caches' in window) {
-                clearAll.push(caches.keys().then(function(names) {
-                    console.log('[Reset] Clearing caches:', names);
-                    return Promise.all(names.map(function(name) { return caches.delete(name); }));
-                }));
-            }
-
-            // 2. Unregister ALL service workers
-            if ('serviceWorker' in navigator) {
-                clearAll.push(navigator.serviceWorker.getRegistrations().then(function(regs) {
-                    console.log('[Reset] Unregistering service workers:', regs.length);
-                    return Promise.all(regs.map(function(reg) { return reg.unregister(); }));
-                }));
-                // Also try to clear the service worker controller
-                if (navigator.serviceWorker.controller) {
-                    navigator.serviceWorker.controller.postMessage({ type: 'SKIP_WAITING' });
-                }
-            }
-
-            // 3. Clear storage
-            try { localStorage.clear(); } catch(e) {}
-            try { sessionStorage.clear(); } catch(e) {}
-
-            Promise.all(clearAll).then(function() {
-                console.log('[Reset] Cache cleared, waiting before reload...');
-                // Wait a moment to ensure everything is flushed
-                return new Promise(function(r) { setTimeout(r, 500); });
-            }).then(function() {
-                // Hard reload with cache-busting and no-cache headers
-                var cleanUrl = window.location.origin + window.location.pathname;
-                // Remove trailing slash if present, then add cache buster
-                cleanUrl = cleanUrl.replace(/\/$/, '') + '?_=' + Date.now();
-                console.log('[Reset] Reloading to:', cleanUrl);
-                window.location.replace(cleanUrl);
-            }).catch(function(e) {
-                alert('Cache clear failed: ' + e.message + '\n\nTry: Settings > Apps > Chrome > Storage > Clear Cache');
-                window.location.replace(window.location.origin + window.location.pathname);
-            });
-
-            // Stop the page from loading anything else
-            window.stop();
-        }
-
-})();
-    </script>
+    <script src="cache-reset.js"></script>
 
     <!-- Apply saved theme before first paint to avoid flash -->
-    <script>
-    (function() {
-        try {
-            var t = localStorage.getItem('overstand-theme');
-            if (t !== 'light') document.documentElement.setAttribute('data-theme', 'dark');
-        } catch(e) {}
-    })();
-    </script>
+    <script src="theme-init.js"></script>
 
     <!-- PWA Meta Tags -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -107,7 +45,7 @@
     <link rel="stylesheet" href="styles.css">
 
     <!-- Umami Analytics (privacy-friendly, no cookies) -->
-    <script defer src="https://cloud.umami.is/script.js" data-website-id="ff5e9727-7123-44ac-bfd4-b1df28180b08"></script>
+    <script defer src="https://cloud.umami.is/script.js" data-website-id="ff5e9727-7123-44ac-bfd4-b1df28180b08" integrity="sha384-njZ5sCqL2nQlDz+tuOzt4BOOdB4zc8UVx7AiE6EGDrjYZPfNHel8zAmY2ESoQilv" crossorigin="anonymous"></script>
 </head>
 
 <body>

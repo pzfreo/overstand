@@ -244,6 +244,16 @@ Examples:
     if args.all and args.view:
         parser.error('Cannot use both --all and --view')
 
+    # Validate output paths don't escape intended directories
+    if args.output:
+        output_path = Path(args.output).resolve()
+        if '..' in Path(args.output).parts:
+            parser.error('Output path must not contain ".." components')
+    if args.output_dir:
+        output_dir_path = Path(args.output_dir).resolve()
+        if '..' in Path(args.output_dir).parts:
+            parser.error('Output directory must not contain ".." components')
+
     # Load parameters
     params = load_parameters(args.input)
     instrument_name = sanitize_filename(params.get('instrument_name', 'instrument'))

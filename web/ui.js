@@ -6,6 +6,7 @@ import { ParameterSection } from './components/parameter-section.js';
 import { OutputSection } from './components/output-section.js';
 import { ZOOM_CONFIG } from './constants.js';
 import { trackInstrumentFamilyChanged, trackParameterEdit } from './analytics.js';
+import { escapeHtml } from './modal.js';
 
 let errorDismissTimer = null;
 
@@ -21,7 +22,7 @@ export function showErrors(errors, type = 'transient') {
         errorDismissTimer = null;
     }
 
-    elements.errorList.innerHTML = errors.map(e => `<li>${e}</li>`).join('');
+    elements.errorList.innerHTML = errors.map(e => `<li>${escapeHtml(e)}</li>`).join('');
     elements.errorPanel.classList.add('show');
 
     // Add error type class for styling
@@ -584,7 +585,7 @@ export function generateDimensionsTableHTML(params, derivedValues, derivedFormat
         // Only show category header if there are visible parameters
         if (visibleParams.length === 0) continue;
 
-        html += `<tr><td colspan="2" class="category-header">${category}</td></tr>`;
+        html += `<tr><td colspan="2" class="category-header">${escapeHtml(category)}</td></tr>`;
         for (const [name, param] of visibleParams) {
             const value = params[name];
             let displayValue = value;
@@ -598,15 +599,17 @@ export function generateDimensionsTableHTML(params, derivedValues, derivedFormat
                         const decimalIndex = stepStr.indexOf('.');
                         decimals = decimalIndex !== -1 ? stepStr.length - decimalIndex - 1 : 0;
                     }
-                    displayValue = `${value.toFixed(decimals)} <span class="param-unit">${param.unit}</span>`;
+                    displayValue = `${escapeHtml(value.toFixed(decimals))} <span class="param-unit">${escapeHtml(param.unit)}</span>`;
                 }
             } else if (param.type === 'boolean') {
                 displayValue = value ? 'Yes' : 'No';
             } else if (param.type === 'enum') {
                 const option = param.options.find(opt => opt.value === value);
-                displayValue = option ? option.label : value;
+                displayValue = escapeHtml(option ? option.label : String(value));
+            } else {
+                displayValue = escapeHtml(String(displayValue));
             }
-            html += `<tr><td class="param-name">${param.label}</td><td class="param-value">${displayValue}</td></tr>`;
+            html += `<tr><td class="param-name">${escapeHtml(param.label)}</td><td class="param-value">${displayValue}</td></tr>`;
         }
     }
 
@@ -622,7 +625,7 @@ export function generateDimensionsTableHTML(params, derivedValues, derivedFormat
             dCategories.get(category).push({ label, value, meta });
         }
         for (const [category, items] of dCategories) {
-            html += `<tr><td colspan="2" class="category-header">${category}</td></tr>`;
+            html += `<tr><td colspan="2" class="category-header">${escapeHtml(category)}</td></tr>`;
             items.sort((a, b) => (a.meta?.order || 999) - (b.meta?.order || 999));
             for (const { label, value, meta } of items) {
                 const displayName = meta ? meta.display_name : label;
@@ -631,13 +634,13 @@ export function generateDimensionsTableHTML(params, derivedValues, derivedFormat
                     formattedValue = '<span class="param-unit">—</span>';
                 } else if (derivedFormatted[label]) {
                     const parts = derivedFormatted[label].split(' ');
-                    formattedValue = `${parts[0]} <span class="param-unit">${parts.slice(1).join(' ')}</span>`;
+                    formattedValue = `${escapeHtml(parts[0])} <span class="param-unit">${escapeHtml(parts.slice(1).join(' '))}</span>`;
                 } else if (meta) {
-                    formattedValue = `${value.toFixed(meta.decimals)} <span class="param-unit">${meta.unit}</span>`;
+                    formattedValue = `${escapeHtml(value.toFixed(meta.decimals))} <span class="param-unit">${escapeHtml(meta.unit)}</span>`;
                 } else {
-                    formattedValue = `${value} <span class="param-unit">mm</span>`;
+                    formattedValue = `${escapeHtml(String(value))} <span class="param-unit">mm</span>`;
                 }
-                html += `<tr><td class="param-name">${displayName}</td><td class="param-value">${formattedValue}</td></tr>`;
+                html += `<tr><td class="param-name">${escapeHtml(displayName)}</td><td class="param-value">${formattedValue}</td></tr>`;
             }
         }
     }
