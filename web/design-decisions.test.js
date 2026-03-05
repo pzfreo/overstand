@@ -177,6 +177,9 @@ describe('Design decisions: dark theme', () => {
 
     test('theme is read from localStorage before first paint', () => {
         // The theme init script must appear in <head> before stylesheets load
-        expect(indexSource).toMatch(/overstand-theme/);
+        // It may be inline or in an external file referenced by index.html
+        const themeInitSource = readFile('theme-init.js');
+        expect(indexSource).toMatch(/theme-init\.js/);
+        expect(themeInitSource).toMatch(/overstand-theme/);
     });
 });

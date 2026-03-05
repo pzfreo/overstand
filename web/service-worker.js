@@ -21,6 +21,8 @@ const APP_SHELL = [
   `${BASE_PATH}`,
   `${BASE_PATH}index.html`,
   `${BASE_PATH}styles.css`,
+  `${BASE_PATH}cache-reset.js`,
+  `${BASE_PATH}theme-init.js`,
   `${BASE_PATH}app.js`,
   `${BASE_PATH}ui.js`,
   `${BASE_PATH}state.js`,
