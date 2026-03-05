@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Instrument neck diagram generator",
   "private": true,
+  "bin": {
+    "overstand": "bin/overstand"
+  },
   "type": "module",
   "scripts": {
     "build:ts": "vite build",
