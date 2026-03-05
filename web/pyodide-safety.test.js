@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * Tests to verify the TypeScript engine cutover is complete and no unsafe
  * Pyodide patterns remain in the web app source.

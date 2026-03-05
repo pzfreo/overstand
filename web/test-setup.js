@@ -3,6 +3,11 @@
  * Sets up the DOM environment and mocks for testing
  */
 
+// Skip DOM setup for tests running in node environment (e.g. source scanners)
+if (typeof document === 'undefined') {
+  // No DOM available — nothing to set up
+} else {
+
 // Mock DOM elements that tests might need
 beforeEach(() => {
   // Create a basic modal structure
@@ -42,3 +47,5 @@ beforeEach(() => {
 afterEach(() => {
   document.body.innerHTML = '';
 });
+
+} // end if (typeof document !== 'undefined')
