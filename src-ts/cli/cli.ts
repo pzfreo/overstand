@@ -93,6 +93,7 @@ export function loadParameters(jsonFile: string): Params {
 interface ViewContent {
   content: string | Buffer
   ext: string
+  paperSize?: string // e.g. 'a4', 'a3' — set for PDF output
 }
 
 import type { GenerateViolinResult } from '../instrument_generator'
@@ -235,9 +236,11 @@ export async function main(): Promise<void> {
   if (opts.pdf) {
     for (const [viewKey, view] of Object.entries(views)) {
       if (view.ext === 'svg') {
+        const { buffer, paperSize } = await svgToPdfBuffer(view.content as string)
         views[viewKey] = {
-          content: await svgToPdfBuffer(view.content as string),
+          content: buffer,
           ext: 'pdf',
+          paperSize: paperSize.toLowerCase(),
         }
       } else if (viewKey === 'dimensions') {
         views[viewKey] = {
@@ -266,10 +269,11 @@ export async function main(): Promise<void> {
     const outputDir = opts['output-dir']!
     mkdirSync(outputDir, { recursive: true })
 
-    for (const [viewKey, { content, ext }] of Object.entries(views)) {
+    for (const [viewKey, view] of Object.entries(views)) {
       const viewName = VIEW_NAMES[viewKey] || viewKey
-      const outputFile = path.join(outputDir, `${instrumentName}_${viewName}.${ext}`)
-      writeFileSync(outputFile, content)
+      const sizeSuffix = view.paperSize ? `_${view.paperSize}` : ''
+      const outputFile = path.join(outputDir, `${instrumentName}_${viewName}${sizeSuffix}.${view.ext}`)
+      writeFileSync(outputFile, view.content)
       console.log(`Generated: ${outputFile}`)
     }
   } else {
@@ -291,9 +295,13 @@ export async function main(): Promise<void> {
   }
 }
 
-// Only run when executed directly (not when imported for testing)
-const isMain = process.argv[1] && fileURLToPath(import.meta.url).includes(process.argv[1].replace(/\.ts$/, ''))
-if (isMain) {
+// Only run when executed directly via tsx (not when imported for testing or via main.ts)
+const __thisFile = fileURLToPath(import.meta.url)
+const isDirectRun =
+  process.argv[1] &&
+  __thisFile.endsWith('cli.ts') &&
+  process.argv[1].replace(/\.ts$/, '').endsWith('cli')
+if (isDirectRun) {
   main().catch((e) => {
     console.error(`Unexpected error: ${(e as Error).message}`)
     process.exit(1)

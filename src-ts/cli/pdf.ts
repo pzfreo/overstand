@@ -122,11 +122,16 @@ function pdfDocToBuffer(doc: PDFKit.PDFDocument): Promise<Buffer> {
 // SVG → PDF
 // ---------------------------------------------------------------------------
 
+export interface SvgPdfResult {
+  buffer: Buffer
+  paperSize: string // e.g. 'A4', 'A3'
+}
+
 /**
  * Convert an SVG string to a PDF buffer.
  * Auto-selects paper size and centers the SVG on the page.
  */
-export async function svgToPdfBuffer(svg: string): Promise<Buffer> {
+export async function svgToPdfBuffer(svg: string): Promise<SvgPdfResult> {
   const dims = parseSvgDimensions(svg)
   const paper = selectPaperSize(dims.width, dims.height)
 
@@ -157,7 +162,7 @@ export async function svgToPdfBuffer(svg: string): Promise<Buffer> {
     },
   })
 
-  return pdfDocToBuffer(doc)
+  return { buffer: await pdfDocToBuffer(doc), paperSize: paper.name }
 }
 
 // ---------------------------------------------------------------------------

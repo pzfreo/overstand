@@ -94,17 +94,19 @@ describe('selectPaperSize', () => {
 describe('svgToPdfBuffer', () => {
   test('produces valid PDF from simple SVG', async () => {
     const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="100mm" height="100mm" viewBox="0 0 100 100"><rect x="10" y="10" width="80" height="80" fill="blue"/></svg>'
-    const buffer = await svgToPdfBuffer(svg)
+    const { buffer, paperSize } = await svgToPdfBuffer(svg)
     expect(buffer.slice(0, 5).toString()).toBe('%PDF-')
     expect(buffer.length).toBeGreaterThan(100)
+    expect(paperSize).toBe('A4')
   })
 
   test('produces valid PDF from real violin side view', async () => {
     const params = { ...getDefaultValues(), instrument_family: 'VIOLIN' } as Params
     const result = generateViolin(params)
     expect(result.success).toBe(true)
-    const buffer = await svgToPdfBuffer(result.views!['side'])
+    const { buffer, paperSize } = await svgToPdfBuffer(result.views!['side'])
     expect(buffer.slice(0, 5).toString()).toBe('%PDF-')
+    expect(paperSize).toMatch(/^A\d$/)
   })
 })
 

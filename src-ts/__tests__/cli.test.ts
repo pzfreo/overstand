@@ -7,7 +7,7 @@
 
 import { describe, test, expect, beforeEach, afterEach } from 'vitest'
 import { execFileSync } from 'node:child_process'
-import { writeFileSync, mkdirSync, readFileSync, existsSync } from 'node:fs'
+import { writeFileSync, mkdirSync, readFileSync, existsSync, readdirSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 
@@ -468,13 +468,18 @@ describe('CLI integration', () => {
     expect(content.slice(0, 5).toString()).toBe('%PDF-')
   })
 
-  test('--all --pdf creates PDF files', () => {
+  test('--all --pdf creates PDF files with paper size in SVG names', () => {
     const presetFile = path.join(PRESETS_DIR, 'violin.json')
     const outputDir = path.join(tmpDir, 'pdf-output')
     const result = runCli([presetFile, '--all', '--pdf', '--output-dir', outputDir])
     expect(result.status).toBe(0)
-    expect(existsSync(path.join(outputDir, 'Default_Violin_side-view.pdf'))).toBe(true)
-    expect(existsSync(path.join(outputDir, 'Default_Violin_dimensions.pdf'))).toBe(true)
+    const files = readdirSync(outputDir)
+    // SVG views get paper size suffix
+    const sideView = files.find((f) => f.includes('side-view') && f.endsWith('.pdf'))
+    expect(sideView).toBeDefined()
+    expect(sideView).toMatch(/_a\d\.pdf$/)
+    // Table views have no paper size suffix
+    expect(files.find((f) => f.includes('dimensions') && f.endsWith('.pdf'))).toBeDefined()
   })
 
   test('--help shows usage', () => {
