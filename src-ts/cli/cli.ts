@@ -152,7 +152,7 @@ async function generateAllViews(
 // Main
 // ---------------------------------------------------------------------------
 
-async function main(): Promise<void> {
+export async function main(): Promise<void> {
   let parsed
   try {
     parsed = parseArgs({

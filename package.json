@@ -18,7 +18,8 @@
     "lint:fix": "eslint src-ts/ web/ --fix",
     "format": "prettier --write 'src-ts/**/*.ts' 'web/**/*.js'",
     "format:check": "prettier --check 'src-ts/**/*.ts' 'web/**/*.js'",
-    "cli": "tsx src-ts/cli/cli.ts"
+    "cli": "tsx src-ts/cli/cli.ts",
+    "build:cli": "bun build src-ts/cli/main.ts --compile --outfile dist/overstand"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
