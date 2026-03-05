@@ -152,6 +152,10 @@ export async function svgToPdf(svg: string): Promise<SvgPdfResult> {
       if (italic) return 'Helvetica-Oblique'
       return 'Helvetica'
     },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    warningCallback: (msg: any) => {
+      console.warn('[svg-to-pdfkit]', msg)
+    },
   })
 
   return { bytes: await collectPdfBytes(doc), paperSize: paper.name }
