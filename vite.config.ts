@@ -134,6 +134,15 @@ export default defineConfig(({ mode }) => {
           },
         },
         {
+          resolve: {
+            alias: {
+              // In production, web code imports from /dist/instrument_generator.js
+              // (the Vite-built bundle). During tests, dist/ doesn't exist — resolve
+              // to the TypeScript source instead.
+              '/dist/instrument_generator.js': resolve(__dirname, 'src-ts/instrument_generator.ts'),
+              '/dist/pdf_generator.js': resolve(__dirname, 'src-ts/pdf/index.ts'),
+            },
+          },
           test: {
             name: 'web',
             include: ['web/**/*.test.js'],
