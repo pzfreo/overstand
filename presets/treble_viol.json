@@ -30,7 +30,7 @@
     "fingerboard_width_at_nut": 40,
     "fingerboard_width_at_end": 62,
     "show_measurements": true,
-    "break_angle": 30,
-    "top_block_height": 45
+    "top_block_height": 45,
+    "back_break_length": 312.1
   }
 }

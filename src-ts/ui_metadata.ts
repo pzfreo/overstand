@@ -129,10 +129,10 @@ export const SECTIONS: Record<string, SectionDefinition> = {
     default_expanded: false,
     order: 4,
     parameter_names: [
-      'break_angle',
+      'back_break_length',
       'top_block_height',
     ],
-    description: 'Viol-specific side view geometry: back break angle and top block height',
+    description: 'Viol-specific side view geometry: back break length and top block height',
   },
 
   // Stage 5: Fingerboard

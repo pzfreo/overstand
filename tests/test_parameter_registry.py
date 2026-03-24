@@ -333,8 +333,8 @@ def test_viol_break_angle_display_name():
     assert 'break_angle' in PARAMETER_REGISTRY
     param = PARAMETER_REGISTRY['break_angle']
 
-    assert param.display_name == 'Viol Back Break Angle'
-    assert param.role == ParameterRole.INPUT_ONLY
+    assert param.display_name == 'Back Break Angle'
+    assert param.role == ParameterRole.OUTPUT_ONLY
 
 
 def test_afterlength_angle_parameter():

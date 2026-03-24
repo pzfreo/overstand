@@ -7,6 +7,7 @@ This module acts as an orchestrator, combining logic from:
 - view_generator.py: HTML view generation
 """
 
+import math
 from buildprimitives import *
 from buildprimitives import FONT_NAME, TITLE_FONT_SIZE
 import geometry_engine
@@ -310,7 +311,7 @@ def generate_side_view_svg(params: Dict[str, Any], show_measurements: bool = Tru
             exporter, show_measurements,
             params.get('body_length', 0), params.get('belly_edge_thickness', 0),
             params.get('rib_height', 0), params.get('top_block_height', 40),
-            params.get('break_angle', 15), derived['back_break_length'],
+            math.degrees(derived['break_angle_rad']), derived['back_break_length'],
             derived['break_start_x'], derived['break_start_y'],
             derived['break_end_x'], derived['break_end_y']
         )

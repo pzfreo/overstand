@@ -793,18 +793,16 @@ export const PARAMETER_REGISTRY: Record<string, UnifiedParameter> = {
 
   break_angle: new UnifiedParameter({
     key: 'break_angle',
-    display_name: 'Viol Back Break Angle',
+    display_name: 'Back Break Angle',
     param_type: ParameterType.NUMERIC,
     unit: '°',
-    description: 'Angle at which the back breaks (viol back construction)',
-    role: ParameterRole.INPUT_ONLY,
-    input_config: {
-      min_val: 0.0,
-      max_val: 45.0,
-      default: 15.0,
-      step: 0.5,
-      visible_when: { instrument_family: 'VIOL' },
-      category: 'Viol Construction',
+    description: 'Calculated angle at which the back breaks',
+    role: ParameterRole.OUTPUT_ONLY,
+    output_config: {
+      decimals: 1,
+      visible: true,
+      category: 'Viol Geometry',
+      order: 51,
     },
   }),
 
@@ -886,16 +884,18 @@ export const PARAMETER_REGISTRY: Record<string, UnifiedParameter> = {
 
   back_break_length: new UnifiedParameter({
     key: 'back_break_length',
-    display_name: 'Back Break Length',
+    display_name: 'Tail to Back Break Length',
     param_type: ParameterType.NUMERIC,
     unit: 'mm',
-    description: 'Length of the back from hookbar to break point',
-    role: ParameterRole.OUTPUT_ONLY,
-    output_config: {
-      decimals: 1,
-      visible: true,
-      category: 'Viol Geometry',
-      order: 50,
+    description: 'Length of the flat back from tail to the break point',
+    role: ParameterRole.INPUT_ONLY,
+    input_config: {
+      min_val: 0.0,
+      max_val: 1000.0,
+      default: 250.0,
+      step: 1.0,
+      visible_when: { instrument_family: 'VIOL' },
+      category: 'Viol Construction',
     },
   }),
 
