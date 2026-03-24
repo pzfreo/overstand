@@ -104,26 +104,45 @@ export function drawBody(
 
   if (viol_break_end_x != null && viol_break_end_y != null) {
     // For viols: draw individual edges, skipping the cut corner
+    // Tail end and bottom are dashed — rib height tapers, only accurate at neck join
     const right_edge = Edge.make_line(
       [body_length, belly_edge_thickness],
       [body_length, back_y],
     )
-    exporter.add_shape(right_edge, 'drawing')
+    exporter.add_shape(right_edge, 'schematic')
 
     const bottom_edge = Edge.make_line(
       [viol_break_end_x, back_y],
       [body_length, back_y],
     )
-    exporter.add_shape(bottom_edge, 'drawing')
+    exporter.add_shape(bottom_edge, 'schematic')
     // Left edge is drawn by drawViolBack
   } else {
-    const rect = new Rectangle(body_length, rib_height)
-    exporter.add_shape(
-      rect.move(
-        new Location([body_length / 2, belly_edge_thickness - rib_height / 2]),
-      ),
-      'drawing',
+    // Non-viols: draw individual edges so rib bottom + tail can be dotted
+    // Rib height is only accurate at the neck join — ribs taper toward the tail
+    const left_edge = Edge.make_line(
+      [0, belly_edge_thickness],
+      [0, back_y],
     )
+    exporter.add_shape(left_edge, 'drawing')
+
+    const top_edge = Edge.make_line(
+      [0, belly_edge_thickness],
+      [body_length, belly_edge_thickness],
+    )
+    exporter.add_shape(top_edge, 'drawing')
+
+    const bottom_edge = Edge.make_line(
+      [0, back_y],
+      [body_length, back_y],
+    )
+    exporter.add_shape(bottom_edge, 'schematic')
+
+    const right_edge = Edge.make_line(
+      [body_length, belly_edge_thickness],
+      [body_length, back_y],
+    )
+    exporter.add_shape(right_edge, 'schematic')
   }
 
   const arch_spline = Spline.interpolate_three_points(
@@ -165,11 +184,12 @@ export function drawViolBack(
   exporter.add_shape(break_line, 'drawing')
 
   const back_y = belly_edge_thickness - _rib_height
+  // Flat back after break is dashed — rib height tapers, only accurate at neck join
   const flat_back_line = Edge.make_line(
     [break_end_x, break_end_y],
     [_body_length, back_y],
   )
-  exporter.add_shape(flat_back_line, 'drawing')
+  exporter.add_shape(flat_back_line, 'schematic')
 }
 
 // ============================================================================
@@ -715,13 +735,13 @@ function addBodyDimensions(exporter: ExportSVG, opts: SideViewDimensionOpts): vo
  * Tailpiece line, break angle, tailpiece height, and downforce arrow dimensions.
  */
 function addTailpieceAndForceDimensions(exporter: ExportSVG, opts: SideViewDimensionOpts): void {
-  // Tailpiece to bridge dotted line
+  // Tailpiece to bridge dashed line (string heading to tailpiece is schematic)
   const tailpiece_top_y = opts.belly_edge_thickness + opts.tailpiece_height
   const tailpiece_to_bridge_line = Edge.make_line(
     [opts.body_length, tailpiece_top_y],
     [opts.bridge_top_x, opts.bridge_top_y],
   )
-  exporter.add_shape(tailpiece_to_bridge_line, 'schematic_dotted')
+  exporter.add_shape(tailpiece_to_bridge_line, 'schematic')
 
   if (opts.string_break_angle > 0) {
     addDimensionShapes(exporter, createAngleDimension(

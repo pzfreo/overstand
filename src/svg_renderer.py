@@ -49,25 +49,41 @@ def draw_body(exporter: ExportSVG, body_length: float, belly_edge_thickness: flo
 
     if viol_break_end_x is not None:
         # For viols: draw individual edges, skipping the cut corner
-        # Top edge (at belly level) is already drawn as belly rectangle bottom
-        # Right edge: full height at x=body_length
+        # Tail end and bottom are dashed — rib height tapers, only accurate at neck join
         right_edge = Edge.make_line(
             (body_length, belly_edge_thickness),
             (body_length, back_y)
         )
-        exporter.add_shape(right_edge, layer="drawing")
-        # Bottom edge: only from break_end_x to body_length (skip left portion)
+        exporter.add_shape(right_edge, layer="schematic")
         bottom_edge = Edge.make_line(
             (viol_break_end_x, back_y),
             (body_length, back_y)
         )
-        exporter.add_shape(bottom_edge, layer="drawing")
+        exporter.add_shape(bottom_edge, layer="schematic")
         # Left edge is drawn by draw_viol_back (vertical + break line)
     else:
-        # For non-viols: draw full rectangle
-        rect = Rectangle(width=body_length, height=rib_height)
-        rect = rect.move(Location((body_length/2, belly_edge_thickness - rib_height/2)))
-        exporter.add_shape(rect, layer="drawing")
+        # Non-viols: draw individual edges so rib bottom + tail can be dotted
+        # Rib height is only accurate at the neck join — ribs taper toward the tail
+        left_edge = Edge.make_line(
+            (0, belly_edge_thickness),
+            (0, back_y)
+        )
+        exporter.add_shape(left_edge, layer="drawing")
+        top_edge = Edge.make_line(
+            (0, belly_edge_thickness),
+            (body_length, belly_edge_thickness)
+        )
+        exporter.add_shape(top_edge, layer="drawing")
+        bottom_edge = Edge.make_line(
+            (0, back_y),
+            (body_length, back_y)
+        )
+        exporter.add_shape(bottom_edge, layer="schematic")
+        right_edge = Edge.make_line(
+            (body_length, belly_edge_thickness),
+            (body_length, back_y)
+        )
+        exporter.add_shape(right_edge, layer="schematic")
 
     arch_spline = Spline.interpolate_three_points(
         (0, belly_edge_thickness),
@@ -105,12 +121,12 @@ def draw_viol_back(exporter: ExportSVG, body_length: float, belly_edge_thickness
     )
     exporter.add_shape(break_line, layer="drawing")
 
-    # Flat back section (from break point to tail)
+    # Flat back after break is dashed — rib height tapers, only accurate at neck join
     flat_back_line = Edge.make_line(
         (break_end_x, break_end_y),
         (body_length, back_y)
     )
-    exporter.add_shape(flat_back_line, layer="drawing")
+    exporter.add_shape(flat_back_line, layer="schematic")
 
 
 def add_viol_back_dimensions(exporter: ExportSVG, show_measurements: bool,
@@ -427,12 +443,12 @@ def add_dimensions(exporter: ExportSVG, show_measurements: bool,
     tailpiece_base_y = belly_edge_thickness
     tailpiece_top_y = belly_edge_thickness + tailpiece_height
 
-    # Always draw dotted line from tailpiece attachment to bridge top
+    # String heading to tailpiece is dashed (schematic, like the belly curve)
     tailpiece_to_bridge_line = Edge.make_line(
         (body_length, tailpiece_top_y),
         (bridge_top_x, bridge_top_y)
     )
-    exporter.add_shape(tailpiece_to_bridge_line, layer="schematic_dotted")
+    exporter.add_shape(tailpiece_to_bridge_line, layer="schematic")
 
     # Draw the string break angle dimension at the bridge (arc and label only, no lines)
     if string_break_angle > 0:
