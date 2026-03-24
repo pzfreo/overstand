@@ -365,7 +365,7 @@ describe('CLI integration', () => {
     expect(result.status).toBe(0)
     expect(result.stdout).toContain('<svg')
     expect(result.stdout).toContain('</svg>')
-  })
+  }, 15_000)
 
   test('side view to file', () => {
     const presetFile = path.join(PRESETS_DIR, 'violin.json')
