@@ -8,6 +8,22 @@ if (typeof document === 'undefined') {
   // No DOM available — nothing to set up
 } else {
 
+// Node.js 22+ exposes a built-in localStorage global that shadows jsdom's
+// implementation. The built-in one requires --localstorage-file to work, so
+// its methods are broken in test environments. Replace it with a simple
+// in-memory implementation that jsdom-based tests expect.
+if (typeof localStorage === 'undefined' || typeof localStorage.getItem !== 'function') {
+  const store = new Map();
+  globalThis.localStorage = {
+    getItem: (key) => store.has(key) ? store.get(key) : null,
+    setItem: (key, value) => store.set(key, String(value)),
+    removeItem: (key) => store.delete(key),
+    clear: () => store.clear(),
+    get length() { return store.size; },
+    key: (index) => [...store.keys()][index] ?? null,
+  };
+}
+
 // Mock DOM elements that tests might need
 beforeEach(() => {
   // Create a basic modal structure

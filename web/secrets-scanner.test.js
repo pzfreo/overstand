@@ -22,7 +22,7 @@ const pyFiles = readdirSync(srcDir)
 
 // Exclude test files and the example config (which has intentional placeholders)
 const jsFiles = readdirSync(webDir)
-    .filter(f => f.endsWith('.js') && !f.endsWith('.test.js') && f !== 'config.example.js')
+    .filter(f => f.endsWith('.js') && !f.endsWith('.test.js') && f !== 'config.example.js' && f !== 'config.js')
     .map(f => ({ name: `web/${f}`, content: readFileSync(resolve(webDir, f), 'utf-8') }));
 
 // Patterns that suggest hardcoded secrets.
