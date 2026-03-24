@@ -570,10 +570,10 @@ PARAMETER_REGISTRY: Dict[str, UnifiedParameter] = {
 
     'rib_height': UnifiedParameter(
         key='rib_height',
-        display_name='Rib Height',
+        display_name='Rib Height at Neck Join',
         param_type=ParameterType.NUMERIC,
         unit='mm',
-        description="Rib Height assumed constant (doesn't affect calculation)",
+        description='Rib height at the neck join — ribs taper toward the tail',
         role=ParameterRole.INPUT_ONLY,
         input_config=InputConfig(
             min_val=10.0,
