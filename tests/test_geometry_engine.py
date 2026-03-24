@@ -477,7 +477,7 @@ class TestCalculateViolBackBreak:
     def test_returns_expected_keys(self):
         """Should return dict with expected keys"""
         params = {
-            'break_angle': 15.0,
+            'back_break_length': 256.0,
             'top_block_height': 40.0,
             'rib_height': 100.0,
             'body_length': 480.0,
@@ -492,10 +492,15 @@ class TestCalculateViolBackBreak:
         assert 'break_end_y' in result
         assert 'break_angle_rad' in result
 
-    def test_back_break_length_calculation(self):
-        """Back break length should be body_length minus horizontal distance of break"""
+    def test_derives_break_angle_from_back_break_length(self):
+        """Break angle should be derived from back_break_length"""
+        # With back_break_length ≈ 256.08, the angle should be ~15 degrees
+        remaining_drop = 100.0 - 40.0
+        break_horizontal = remaining_drop / math.tan(math.radians(15.0))
+        back_break_length = 480.0 - break_horizontal
+
         params = {
-            'break_angle': 15.0,
+            'back_break_length': back_break_length,
             'top_block_height': 40.0,
             'rib_height': 100.0,
             'body_length': 480.0,
@@ -503,19 +508,13 @@ class TestCalculateViolBackBreak:
         }
         result = calculate_viol_back_break(params)
 
-        # remaining_drop = rib_height - top_block_height = 60
-        # break_horizontal = 60 / tan(15°) ≈ 223.9
-        # back_break_length = 480 - 223.9 ≈ 256.1
-        remaining_drop = 100.0 - 40.0
-        break_horizontal = remaining_drop / math.tan(math.radians(15.0))
-        expected = 480.0 - break_horizontal
-
-        assert abs(result['back_break_length'] - expected) < 0.1
+        expected_angle_rad = math.radians(15.0)
+        assert abs(result['break_angle_rad'] - expected_angle_rad) < 0.001
 
     def test_break_start_is_at_top_block_height(self):
         """Break should start at top_block_height below belly"""
         params = {
-            'break_angle': 15.0,
+            'back_break_length': 256.0,
             'top_block_height': 40.0,
             'rib_height': 100.0,
             'body_length': 480.0,
@@ -523,15 +522,14 @@ class TestCalculateViolBackBreak:
         }
         result = calculate_viol_back_break(params)
 
-        # Break starts at x=0, y = belly_y - top_block_height
         assert result['break_start_x'] == 0
-        expected_y = 3.5 - 40.0  # belly_y - top_block_height
+        expected_y = 3.5 - 40.0
         assert abs(result['break_start_y'] - expected_y) < 0.01
 
     def test_break_end_is_at_back_level(self):
         """Break should end at back level (bottom of ribs)"""
         params = {
-            'break_angle': 15.0,
+            'back_break_length': 256.0,
             'top_block_height': 40.0,
             'rib_height': 100.0,
             'body_length': 480.0,
@@ -539,46 +537,44 @@ class TestCalculateViolBackBreak:
         }
         result = calculate_viol_back_break(params)
 
-        # Break ends at y = belly_y - rib_height (back level)
         expected_y = 3.5 - 100.0
         assert abs(result['break_end_y'] - expected_y) < 0.01
 
-    def test_zero_angle_handled(self):
-        """Zero break angle should not cause division by zero"""
+    def test_full_flat_back_gives_shallow_angle(self):
+        """back_break_length=0 means break starts at body join and spans full body"""
         params = {
-            'break_angle': 0.0,
+            'back_break_length': 0.0,
             'top_block_height': 40.0,
             'rib_height': 100.0,
             'body_length': 480.0,
             'belly_edge_thickness': 3.5
         }
         result = calculate_viol_back_break(params)
+        # angle = atan(60/480) ≈ 7.1° — shallow but not zero
+        expected_rad = math.atan(60.0 / 480.0)
+        assert abs(result['break_angle_rad'] - expected_rad) < 0.001
 
-        # With zero angle, break_horizontal goes to body_length (clamped)
-        assert result['back_break_length'] == 0  # body_length - body_length
-
-    def test_large_angle_small_break_length(self):
-        """Larger angle should result in smaller back_break_length"""
-        params_small_angle = {
-            'break_angle': 10.0,
+    def test_larger_back_break_length_gives_steeper_angle(self):
+        """Longer flat back section means steeper break angle"""
+        params_short = {
+            'back_break_length': 100.0,
             'top_block_height': 40.0,
             'rib_height': 100.0,
             'body_length': 480.0,
             'belly_edge_thickness': 3.5
         }
-        params_large_angle = {
-            'break_angle': 30.0,
+        params_long = {
+            'back_break_length': 400.0,
             'top_block_height': 40.0,
             'rib_height': 100.0,
             'body_length': 480.0,
             'belly_edge_thickness': 3.5
         }
 
-        result_small = calculate_viol_back_break(params_small_angle)
-        result_large = calculate_viol_back_break(params_large_angle)
+        result_short = calculate_viol_back_break(params_short)
+        result_long = calculate_viol_back_break(params_long)
 
-        # Larger angle = steeper break = shorter horizontal distance = longer back_break_length
-        assert result_large['back_break_length'] > result_small['back_break_length']
+        assert result_long['break_angle_rad'] > result_short['break_angle_rad']
 
 
 class TestEvaluateCubicBezier:
@@ -761,22 +757,33 @@ class TestCalculateStringAnglesGuitarValidation:
             calculate_string_angles_guitar(params, vsl, fret_positions, 0.0)
 
 
-class TestCalculateViolBackBreakClamping:
+class TestCalculateViolBackBreakEdgeCases:
     """Additional tests for calculate_viol_back_break"""
 
-    def test_very_small_angle_clamps_break_horizontal_to_body_length(self):
-        """Very small angle (but above guard) causes break_horizontal > body_length, clamped"""
+    def test_back_break_length_exceeds_body_gives_steep_angle(self):
+        """back_break_length >= body_length clamps horizontal to epsilon"""
         params = {
-            'break_angle': 0.06,      # ~0.00105 rad, above 0.001 guard
+            'back_break_length': 500.0,  # Exceeds body_length
             'top_block_height': 40.0,
             'rib_height': 100.0,
-            'body_length': 100.0,     # Small body to ensure clamping
+            'body_length': 100.0,
             'belly_edge_thickness': 3.5,
         }
         result = calculate_viol_back_break(params)
-        # Clamped: break_horizontal = body_length, back_break_length = 0
-        assert result['back_break_length'] == 0.0
-        assert result['break_end_x'] == 100.0
+        # break_horizontal is clamped to EPSILON, angle approaches 90°
+        assert result['break_angle_rad'] > 1.0  # > ~57°
+
+    def test_remaining_drop_zero_gives_zero_angle(self):
+        """When top_block_height >= rib_height, angle should be zero"""
+        params = {
+            'back_break_length': 200.0,
+            'top_block_height': 100.0,  # Same as rib_height
+            'rib_height': 100.0,
+            'body_length': 480.0,
+            'belly_edge_thickness': 3.5,
+        }
+        result = calculate_viol_back_break(params)
+        assert result['break_angle_rad'] == 0
 
 
 class TestCalculateCrossSectionGeometry:

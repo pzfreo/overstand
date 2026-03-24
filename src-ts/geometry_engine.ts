@@ -671,38 +671,32 @@ export interface ViolBackBreakResult {
  * Calculate viol back break geometry.
  */
 export function calculateViolBackBreak(params: Params): ViolBackBreakResult {
-  const breakAngleDeg = getNumParamNullish(params, 'break_angle', 15.0)
+  const backBreakLength = getNumParamNullish(params, 'back_break_length', 250.0)
   const topBlockHeight = getNumParamNullish(params, 'top_block_height', 40.0)
   const ribHeight = getNumParamNullish(params, 'rib_height', 100.0)
   const bodyLength = getNumParamNullish(params, 'body_length', 355.0)
   const bellyEdgeThickness = getNumParamNullish(params, 'belly_edge_thickness', 3.5)
 
-  // Convert angle to radians
-  const breakAngleRad = toRadians(breakAngleDeg)
-
-  // Y coordinates (belly is at bellyEdgeThickness, back is at bellyEdgeThickness - ribHeight)
-  const bellyY = bellyEdgeThickness
-  // const backY = bellyEdgeThickness - ribHeight  // computed below
-
   // Break start: bottom of vertical section at x=0
   const breakStartX = 0
-  const breakStartY = bellyY - topBlockHeight
+  const breakStartY = bellyEdgeThickness - topBlockHeight
 
   // Calculate remaining vertical drop to the back
   const remainingDrop = ribHeight - topBlockHeight
 
-  // Calculate horizontal distance of break line
-  // tan(angle) = opposite/adjacent = remainingDrop/breakHorizontal
-  let breakHorizontal: number
-  if (breakAngleRad < 0.001) {
-    breakHorizontal = bodyLength // Effectively horizontal
-  } else {
-    breakHorizontal = remainingDrop / Math.tan(breakAngleRad)
+  // Horizontal distance of break line = body_length - back_break_length
+  let breakHorizontal = bodyLength - backBreakLength
+  if (breakHorizontal < EPSILON) {
+    breakHorizontal = EPSILON // Avoid division by zero
   }
 
-  // Clamp break_horizontal to body_length
-  if (breakHorizontal > bodyLength) {
-    breakHorizontal = bodyLength
+  // Derive the break angle from the geometry
+  // tan(angle) = remainingDrop / breakHorizontal
+  let breakAngleRad: number
+  if (remainingDrop <= 0) {
+    breakAngleRad = 0
+  } else {
+    breakAngleRad = Math.atan(remainingDrop / breakHorizontal)
   }
 
   const backY = bellyEdgeThickness - ribHeight
@@ -710,9 +704,6 @@ export function calculateViolBackBreak(params: Params): ViolBackBreakResult {
   // Break end point (on the back)
   const breakEndX = breakHorizontal
   const breakEndY = backY
-
-  // Back break length is from tail to break point
-  const backBreakLength = bodyLength - breakHorizontal
 
   return {
     back_break_length: backBreakLength,

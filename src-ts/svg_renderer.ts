@@ -1335,7 +1335,7 @@ export function renderSideView(
       belly_edge_thickness,
       rib_height,
       getNumParam(params, 'top_block_height', 40),
-      getNumParam(params, 'break_angle', 15),
+      ((derived['break_angle_rad'] as number) ?? 0) * (180 / Math.PI),
       derived['back_break_length'] ?? 0,
       derived['break_start_x'] ?? 0,
       derived['break_start_y'] ?? 0,

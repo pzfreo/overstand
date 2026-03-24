@@ -298,8 +298,8 @@
       "string_height_eof": 7.0,
       "string_height_nut": 0.6,
       "vsl": 680.0,
-      "break_angle": 15.0,
-      "top_block_height": 50.0
+      "top_block_height": 50.0,
+      "back_break_length": 438.8
     },
     "expected": {
       "derived_values": {
@@ -348,12 +348,12 @@
         "afterlength_angle": 15.414292460587303,
         "string_break_angle": 154.36053877658185,
         "downward_force_percent": 44.33136617802934,
-        "back_break_length": 438.75644347017857,
+        "back_break_length": 438.8,
         "break_start_x": 0,
         "break_start_y": -46.5,
-        "break_end_x": 261.24355652982143,
+        "break_end_x": 261.2,
         "break_end_y": -116.5,
-        "break_angle_rad": 0.2617993877991494,
+        "break_angle_rad": 0.2618410762019571,
         "neck_block_max_width": 58.0625
       },
       "fret_positions": [
@@ -839,8 +839,8 @@
       "string_height_eof": 5.0,
       "string_height_nut": 0.6,
       "vsl": 400.0,
-      "break_angle": 15.0,
-      "top_block_height": 35.0
+      "top_block_height": 35.0,
+      "back_break_length": 237.4
     },
     "expected": {
       "derived_values": {
@@ -889,12 +889,12 @@
         "afterlength_angle": 11.195111426299977,
         "string_break_angle": 163.3279285446014,
         "downward_force_percent": 28.959612647102055,
-        "back_break_length": 237.41669750802296,
+        "back_break_length": 237.4,
         "break_start_x": 0,
         "break_start_y": -31.5,
-        "break_end_x": 242.58330249197704,
+        "break_end_x": 242.6,
         "break_end_y": -96.5,
-        "break_angle_rad": 0.2617993877991494,
+        "break_angle_rad": 0.2617821808896209,
         "neck_block_max_width": 48.888888888888886
       },
       "fret_positions": [
@@ -932,8 +932,8 @@
       "fingerboard_width_at_nut": 40,
       "fingerboard_width_at_end": 62,
       "show_measurements": true,
-      "break_angle": 30,
-      "top_block_height": 45
+      "top_block_height": 45,
+      "back_break_length": 312.1
     },
     "expected": {
       "derived_values": {
@@ -982,12 +982,12 @@
         "afterlength_angle": 16.12929755741891,
         "string_break_angle": 154.35194370713552,
         "downward_force_percent": 44.31764093132756,
-        "back_break_length": 312.0577136594005,
+        "back_break_length": 312.1,
         "break_start_x": 0,
         "break_start_y": -41.5,
-        "break_end_x": 77.9422863405995,
+        "break_end_x": 77.89999999999998,
         "break_end_y": -86.5,
-        "break_angle_rad": 0.5235987755982988,
+        "break_angle_rad": 0.5238337953380654,
         "neck_block_max_width": 55.8984375
       },
       "fret_positions": [

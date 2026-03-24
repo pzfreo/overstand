@@ -403,7 +403,7 @@ describe('Integration: full violin calculation pipeline', () => {
 describe('calculateViolBackBreak', () => {
   it('returns expected keys', () => {
     const params = {
-      break_angle: 15.0,
+      back_break_length: 256.0,
       top_block_height: 40.0,
       rib_height: 100.0,
       body_length: 480.0,
@@ -418,9 +418,14 @@ describe('calculateViolBackBreak', () => {
     expect('break_angle_rad' in result).toBe(true)
   })
 
-  it('back break length calculation', () => {
+  it('derives break angle from back break length', () => {
+    // With back_break_length=256.08, the angle should be ~15 degrees
+    const remainingDrop = 100.0 - 40.0
+    const breakHorizontal = remainingDrop / Math.tan((15.0 * Math.PI) / 180)
+    const backBreakLength = 480.0 - breakHorizontal
+
     const params = {
-      break_angle: 15.0,
+      back_break_length: backBreakLength,
       top_block_height: 40.0,
       rib_height: 100.0,
       body_length: 480.0,
@@ -428,16 +433,13 @@ describe('calculateViolBackBreak', () => {
     }
     const result = calculateViolBackBreak(params)
 
-    const remainingDrop = 100.0 - 40.0
-    const breakHorizontal = remainingDrop / Math.tan((15.0 * Math.PI) / 180)
-    const expected = 480.0 - breakHorizontal
-
-    expect(Math.abs(result.back_break_length - expected)).toBeLessThan(0.1)
+    const expectedAngleRad = (15.0 * Math.PI) / 180
+    expect(Math.abs(result.break_angle_rad - expectedAngleRad)).toBeLessThan(0.001)
   })
 
   it('break start is at top block height', () => {
     const params = {
-      break_angle: 15.0,
+      back_break_length: 256.0,
       top_block_height: 40.0,
       rib_height: 100.0,
       body_length: 480.0,
@@ -452,7 +454,7 @@ describe('calculateViolBackBreak', () => {
 
   it('break end is at back level', () => {
     const params = {
-      break_angle: 15.0,
+      back_break_length: 256.0,
       top_block_height: 40.0,
       rib_height: 100.0,
       body_length: 480.0,
@@ -464,37 +466,39 @@ describe('calculateViolBackBreak', () => {
     expect(Math.abs(result.break_end_y - expectedY)).toBeLessThan(0.01)
   })
 
-  it('zero angle handled', () => {
+  it('full flat back gives shallow angle', () => {
     const params = {
-      break_angle: 0.0,
+      back_break_length: 0.0,
       top_block_height: 40.0,
       rib_height: 100.0,
       body_length: 480.0,
       belly_edge_thickness: 3.5,
     }
     const result = calculateViolBackBreak(params)
-    expect(result.back_break_length).toBe(0)
+    // angle = atan(60/480) ≈ 7.1° — shallow but not zero
+    const expectedRad = Math.atan(60.0 / 480.0)
+    expect(Math.abs(result.break_angle_rad - expectedRad)).toBeLessThan(0.001)
   })
 
-  it('large angle small break length', () => {
-    const paramsSmall = {
-      break_angle: 10.0,
+  it('larger back break length gives steeper angle', () => {
+    const paramsShort = {
+      back_break_length: 100.0,
       top_block_height: 40.0,
       rib_height: 100.0,
       body_length: 480.0,
       belly_edge_thickness: 3.5,
     }
-    const paramsLarge = {
-      break_angle: 30.0,
+    const paramsLong = {
+      back_break_length: 400.0,
       top_block_height: 40.0,
       rib_height: 100.0,
       body_length: 480.0,
       belly_edge_thickness: 3.5,
     }
-    const resultSmall = calculateViolBackBreak(paramsSmall)
-    const resultLarge = calculateViolBackBreak(paramsLarge)
+    const resultShort = calculateViolBackBreak(paramsShort)
+    const resultLong = calculateViolBackBreak(paramsLong)
 
-    expect(resultLarge.back_break_length).toBeGreaterThan(resultSmall.back_break_length)
+    expect(resultLong.break_angle_rad).toBeGreaterThan(resultShort.break_angle_rad)
   })
 })
 
@@ -701,18 +705,30 @@ describe('calculateStringAnglesGuitar validation', () => {
 // TestCalculateViolBackBreakClamping
 // ---------------------------------------------------------------------------
 
-describe('calculateViolBackBreak clamping', () => {
-  it('very small angle clamps break horizontal to body length', () => {
+describe('calculateViolBackBreak edge cases', () => {
+  it('back_break_length >= body_length clamps horizontal to epsilon', () => {
     const params = {
-      break_angle: 0.06,       // ~0.00105 rad, above 0.001 guard
+      back_break_length: 500.0,  // Exceeds body_length
       top_block_height: 40.0,
       rib_height: 100.0,
-      body_length: 100.0,      // Small body to ensure clamping
+      body_length: 100.0,
       belly_edge_thickness: 3.5,
     }
     const result = calculateViolBackBreak(params)
-    expect(result.back_break_length).toBe(0.0)
-    expect(result.break_end_x).toBe(100.0)
+    // break_horizontal is clamped to EPSILON, angle approaches 90°
+    expect(result.break_angle_rad).toBeGreaterThan(1.0) // > ~57°
+  })
+
+  it('remaining_drop <= 0 gives zero angle', () => {
+    const params = {
+      back_break_length: 200.0,
+      top_block_height: 100.0,  // Same as rib_height — no drop
+      rib_height: 100.0,
+      body_length: 480.0,
+      belly_edge_thickness: 3.5,
+    }
+    const result = calculateViolBackBreak(params)
+    expect(result.break_angle_rad).toBe(0)
   })
 })
 

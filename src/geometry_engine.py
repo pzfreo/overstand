@@ -498,12 +498,14 @@ def calculate_viol_back_break(params: Dict[str, Any]) -> Dict[str, Any]:
     Viols have a flat back that "breaks" at an angle near the neck. The geometry has
     three sections:
     1. Vertical section: From belly down for top_block_height at x=0
-    2. Break line: From bottom of vertical, angled at break_angle to meet back
+    2. Break line: Angled section from bottom of vertical to the back
     3. Flat back: From break point to tail
+
+    The break angle is derived from the back_break_length input.
 
     Args:
         params: Dictionary containing:
-            - break_angle: Angle of back break in degrees
+            - back_break_length: Length of flat back from tail to break point
             - top_block_height: Vertical distance from top of ribs to start of break
             - rib_height: Total rib height
             - body_length: Body length
@@ -514,46 +516,40 @@ def calculate_viol_back_break(params: Dict[str, Any]) -> Dict[str, Any]:
             - back_break_length: Distance from tail to break point
             - break_start_x/y: Start of break line (bottom of vertical section)
             - break_end_x/y: End of break line (on back)
+            - break_angle_rad: Derived break angle in radians
     """
     result = {}
 
-    break_angle_deg = params.get('break_angle', 15.0)
+    back_break_length = params.get('back_break_length', 250.0)
     top_block_height = params.get('top_block_height', 40.0)
     rib_height = params.get('rib_height', 100.0)
     body_length = params.get('body_length', 355.0)
     belly_edge_thickness = params.get('belly_edge_thickness', 3.5)
 
-    # Convert angle to radians
-    break_angle_rad = math.radians(break_angle_deg)
-
-    # Y coordinates (belly is at belly_edge_thickness, back is at belly_edge_thickness - rib_height)
-    belly_y = belly_edge_thickness
-    back_y = belly_edge_thickness - rib_height
-
     # Break start: bottom of vertical section at x=0
     break_start_x = 0
-    break_start_y = belly_y - top_block_height
+    break_start_y = belly_edge_thickness - top_block_height
 
     # Calculate remaining vertical drop to the back
     remaining_drop = rib_height - top_block_height
 
-    # Calculate horizontal distance of break line
-    # tan(angle) = opposite/adjacent = remaining_drop/break_horizontal
-    if break_angle_rad < 0.001:  # Guard against zero/tiny angles
-        break_horizontal = body_length  # Effectively horizontal
-    else:
-        break_horizontal = remaining_drop / math.tan(break_angle_rad)
+    # Horizontal distance of break line = body_length - back_break_length
+    break_horizontal = body_length - back_break_length
+    if break_horizontal < EPSILON:
+        break_horizontal = EPSILON  # Avoid division by zero
 
-    # Clamp break_horizontal to body_length
-    if break_horizontal > body_length:
-        break_horizontal = body_length
+    # Derive the break angle from the geometry
+    # tan(angle) = remaining_drop / break_horizontal
+    if remaining_drop <= 0:
+        break_angle_rad = 0
+    else:
+        break_angle_rad = math.atan(remaining_drop / break_horizontal)
+
+    back_y = belly_edge_thickness - rib_height
 
     # Break end point (on the back)
     break_end_x = break_horizontal
     break_end_y = back_y
-
-    # Back break length is from tail to break point
-    back_break_length = body_length - break_horizontal
 
     result['back_break_length'] = back_break_length
     result['break_start_x'] = break_start_x

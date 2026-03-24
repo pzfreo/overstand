@@ -448,8 +448,8 @@ describe('viol break_angle display name', () => {
   it('break_angle has correct display_name and role', () => {
     expect('break_angle' in PARAMETER_REGISTRY).toBe(true)
     const param = PARAMETER_REGISTRY['break_angle']!
-    expect(param.display_name).toBe('Viol Back Break Angle')
-    expect(param.role).toBe(ParameterRole.INPUT_ONLY)
+    expect(param.display_name).toBe('Back Break Angle')
+    expect(param.role).toBe(ParameterRole.OUTPUT_ONLY)
   })
 })
 
