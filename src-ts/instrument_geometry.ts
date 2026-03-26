@@ -184,6 +184,8 @@ export function calculateDerivedValues(params: Params): DerivedValues {
   if (instrumentFamily === 'VIOL') {
     const backBreakResult = calculateViolBackBreak(params)
     Object.assign(derived, backBreakResult)
+    // Add break_angle in degrees for the output panel
+    derived['break_angle'] = backBreakResult.break_angle_rad * (180 / Math.PI)
   } else {
     derived['back_break_length'] = 0
   }

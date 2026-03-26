@@ -233,6 +233,7 @@ export const SECTIONS: Record<string, SectionDefinition> = {
       'fb_thickness_at_nut',
       'fb_thickness_at_join',
       'neck_block_max_width',
+      'break_angle',
     ],
     description: 'Primary calculated values',
   },

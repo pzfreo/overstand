@@ -136,6 +136,8 @@ def calculate_derived_values(params: Dict[str, Any]) -> Dict[str, Any]:
     if instrument_family == InstrumentFamily.VIOL.name:
         back_break_result = geometry_engine.calculate_viol_back_break(params)
         derived.update(back_break_result)
+        # Add break_angle in degrees for the output panel
+        derived['break_angle'] = math.degrees(back_break_result['break_angle_rad'])
     else:
         derived['back_break_length'] = 0
 

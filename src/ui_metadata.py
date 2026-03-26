@@ -257,7 +257,8 @@ SECTIONS = {
             'downward_force_percent',
             'fb_thickness_at_nut',
             'fb_thickness_at_join',
-            'neck_block_max_width'
+            'neck_block_max_width',
+            'break_angle'
         ],
         description='Primary calculated values'
     ),

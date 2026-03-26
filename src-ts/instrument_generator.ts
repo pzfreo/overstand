@@ -38,6 +38,48 @@ import type { Params } from './types'
 import { getNumParam, getStringParam, getErrorMessage } from './utils'
 
 // ---------------------------------------------------------------------------
+// Parameter migration
+// ---------------------------------------------------------------------------
+
+/**
+ * Migrate parameters from older saved profiles to the current schema.
+ *
+ * Handles backwards-incompatible parameter changes so that old saved JSON
+ * profiles still load correctly.
+ */
+function migrateParams(params: Params): Params {
+  // PR #119: break_angle was input, back_break_length was output.
+  // Now reversed. Convert old profiles that have break_angle but not back_break_length.
+  if (
+    'break_angle' in params &&
+    !('back_break_length' in params) &&
+    params['instrument_family'] === 'VIOL'
+  ) {
+    const breakAngleDeg = Number(params['break_angle']) || 15.0
+    const topBlockHeight = Number(params['top_block_height']) || 40.0
+    const ribHeight = Number(params['rib_height']) || 100.0
+    const bodyLength = Number(params['body_length']) || 355.0
+
+    const breakAngleRad = (breakAngleDeg * Math.PI) / 180
+    const remainingDrop = ribHeight - topBlockHeight
+    let breakHorizontal: number
+    if (breakAngleRad < 0.001) {
+      breakHorizontal = bodyLength
+    } else {
+      breakHorizontal = remainingDrop / Math.tan(breakAngleRad)
+    }
+    if (breakHorizontal > bodyLength) {
+      breakHorizontal = bodyLength
+    }
+
+    params['back_break_length'] = bodyLength - breakHorizontal
+    delete params['break_angle']
+  }
+
+  return params
+}
+
+// ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
@@ -165,6 +207,7 @@ function buildFormattedAndMetadata(
  */
 export function generateViolin(params: Params): GenerateViolinResult {
   try {
+    migrateParams(params)
     const [isValid, errors] = validateParameters(params)
 
     if (!isValid) {
@@ -277,6 +320,7 @@ export function generateViolinNeck(paramsJson: string): string {
 export function getDerivedValues(paramsJson: string): string {
   try {
     const params = JSON.parse(paramsJson) as Params
+    migrateParams(params)
     const derivedRaw = calculateDerivedValues(params)
 
     const { formattedValues, metadataDict } = buildFormattedAndMetadata(derivedRaw)
