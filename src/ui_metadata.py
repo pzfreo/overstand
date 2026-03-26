@@ -255,6 +255,7 @@ SECTIONS = {
             'nut_relative_to_ribs',
             'string_break_angle',
             'downward_force_percent',
+            'total_downforce',
             'fb_thickness_at_nut',
             'fb_thickness_at_join',
             'neck_block_max_width',

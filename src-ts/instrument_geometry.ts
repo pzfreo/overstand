@@ -180,6 +180,12 @@ export function calculateDerivedValues(params: Params): DerivedValues {
   const afterlengthAngleRad = toRadians(derived['afterlength_angle']!)
   derived['downward_force_percent'] = (Math.sin(stringAngleRad) + Math.sin(afterlengthAngleRad)) * 100
 
+  // Calculate total downforce if string tension is provided
+  const totalStringTension = params['total_string_tension'] as number | null | undefined
+  if (totalStringTension != null && totalStringTension > 0) {
+    derived['total_downforce'] = totalStringTension * (derived['downward_force_percent']! / 100)
+  }
+
   // Calculate viol-specific back break geometry
   if (instrumentFamily === 'VIOL') {
     const backBreakResult = calculateViolBackBreak(params)

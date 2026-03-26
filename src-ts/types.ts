@@ -76,7 +76,7 @@ export type DerivedValues = Record<string, number | null | undefined>
 export interface InputConfig {
   min_val: number
   max_val: number
-  default: number | boolean | string
+  default: number | boolean | string | null
   step: number  // default 0.1 in Python
   visible_when: Record<string, string | string[]> | null  // Conditional visibility
   category: string  // default "Basic Dimensions"

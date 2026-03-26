@@ -498,6 +498,21 @@ PARAMETER_REGISTRY: Dict[str, UnifiedParameter] = {
         )
     ),
 
+    'total_downforce': UnifiedParameter(
+        key='total_downforce',
+        display_name='Total Downforce',
+        param_type=ParameterType.NUMERIC,
+        unit='kg',
+        description='Total downward force on the belly (string tension × downward force %)',
+        role=ParameterRole.OUTPUT_ONLY,
+        output_config=OutputConfig(
+            decimals=2,
+            visible=True,
+            category='Geometry',
+            order=11
+        )
+    ),
+
     # ============================================
     # BASIC DIMENSION PARAMETERS (Input Only)
     # ============================================
@@ -645,6 +660,22 @@ PARAMETER_REGISTRY: Dict[str, UnifiedParameter] = {
             default=33.0,
             step=0.1,
             category='Basic Dimensions'
+        )
+    ),
+
+    'total_string_tension': UnifiedParameter(
+        key='total_string_tension',
+        display_name='Total String Tension',
+        param_type=ParameterType.NUMERIC,
+        unit='kg',
+        description='Total tension of all strings combined (optional)',
+        role=ParameterRole.INPUT_ONLY,
+        input_config=InputConfig(
+            min_val=0.0,
+            max_val=200.0,
+            default=None,
+            step=0.1,
+            category='Advanced Geometry'
         )
     ),
 
@@ -1623,6 +1654,8 @@ def validate_parameters(params: Dict[str, Any]) -> tuple:
         value = params[key]
 
         if param.param_type == ParameterType.NUMERIC and param.input_config:
+            if value is None:
+                continue  # Optional parameter with no value
             if value < param.input_config.min_val:
                 errors.append(f"{param.display_name} must be at least {param.input_config.min_val}")
             if value > param.input_config.max_val:
