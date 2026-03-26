@@ -218,9 +218,11 @@ describe('numeric parameters have valid ranges', () => {
       if (param.param_type === ParameterType.NUMERIC && param.input_config) {
         const config = param.input_config
         expect(config.min_val).toBeLessThan(config.max_val)
-        const def = config.default as number
-        expect(def).toBeGreaterThanOrEqual(config.min_val)
-        expect(def).toBeLessThanOrEqual(config.max_val)
+        if (config.default != null) {
+          const def = config.default as number
+          expect(def).toBeGreaterThanOrEqual(config.min_val)
+          expect(def).toBeLessThanOrEqual(config.max_val)
+        }
       }
     }
   })

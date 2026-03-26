@@ -132,10 +132,17 @@ def calculate_derived_values(params: Dict[str, Any]) -> Dict[str, Any]:
     afterlength_angle_rad = derived['afterlength_angle'] * math.pi / 180
     derived['downward_force_percent'] = (math.sin(string_angle_rad) + math.sin(afterlength_angle_rad)) * 100
 
+    # Calculate total downforce if string tension is provided
+    total_string_tension = params.get('total_string_tension')
+    if total_string_tension is not None and total_string_tension > 0:
+        derived['total_downforce'] = total_string_tension * (derived['downward_force_percent'] / 100)
+
     # Calculate viol-specific back break geometry
     if instrument_family == InstrumentFamily.VIOL.name:
         back_break_result = geometry_engine.calculate_viol_back_break(params)
         derived.update(back_break_result)
+        # Add break_angle in degrees for the output panel
+        derived['break_angle'] = math.degrees(back_break_result['break_angle_rad'])
     else:
         derived['back_break_length'] = 0
 

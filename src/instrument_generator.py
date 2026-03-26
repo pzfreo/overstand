@@ -7,7 +7,41 @@ You rarely need to modify this - it's the "glue" code.
 
 from typing import Dict, Any, List, Tuple
 import json
+import math
 from parameter_registry import get_all_output_parameters, get_derived_metadata_as_dict
+
+
+def migrate_params(params: Dict[str, Any]) -> Dict[str, Any]:
+    """Migrate parameters from older saved profiles to the current schema.
+
+    Handles backwards-incompatible parameter changes so that old saved JSON
+    profiles still load correctly.
+    """
+    # PR #119: break_angle was input, back_break_length was output.
+    # Now reversed. Convert old profiles that have break_angle but not back_break_length.
+    if (
+        'break_angle' in params
+        and 'back_break_length' not in params
+        and params.get('instrument_family') == 'VIOL'
+    ):
+        break_angle_deg = float(params.get('break_angle', 15.0))
+        top_block_height = float(params.get('top_block_height', 40.0))
+        rib_height = float(params.get('rib_height', 100.0))
+        body_length = float(params.get('body_length', 355.0))
+
+        break_angle_rad = math.radians(break_angle_deg)
+        remaining_drop = rib_height - top_block_height
+        if break_angle_rad < 0.001:
+            break_horizontal = body_length
+        else:
+            break_horizontal = remaining_drop / math.tan(break_angle_rad)
+        if break_horizontal > body_length:
+            break_horizontal = body_length
+
+        params['back_break_length'] = body_length - break_horizontal
+        del params['break_angle']
+
+    return params
 
 
 def generate_violin_neck(params_json: str) -> str:
@@ -39,6 +73,7 @@ def generate_violin_neck(params_json: str) -> str:
     try:
         # Parse parameters
         params = json.loads(params_json)
+        migrate_params(params)
 
         # Import here to ensure modules are loaded
         from parameter_registry import validate_parameters
@@ -136,6 +171,7 @@ def get_derived_values(params_json: str) -> str:
         from instrument_geometry import calculate_derived_values
 
         params = json.loads(params_json)
+        migrate_params(params)
         derived_raw = calculate_derived_values(params)
 
         # Build enhanced response with metadata

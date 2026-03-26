@@ -243,7 +243,7 @@ function createNumberControl(name, param, isOutput, callbacks) {
     input.type = 'number';
     input.id = name;
     input.name = name;
-    input.value = param.default;
+    input.value = param.default != null ? param.default : '';
     input.min = param.min;
     input.max = param.max;
     input.step = param.step;
@@ -333,7 +333,7 @@ function createStringControl(name, param, callbacks) {
     input.type = 'text';
     input.id = name;
     input.name = name;
-    input.value = param.default;
+    input.value = param.default != null ? param.default : '';
     input.maxLength = param.max_length || 100;
     input.addEventListener('change', hideErrors);
     input.addEventListener('input', callbacks.onInputChange);

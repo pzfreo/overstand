@@ -30,7 +30,7 @@ export function applyParametersToForm(parameters) {
         const el = document.getElementById(name);
         if (el) {
             if (el.type === 'checkbox') el.checked = value;
-            else el.value = value;
+            else el.value = value != null ? value : '';
         }
     }
 }

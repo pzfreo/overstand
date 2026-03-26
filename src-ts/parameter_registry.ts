@@ -442,6 +442,21 @@ export const PARAMETER_REGISTRY: Record<string, UnifiedParameter> = {
     },
   }),
 
+  total_downforce: new UnifiedParameter({
+    key: 'total_downforce',
+    display_name: 'Total Downforce',
+    param_type: ParameterType.NUMERIC,
+    unit: 'kg',
+    description: 'Total downward force on the belly (string tension × downward force %)',
+    role: ParameterRole.OUTPUT_ONLY,
+    output_config: {
+      decimals: 2,
+      visible: true,
+      category: 'Geometry',
+      order: 11,
+    },
+  }),
+
   // ============================================================
   // BASIC DIMENSION PARAMETERS (Input Only)
   // ============================================================
@@ -597,6 +612,23 @@ export const PARAMETER_REGISTRY: Record<string, UnifiedParameter> = {
       step: 0.1,
       visible_when: null,
       category: 'Basic Dimensions',
+    },
+  }),
+
+  total_string_tension: new UnifiedParameter({
+    key: 'total_string_tension',
+    display_name: 'Total String Tension',
+    param_type: ParameterType.NUMERIC,
+    unit: 'kg',
+    description: 'Total tension of all strings combined (optional)',
+    role: ParameterRole.INPUT_ONLY,
+    input_config: {
+      min_val: 0.0,
+      max_val: 200.0,
+      default: null,
+      step: 0.1,
+      visible_when: null,
+      category: 'Advanced Geometry',
     },
   }),
 
@@ -1168,16 +1200,15 @@ export function getAllOutputParameters(
   return result
 }
 
-export function getDefaultValues(): Record<string, number | boolean | string> {
-  const defaults: Record<string, number | boolean | string> = {}
+export function getDefaultValues(): Record<string, number | boolean | string | null> {
+  const defaults: Record<string, number | boolean | string | null> = {}
 
   for (const [key, param] of Object.entries(PARAMETER_REGISTRY)) {
     // Skip output-only parameters
     if (param.role === ParameterRole.OUTPUT_ONLY) continue
     if (!param.input_config) continue
 
-    const defaultVal = param.input_config.default
-    defaults[key] = defaultVal
+    defaults[key] = param.input_config.default
   }
 
   return defaults
@@ -1194,6 +1225,7 @@ export function validateParameters(
     const value = params[key]
 
     if (param.param_type === ParameterType.NUMERIC && param.input_config) {
+      if (value == null) continue // Optional parameter with no value
       const numVal = value as number
       if (numVal < param.input_config.min_val) {
         errors.push(`${param.display_name} must be at least ${param.input_config.min_val}`)

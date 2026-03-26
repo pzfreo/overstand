@@ -156,8 +156,9 @@ def test_numeric_parameters_have_valid_ranges():
             config = param.input_config
             assert config.min_val < config.max_val, \
                 f"Parameter '{key}' has invalid range: min={config.min_val}, max={config.max_val}"
-            assert config.min_val <= config.default <= config.max_val, \
-                f"Parameter '{key}' default {config.default} outside range [{config.min_val}, {config.max_val}]"
+            if config.default is not None:
+                assert config.min_val <= config.default <= config.max_val, \
+                    f"Parameter '{key}' default {config.default} outside range [{config.min_val}, {config.max_val}]"
 
 
 def test_output_metadata_generation():

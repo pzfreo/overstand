@@ -354,6 +354,7 @@
         "break_end_x": 261.2,
         "break_end_y": -116.5,
         "break_angle_rad": 0.2618410762019571,
+        "break_angle": 15.002388569535523,
         "neck_block_max_width": 58.0625
       },
       "fret_positions": [
@@ -895,6 +896,7 @@
         "break_end_x": 242.6,
         "break_end_y": -96.5,
         "break_angle_rad": 0.2617821808896209,
+        "break_angle": 14.999014116705553,
         "neck_block_max_width": 48.888888888888886
       },
       "fret_positions": [
@@ -988,6 +990,7 @@
         "break_end_x": 77.89999999999998,
         "break_end_y": -86.5,
         "break_angle_rad": 0.5238337953380654,
+        "break_angle": 30.013465639190887,
         "neck_block_max_width": 55.8984375
       },
       "fret_positions": [
