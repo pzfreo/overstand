@@ -1271,7 +1271,7 @@ export function renderSideView(
   addDocumentText(
     exporter,
     instrument_name,
-    'https://github.com/pzfreo/diagram-creator',
+    'https://overstand.tools',
     body_length,
     rib_height,
     belly_edge_thickness,
