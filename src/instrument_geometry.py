@@ -280,7 +280,7 @@ def generate_side_view_svg(params: Dict[str, Any], show_measurements: bool = Tru
     )
     
     svg_renderer.add_document_text(
-        exporter, params.get('instrument_name', 'Instrument'), "https://github.com/pzfreo/diagram-creator",
+        exporter, params.get('instrument_name', 'Instrument'), "https://overstand.tools",
         params.get('body_length', 0), params.get('rib_height', 0), params.get('belly_edge_thickness', 0),
         params.get('arching_height', 0), params.get('bridge_height', 0), derived['neck_end_x']
     )
