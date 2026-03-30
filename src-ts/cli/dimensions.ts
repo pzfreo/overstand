@@ -16,9 +16,9 @@ import type { FretPositionsResult } from '../instrument_generator'
 
 const CSS = `
 body { font-family: Arial, sans-serif; margin: 40px; }
-h1 { color: #4F46E5; }
+h1 { color: #0f766e; }
 table { border-collapse: collapse; width: 100%; max-width: 800px; }
-th { background: #4F46E5; color: white; padding: 12px; text-align: left; }
+th { background: #0f766e; color: white; padding: 12px; text-align: left; }
 td { padding: 10px 12px; border-bottom: 1px solid #e5e7eb; }
 tr:hover { background: #f9fafb; }
 .category-header { background: #f3f4f6; font-weight: 600; color: #374151; }

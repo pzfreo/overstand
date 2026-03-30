@@ -68,8 +68,8 @@ describe('Design decisions: CSS invariants', () => {
         expect(stylesSource).toMatch(/:root\s*\{[^}]*--color-primary/s);
     });
 
-    test('indigo brand color #4F46E5 is present', () => {
-        expect(stylesSource.toLowerCase()).toMatch(/#4f46e5/);
+    test('teal brand color #0f766e is present', () => {
+        expect(stylesSource.toLowerCase()).toMatch(/#0f766e/);
     });
 });
 
