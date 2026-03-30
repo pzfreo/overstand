@@ -556,7 +556,7 @@ h1 {
 .category-section {
     margin-bottom: 0;
     background: var(--color-surface);
-    border-radius: 0;
+    border-radius: var(--radius-sm);
     padding: 0.5rem 0.75rem;
     border: none;
     box-shadow: none;
@@ -1434,7 +1434,7 @@ input[type="checkbox"] {
    ============================================ */
 
 .core-metrics-panel {
-    background: linear-gradient(135deg, #0f766e 0%, #005047 100%);
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
     padding: 0.4rem 0.5rem;
     border-bottom: none;
 }
@@ -1551,7 +1551,7 @@ input[type="checkbox"] {
     justify-content: space-between;
     padding: 1.5rem;
     border-bottom: none;
-    background: linear-gradient(135deg, #0f766e 0%, #005047 100%);
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
     color: white;
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
 }
@@ -2532,12 +2532,12 @@ input[type="checkbox"] {
 }
 
 .toolbar-btn.btn-primary {
-    background: linear-gradient(135deg, #80d5cb 0%, #0f766e 100%);
+    background: linear-gradient(135deg, var(--color-primary-light) 0%, var(--color-primary) 100%);
     color: white;
 }
 
 .toolbar-btn.btn-primary:hover {
-    background: linear-gradient(135deg, #9cf2e8 0%, #14b8a6 100%);
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
     color: white;
 }
 
@@ -2667,7 +2667,7 @@ input[type="checkbox"] {
     --color-gray-500: #3e4947;
     --color-gray-400: #30353b;
     --color-gray-300: #252a30;
-    --color-gray-200: #252a30;
+    --color-gray-200: #2e333a;
     --color-gray-100: #1b2026;
     --color-gray-50: #171c22;
 
@@ -2756,6 +2756,11 @@ input[type="checkbox"] {
 
 [data-theme="dark"] .output-value {
     color: var(--color-primary-light);
+}
+
+/* SVG diagrams have hardcoded colors; keep canvas white in dark mode */
+[data-theme="dark"] #preview-container {
+    background: #ffffff;
 }
 
 [data-theme="dark"] .dimensions-table .param-name {
