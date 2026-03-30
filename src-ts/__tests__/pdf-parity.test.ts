@@ -40,11 +40,11 @@ describe('pdf_constants.js', () => {
   })
 
   test('exports BRAND_COLOR_HEX', () => {
-    expect(pdfConstants).toContain('#4F46E5')
+    expect(pdfConstants).toContain('#0f766e')
   })
 
   test('exports BRAND_COLOR_RGB', () => {
-    expect(pdfConstants).toContain('79, 70, 229')
+    expect(pdfConstants).toContain('15, 118, 110')
   })
 })
 
@@ -78,7 +78,7 @@ describe('pdf_core.ts uses shared constants', () => {
   })
 
   test('does not hardcode brand color', () => {
-    expect(pdfCore).not.toMatch(/BRAND_COLOR\s*=\s*'#4F46E5'/)
+    expect(pdfCore).not.toMatch(/BRAND_COLOR\s*=\s*'#0f766e'/)
   })
 })
 

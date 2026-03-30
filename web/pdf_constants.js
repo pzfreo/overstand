@@ -18,7 +18,7 @@ export const ISO_SIZES = [
 export const PDF_MARGIN_MM = 20;
 
 /** Overstand brand color (hex). */
-export const BRAND_COLOR_HEX = '#4F46E5';
+export const BRAND_COLOR_HEX = '#0f766e';
 
 /** Overstand brand color (RGB array for jsPDF). */
-export const BRAND_COLOR_RGB = [79, 70, 229];
+export const BRAND_COLOR_RGB = [15, 118, 110];

@@ -34,7 +34,7 @@ function showUpdateNotification() {
         bottom: 20px;
         left: 50%;
         transform: translateX(-50%);
-        background: #4F46E5;
+        background: #0f766e;
         color: white;
         padding: 16px 24px;
         border-radius: 8px;
@@ -50,7 +50,7 @@ function showUpdateNotification() {
         <span>✨ A new version is available!</span>
         <button id="update-btn" style="
             background: white;
-            color: #4F46E5;
+            color: #0f766e;
             border: none;
             padding: 8px 16px;
             border-radius: 4px;
