@@ -35,7 +35,20 @@ let _font: unknown = null
  */
 export async function loadStencilFont(url = FONT_URL): Promise<void> {
   try {
-    _font = await opentype.load(url)
+    // opentype.js 2.x removed load(); fetch/read the bytes and parse().
+    let buffer: ArrayBuffer
+    if (typeof window === 'undefined' && !/^https?:/.test(url)) {
+      // Node (CLI/tests): treat as a filesystem path. Never taken in the
+      // browser bundle, where vite stubs out node:fs/promises.
+      const { readFile } = await import('node:fs/promises')
+      const data = await readFile(url)
+      buffer = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength) as ArrayBuffer
+    } else {
+      const response = await fetch(url)
+      if (!response.ok) throw new Error(`HTTP ${response.status} fetching ${url}`)
+      buffer = await response.arrayBuffer()
+    }
+    _font = opentype.parse(buffer)
   } catch (e) {
     console.warn('Could not load stencil font:', e)
     _font = null
