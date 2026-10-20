@@ -9,7 +9,20 @@
 --
 -- Grants decide whether a role can touch a table at all; the RLS policies in
 -- 001-003 still decide which rows. Grants below mirror those policies.
--- Safe to run on the existing project: GRANT is idempotent.
+--
+-- On the existing project this also removes the broad implicit grants
+-- (e.g. anon INSERT/UPDATE/DELETE/TRUNCATE everywhere), so the live
+-- database ends up with exactly the grants a fresh rebuild gets.
+-- Safe to re-run: it resets to the same state each time.
+
+BEGIN;
+
+-- ============================================================================
+-- RESET
+-- ============================================================================
+
+REVOKE ALL ON profiles, user_presets, shared_presets, bookmarks
+    FROM anon, authenticated, service_role;
 
 -- ============================================================================
 -- GRANTS
@@ -34,3 +47,5 @@ GRANT SELECT, INSERT, DELETE ON bookmarks TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE
     ON profiles, user_presets, shared_presets, bookmarks
     TO service_role;
+
+COMMIT;
